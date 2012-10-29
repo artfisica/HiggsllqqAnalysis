@@ -92,7 +92,7 @@ int main(int argc, char **argv)
    analysis->setElectronFamily((doGSF) ? Electron::GSF : Electron::noGSF);
    analysis->setSmearing(doSmearing);
    analysis->setTopoIso(useTopoIso);
-   //analysis->setHighMassSelection(); //To be implemented!! Error
+   analysis->setResolutionModel(ResolutionModel::BW_GAUS);
    analysis->setOutputFile(output_filename);
 
    theChain->Process(analysis);

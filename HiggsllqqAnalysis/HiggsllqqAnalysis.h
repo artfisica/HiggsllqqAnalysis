@@ -5,10 +5,8 @@
 
     Code to perform SM H -> ZZ(*) -> qqll analysis.
 
-    @author Valerio Ippolito <valerio.ippolito@cern.ch>
-    @author Arturo Sanchez   <arturos@cern.ch>
-
-    @date 25/08/2012
+    @start  date 15/08/2012 
+    @update date 29/10/2012
 */
 
 #include <TEfficiency.h>
@@ -34,19 +32,14 @@
 #include "egammaAnalysisUtils/MultiLeptonDefs.h"
 #include "egammaAnalysisUtils/VertexPositionReweightingTool.h"
 
-// Higgs[llqq-4lep]Analysis tools
+// Higgs[llqq-4lep]Analysis common tools
 #include "HiggsllqqAnalysis/ggFReweighting.h"
 #include "HiggsllqqAnalysis/CommonTools.h"
 #include "HiggsllqqAnalysis/ChargedLepton.h"
 #include "HiggsllqqAnalysis/Jet.h"
 #include "HiggsllqqAnalysis/Dilepton.h"
-#include "HiggsllqqAnalysis/Quadrilepton.h"
 #include "HiggsllqqAnalysis/CutFlowTool.h"
 #include "HiggsllqqAnalysis/DataPeriodTool.h"
-#include "HiggsllqqAnalysis/CandidateStruct.h"
-#include "HiggsllqqAnalysis/ConstraintFit.h"
-#include "HiggsllqqAnalysis/ConstraintFitResult.h"
-#include "HiggsllqqAnalysis/ResolutionModel.h"
 
 
 // HiggsqqllAnalysis needs
@@ -56,6 +49,20 @@
 #include "ApplyJetResolutionSmearing/ApplyJetSmearing.h"
 #include "HiggsllqqAnalysis/JetKinematicFitter.h"
 #include "HiggsllqqAnalysis/HforToolD3PD.h"
+
+// TestSelection needs (redundancies to be removed)
+#include <TROOT.h>
+#include <TChain.h>
+#include <TFile.h>
+#include <TSelector.h>
+#include <TLorentzVector.h>
+#include <vector>
+#include <TStopwatch.h>
+#include <TH1D.h>
+#include "TMVA/Tools.h"
+#include "TMVA/Reader.h"
+//#include "TestSelection/JetKinematicFitter.h"
+//#include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
 
 
 namespace DataPeriod {
@@ -101,8 +108,6 @@ namespace HllqqCutFlow {
     NumTagJets,
     DileptonMass,
     DiJetMass,
-    SelectedLeptons,
-    GoodCandidate,
   };
 }
 
@@ -140,26 +145,6 @@ namespace HllqqJetQuality {
     overlap,
   };
 }
-
-namespace HllqqQuadrileptonQuality {
-  enum {
-    mass_2e2mu,
-    opposite_charge,
-    kinematics,
-    trigmatch,
-    Z1_mass,
-    Z2_mass,
-    DeltaR,
-    best,
-    track_iso,
-    calo_iso,
-    d0_sig,
-    mass_window,
-    trigger_on_top,
-    trigmatch_on_top,
-  };
-}
-
 
 namespace HllqqGRL {
   enum {
@@ -222,14 +207,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void setElectronFamily(Int_t val) {
     m_electronFamily = val;
   }
-  virtual void setResolutionModel(Int_t val) {
-    m_WhichResolutionModel = val;
-  }
   virtual void setOutputFile(TString val) {
     m_outputFileName = val;
   }
   
  protected:
+  
   // pointers to ATLAS tools
   Root::TGoodRunsListReader *m_GRL;
   Root::TPileupReweighting *m_PileupReweighter;
@@ -251,10 +234,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TAxis *m_smearD0_x;
   TAxis *m_smearD0_y;
   
-  // ponter to Resolution Model tool
-  ResolutionModel *m_ResolutionModel;
-  
-  // containers for leptons, Jets, dileptons, quadrileptons in the event
+  // containers for leptons, Jets, dileptons, in the event
   std::vector<Analysis::ChargedLepton *> m_Muons;
   std::vector<Analysis::ChargedLepton *> m_Electrons;
   std::vector<Analysis::Jet *> m_Jets;
@@ -262,8 +242,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Analysis::ChargedLepton *> m_GoodElectrons;
   std::vector<Analysis::Jet *> m_GoodJets;
   std::vector<Analysis::Dilepton *> m_Dileptons;
-  std::vector<Analysis::Quadrilepton *> m_Quadrileptons;
-  std::vector<Analysis::Quadrilepton *> m_GoodQuadrileptons;
   
   // utility maps
   std::map<UInt_t, Float_t> m_CrossSection;
@@ -273,7 +251,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Int_t> m_Channels;
   std::vector<Analysis::CutFlowTool> m_EventCutflow;
   std::vector<Analysis::CutFlowTool> m_EventCutflow_rw;
-  std::vector<Analysis::CutFlowTool> m_CandidateCutflow;
   std::vector<Analysis::CutFlowTool> m_ElectronCutflow;
   std::vector<Analysis::CutFlowTool> m_MuonCutflow;
   std::vector<Analysis::CutFlowTool> m_JetCutflow;
@@ -291,8 +268,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual Bool_t finalize_analysis();
   
   // event selection
-  virtual Bool_t hasPowHegZZBug();
-  virtual Bool_t isWithinT1llqqPhaseSpace();
+  virtual Bool_t hasPowHegZZBug(); // to be removed and/or change!!
   virtual Int_t getLastCutPassed();
   virtual Bool_t passesGRL();
   virtual Bool_t hasGoodVertex();
@@ -310,43 +286,23 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual TString getDiElectronTriggerName();
   virtual TString getElectronMuonTriggerName();
   virtual void applyChanges(Analysis::ChargedLepton *lep);
-  virtual void applyChanges(Analysis::Jet *jet);////*////
+  virtual void applyChanges(Analysis::Jet *jet);
   virtual void getMuons(D3PDReader::MuonD3PDObject *mu_branch, Int_t family);
   virtual void getElectrons(D3PDReader::ElectronD3PDObject *el_branch, Int_t family);
-  virtual void getJets(D3PDReader::JetD3PDObject *jet_branch);////*////
+  virtual void getJets(D3PDReader::JetD3PDObject *jet_branch); // To include Jet Family??
   virtual void getGoodMuons();
   virtual void getGoodElectrons();
-  virtual void getGoodJets();////*////
+  virtual void getGoodJets();
   virtual void getGoodLeptons();
   virtual void getDileptons();
-  virtual void getQuadrileptons();
-  Analysis::Quadrilepton *findClosestToZZ();
-  Bool_t isClosestToZZ(Analysis::Quadrilepton *higgs);
-  Bool_t isSelected(Analysis::Quadrilepton *higgs);
-  virtual void getGoodQuadrileptons();
   virtual void getGoodObjects();
-  virtual Int_t getBestCandidateCut();
   
   // object selection
   virtual Bool_t isMCPMuon(Analysis::ChargedLepton *lep);
   virtual Bool_t isGood(Analysis::ChargedLepton *lep);
-  Bool_t IsGoodElectron(Analysis::ChargedLepton *lep);////*////
-  Bool_t IsGoodMuon(Analysis::ChargedLepton *lep);////*////
-  Bool_t isGoodJet(Analysis::Jet *jet);////*////
-  virtual Bool_t isGood(Analysis::Quadrilepton *higgs);
-  virtual Bool_t isTriggerMatched(Analysis::Quadrilepton *higgs);
-  virtual Bool_t isSFOS(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesPtLeptonsCut(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesZ1MassCut(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesZ2MassCut(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesDeltaRCut(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesJpsiVeto(Analysis::Quadrilepton *higgs);
-  std::vector<Float_t> getFinalTrackIsoVector(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesTrackIsolationCut(Analysis::Quadrilepton *higgs);
-  Float_t getCorrectedCaloIso(Analysis::ChargedLepton *lep);
-  std::vector<Float_t> getFinalCaloIsoVector(Analysis::Quadrilepton *higgs);
-  virtual Bool_t passesCaloIsolationCut(Analysis::Quadrilepton *higgs);
-  virtual Bool_t hasGoodImpactParameterSignificance(Analysis::Quadrilepton *higgs);
+  Bool_t IsGoodElectron(Analysis::ChargedLepton *lep);
+  Bool_t IsGoodMuon(Analysis::ChargedLepton *lep);
+  Bool_t isGoodJet(Analysis::Jet *jet);
   
   // utility functions for the selection
   virtual Bool_t isMC() {
@@ -384,29 +340,13 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual Float_t getLeptonWeight(Analysis::ChargedLepton *lep);
   virtual Float_t getSFWeight();
   virtual Float_t getggFWeight();
-  virtual Float_t getCandidateTriggerSF(Analysis::Quadrilepton *higgs);
-  
-  // systematics
-  virtual HllqqSystematics::ChargedLepton getLeptonSystematics(Analysis::ChargedLepton *lep);
   
   // tools for cross section computation
-  void initCrossSections();
+  void initCrossSections(); // to be change!!
   Float_t getCrossSectionWeight();
-  Float_t getTruthZZMass();
-  virtual Float_t getTruthHiggsPt();
-  
-  // tools for truth
-  std::vector<TLorentzVector *> getTruthZLeptons(Analysis::Quadrilepton * higgs);
-  virtual std::pair<Float_t, Float_t> getTruthZMass(Analysis::Quadrilepton *higgs);
-  virtual Float_t getTruthHiggsMass();
-  
-  // tools for Z mass constraint
-  virtual Analysis::ConstraintFitResult getMassConstraintFit(Analysis::Quadrilepton *higgs);
-  
-  // functions dealing with output ntuples
-  void setTreeCandidatesBranches(TTree *tree, Analysis::CandidateStruct *cand);
-  void fillCandidateStruct(Analysis::CandidateStruct *cand, Analysis::Quadrilepton *higgs);
-  
+  Float_t getTruthHiggsMass();
+  virtual Float_t getTruthHiggsPt(); // to be change!!
+    
   // option resume
   virtual void printAllOptions() {
     Info("printAllOptions", "======== options =======");
@@ -420,7 +360,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   }
   
   
-  ////*//// Methods from the qqll 2011 analysis
+  // Methods from the qqll 2011 analysis
   Bool_t ApplyChangesMuon(Analysis::ChargedLepton *lep);
   Bool_t ApplyChangesElectron(Analysis::ChargedLepton *lep);
   Bool_t ApplyChangesJet(Analysis::Jet *jet);
@@ -429,16 +369,15 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t GetGoodObjects();
   void LoadGRL();
   Bool_t PassesGRL();
-  Bool_t JetInHole(); // FLS
-  Bool_t NotMETclean(); //
-  void FillReducedNtuple(Int_t cut);
+  Bool_t JetInHole();
+  Bool_t NotMETclean();
   Float_t getCorrectMETValue();
   Bool_t hasGoodMET();
-  /*
+
     void InitReducedNtuple();
     void ResetReducedNtupleMembers();
-    void FillReducedNtuple(Int_t cut);
-  */
+    void FillReducedNtuple(Int_t cut, UInt_t channel);
+    
   Bool_t GetDoLowMass() { return m_dolowmass; }
   Bool_t GetSysStudy() { return m_sysstudy; }
   Bool_t IsConsistentPt();
@@ -491,13 +430,10 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   // Method to fill vectors to calculate the HFOR value
   void FillHFORvariables();
   
-  ////*////
-  
-  
   
  protected:
   Bool_t m_called_getGoodLeptons;
-  Bool_t m_called_getGoodJets;////*////
+  Bool_t m_called_getGoodJets;
   Bool_t m_called_getGoodObjects;
   Long64_t m_entriesInChain;
   Long64_t m_processedEntries;
@@ -510,18 +446,14 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Int_t m_electronFamily;
   Int_t m_thisChannel;
   TH1D *m_generatedEntriesHisto;
-  std::map<TString, TH1F*> m_truthHistos; // kostas
-  TEfficiency *m_selectionEfficiencyVsNvx[4]; // kostas
+  std::map<TString, TH1F*> m_truthHistos; // To be update or remove
+  TEfficiency *m_selectionEfficiencyVsNvx[4]; // To be update or remove
   TTree *m_TreeCutflow;
-  Analysis::CutflowStruct m_cutflowStruct;
-  TTree *m_TreeCandidates;
-  Analysis::CandidateStruct m_candStruct;
-  Int_t m_WhichResolutionModel;
   TString m_outputFileName;
   TFile *m_outputFile;
   
   
-  ////*////Beginning
+  //Beginning
  protected:
   
   //JES AND JER TOOL
@@ -598,9 +530,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t m_sysstudy;
   Bool_t m_doqcdselection;
   std::map<UInt_t, Int_t> fSampleMass;
-  
-  ////*////
-  
+
+  float Mean_jets;
+  float good_events;
   
  public:
   ClassDef(HiggsllqqAnalysis, 0);
