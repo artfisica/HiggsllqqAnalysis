@@ -21,7 +21,6 @@
 #pragma link C++ class std::vector<Analysis::ChargedLepton *>+;
 #pragma link C++ class std::vector<Analysis::Jet *>+;
 #pragma link C++ class Analysis::Dilepton+;
-#pragma link C++ class Analysis::Quadrilepton+;
 #pragma link C++ class JetKinematicFitter+;
 #pragma link C++ class KinematicFitter+;
 #pragma link C++ class HforToolD3PD+;
