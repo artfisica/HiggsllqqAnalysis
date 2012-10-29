@@ -456,19 +456,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   // delay ggF tool initialization
   m_ggFReweighter = 0;
-  
-  // d0 smearing tool
-  TFile *d0_smearing_file = new TFile("HiggsllqqAnalysis/packages/files/d0_reweight/impact_parameter_smearing.root");
-  m_smearD0[0] = (TH2F*)d0_smearing_file->Get("smearD0_0");
-  m_smearD0[1] = (TH2F*)d0_smearing_file->Get("smearD0_1");
-  m_smearD0[2] = (TH2F*)d0_smearing_file->Get("smearD0_2");
-  m_smearD0[0]->SetDirectory(0);
-  m_smearD0[1]->SetDirectory(0);
-  m_smearD0[2]->SetDirectory(0);
-  m_smearD0_x = m_smearD0[0]->GetXaxis();
-  m_smearD0_y = m_smearD0[0]->GetYaxis();
-  d0_smearing_file->Close();
-  
+    
   return kTRUE;
 }
 
