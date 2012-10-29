@@ -9,7 +9,6 @@ atlasoff/Trigger/TrigAnalysis/TrigMuonEfficiency/tags/TrigMuonEfficiency-00-02-1
 atlasoff/Trigger/TrigAnalysis/TrigRootAnalysis/tags/TrigRootAnalysis-00-01-05
 svn+ssh://svn.cern.ch/reps/vippolitsvn/Higgs/HiggsAnalysis/trunk
 #svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/ApplyJetCalibration/tags/
-
 atlasgrp/CombPerf/JetETMiss/JetCalibrationTools/ApplyJetCalibration/tags/ApplyJetCalibration-00-00-09
 atlasgrp/CombPerf/JetETMiss/JetCalibrationTools/ApplyJetResolutionSmearing/tags/ApplyJetResolutionSmearing-00-00-03
 atlasoff/Reconstruction/Jet/JetResolution/trunk
