@@ -60,7 +60,9 @@ command_opts='--analysis rel_17_2 --useTopoIso --input input.txt --output %s'  %
 
 
 ### grid options
-username=os.environ['CERN_USER'] # who is running the job
+##username=os.environ['CERN_USER'] # who is running the job
+username='arturos' # who is running the job
+
 mycodeversion='H4l000020'
 #mycodeversion='Iso000007' # isolation studies [DO NOT USE but do not remove please]
 suffix='2012_campaign.01'

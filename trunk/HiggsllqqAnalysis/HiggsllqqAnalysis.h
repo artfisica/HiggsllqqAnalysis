@@ -37,6 +37,7 @@
 #include "HiggsllqqAnalysis/CommonTools.h"
 #include "HiggsllqqAnalysis/ChargedLepton.h"
 #include "HiggsllqqAnalysis/Jet.h"
+
 #include "HiggsllqqAnalysis/Dilepton.h"
 #include "HiggsllqqAnalysis/CutFlowTool.h"
 #include "HiggsllqqAnalysis/DataPeriodTool.h"
@@ -51,6 +52,8 @@
 #include "HiggsllqqAnalysis/HforToolD3PD.h"
 
 // TestSelection needs (redundancies to be removed)
+#include <fstream>
+#include <TTree.h>
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
@@ -58,9 +61,15 @@
 #include <TLorentzVector.h>
 #include <vector>
 #include <TStopwatch.h>
+#include <TH1.h>
 #include <TH1D.h>
 #include "TMVA/Tools.h"
 #include "TMVA/Reader.h"
+#include "TMVA/Factory.h"
+#include "TMVA/Tools.h"
+#include "TMVA/Config.h"
+#include <TMath.h>
+#include "Math/Interpolator.h"
 //#include "TestSelection/JetKinematicFitter.h"
 //#include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
 
@@ -446,6 +455,15 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Int_t m_electronFamily;
   Int_t m_thisChannel;
   TH1D *m_generatedEntriesHisto;
+  TH1D *h_cutflow;
+  TH1D *h_cutflow_weight;
+  TH1D *h_cutflow_E2;
+  TH1D *h_cutflow_weight_E2;
+  TH1D *h_cutflow_MU2;
+  TH1D *h_cutflow_weight_MU2;
+  TH1D *h_cutflow_MUE;
+  TH1D *h_cutflow_weight_MUE;
+
   std::map<TString, TH1F*> m_truthHistos; // To be update or remove
   TEfficiency *m_selectionEfficiencyVsNvx[4]; // To be update or remove
   TTree *m_TreeCutflow;
@@ -520,6 +538,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<int>     *mc_vx_barcode;
   std::vector<vector<int> > *mc_child_index;
   std::vector<vector<int> > *mc_parent_index;   
+
+  //To save the total number of entries
+  float tot_entries;
   
  private:
   Int_t fChannel;

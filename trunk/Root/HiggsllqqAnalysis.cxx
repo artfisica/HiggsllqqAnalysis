@@ -15,17 +15,17 @@
     - rel. 17 vs rel. 17.2
     - mc11c vs mc12a
     please always check if just assuming "analysis_version()" (rel_17 or rel_17_2) is still reasonable, or one needs to handle with care these three differences
-
+    
     !!! WARNING: it is expected to happen *AS SOON AS 2011 DATA IS REPROCESSED* !!!
-
+    
     throughout the code, RELEASE17.2 means that the stuff there must or might be changed if running with all or particular 17.2 samples
     these changes are, unlike those relying on analysis_version(), to be done manually editing this code
-
-
-  Information: dolowmass for muons     = True   if GetDoLowMass() == True
-  dolowmass for electrons = True   if GetDoLowMass() == True
-  
-  August 10th 2012
+    
+    
+    Information: dolowmass for muons     = True   if GetDoLowMass() == True
+    dolowmass for electrons = True   if GetDoLowMass() == True
+    
+    August 10th 2012
 */
 
 Bool_t cut_leptons   = kFALSE, 
@@ -525,7 +525,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   //Mean of Jets
   Mean_jets =0.0;
   good_events =0.0;
-
+  
   // open the output file
   m_outputFile = new TFile(m_outputFileName, "RECREATE");
   
@@ -536,10 +536,52 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   m_generatedEntriesHisto->Fill("PowHegZZ_bugfix_EvWeight", 0);
   m_generatedEntriesHisto->Fill("with_ggF_as_well", 0);
   m_generatedEntriesHisto->Fill("with_pu_and_vertex", 0);
-      
+  
+  Float_t entradas = 50000;
+  
+  //Definition of the different cutflow histogram: Event, and per channel.
+  h_cutflow = new TH1D("cutflow","",20,0,20);
+  h_cutflow->Fill("Entries",entradas);
+  h_cutflow->Fill("HFOR",0);
+  h_cutflow->Fill("GRL",0);
+  h_cutflow->Fill("larError",0);
+  h_cutflow->Fill("Trigger",0);
+  h_cutflow->Fill("Vertex",0);
+  h_cutflow->Fill("METcleaning",0);
+  h_cutflow->Fill("LArHole",0);
+  h_cutflow->Fill("NumberOfLeptons",0);
+  h_cutflow->Fill("OppositeSign",0);
+  h_cutflow->Fill("PtLeptons",0);
+  h_cutflow->Fill("TriggerConsistency",0);
+  h_cutflow->Fill("MET",0);
+  h_cutflow->Fill("TwoJets",0);
+  h_cutflow->Fill("NumTagJets",0);
+  h_cutflow->Fill("DileptonMass",0);
+  h_cutflow->Fill("DiJetMass",0);
+  
+  h_cutflow_weight = new TH1D("cutflow_weight","",20,0,20);
+  h_cutflow_weight->Fill("Entries",entradas);
+  h_cutflow_weight->Fill("HFOR",0);
+  h_cutflow_weight->Fill("GRL",0);
+  h_cutflow_weight->Fill("larError",0);
+  h_cutflow_weight->Fill("Trigger",0);
+  h_cutflow_weight->Fill("Vertex",0);
+  h_cutflow_weight->Fill("METcleaning",0);
+  h_cutflow_weight->Fill("LArHole",0);
+  h_cutflow_weight->Fill("NumberOfLeptons",0);
+  h_cutflow_weight->Fill("OppositeSign",0);
+  h_cutflow_weight->Fill("PtLeptons",0);
+  h_cutflow_weight->Fill("TriggerConsistency",0);
+  h_cutflow_weight->Fill("MET",0);
+  h_cutflow_weight->Fill("TwoJets",0);
+  h_cutflow_weight->Fill("NumTagJets",0);
+  h_cutflow_weight->Fill("DileptonMass",0);
+  h_cutflow_weight->Fill("DiJetMass",0);
+  
+  
   //Initialization of the qqll ntuple
   InitReducedNtuple();
-
+  
   // reset the convenience event counter
   m_processedEntries = 0;
   
@@ -626,7 +668,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     m_JetCutflow[i].addCut("kinematics");
     m_JetCutflow[i].addCut("Pileup");
     m_JetCutflow[i].addCut("overlap");
-  }
+  }    
   
   return kTRUE;
 }
@@ -1894,6 +1936,9 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_called_getGoodLeptons = kFALSE;
   m_called_getGoodObjects = kFALSE;
   
+  //Total Entries, internal var
+  tot_entries = 0;
+  
   // bugfix for mc12a samples produced using FRONTIER
   if (analysis_version() == "rel_17_2" && isMC()) {
     if (getTriggerInfo("L1_RD0_FILLED") != 1) return kTRUE;
@@ -1906,7 +1951,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_generatedEntriesHisto->Fill("with_ggF_as_well", (!hasPowHegZZBug() && isMC()) ? ntuple->eventinfo.mc_event_weight() * getggFWeight() : 0);
   m_generatedEntriesHisto->Fill("with_pu_and_vertex", (!hasPowHegZZBug() && isMC()) ? getEventWeight() * getggFWeight() * getVertexZWeight() : 0);
   
-   
+     
   for (UInt_t i = 0; i < m_Channels.size(); i++) {
     UInt_t chan = m_Channels.at(i);
     setChannel(chan);
@@ -1917,6 +1962,15 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
     m_EventCutflow[chan].addCutCounter(last_event, 1);
     m_EventCutflow_rw[chan].addCutCounter(last_event, getEventWeight());//*getSFWeight());
     
+    
+    tot_entries++;
+    if(i==0)
+      {	
+	// Fill the cutflow histograms
+	h_cutflow->Fill(last_event,1);
+	h_cutflow_weight->Fill(last_event,getEventWeight());
+      }
+
     std::vector<Analysis::ChargedLepton*>::iterator lep;
     for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep) {
       if ((*lep)->lastcut() != -1)
@@ -1975,6 +2029,9 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   for (UInt_t k = 0; k < m_Jets.size(); k++)
     delete m_Jets.at(k);
   
+
+  h_cutflow->Fill("Entries",tot_entries);
+
   m_Muons.clear();
   m_Electrons.clear();
   m_Jets.clear();
@@ -1983,6 +2040,8 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_GoodJets.clear();
   m_Dileptons.clear();
   
+  tot_entries=0;
+
   return kTRUE;
 }
 
@@ -2015,7 +2074,7 @@ Bool_t HiggsllqqAnalysis::finalize_analysis()
   // write the file
   m_outputFile->Write();
   m_outputFile->Close();
-  
+    
   return kTRUE;
 }
 
