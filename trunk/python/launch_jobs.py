@@ -7,7 +7,7 @@ import samples_data12
 import samples_mc12
 import samples_mc12_signal
 
-# import samples_mc12_p1230
+import samples_mc12_p1230
 
 import tests_valerio
 
@@ -34,7 +34,24 @@ samples_mc12_signal.ggH_lowMass,
 samples_mc12_signal.VBF_lowMass,
 samples_mc12_signal.WH_lowMass,
 samples_mc12_signal.ZH_lowMass,
-####samples_mc12_p1230.Top,
+samples_mc12_p1230.Top,
+samples_mc12_p1230.Diboson_light,
+samples_mc12_p1230.Z_LF,
+samples_mc12_p1230.W_LF,
+samples_mc12_p1230.Single_top,
+samples_mc12_p1230.Z_HF,
+samples_mc12_p1230.W_HF,
+samples_mc12_p1230.Z_llnunu,
+samples_mc12_p1230.Z_inclusive_HF,
+samples_mc12_p1230.WZ_W,
+samples_mc12_p1230.Wgamma,
+samples_mc12_p1230.Z_inclusive_LF,
+samples_mc12_p1230.DY_jets,
+samples_mc12_p1230.Diboson_inclusive,
+samples_mc12_p1230.Z_inclusive,
+samples_mc12_p1230.W_inclusive,
+samples_mc12_p1230.Powheg_Z,
+samples_mc12_p1230.ZZ_4lep,
 # DATA
 #  samples_data11.physics_Muons,
 #  samples_data11.physics_Egamma,
@@ -65,7 +82,7 @@ command_opts='--analysis rel_17_2 --useTopoIso --input input.txt --output %s'  %
 username='arturos' # who is running the jo
 mycodeversion='Hllqq'
 #mycodeversion='Iso000007' # isolation studies [DO NOT USE but do not remove please]
-suffix='2012.01'
+suffix='2012.02'
 filename=command_outputname
 excludedSite=''
 useItCloud=True
