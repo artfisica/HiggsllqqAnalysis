@@ -5,6 +5,9 @@ import samples_data11
 import samples_mc11c
 import samples_data12
 import samples_mc12
+import samples_mc12_signal
+
+# import samples_mc12_p1230
 
 import tests_valerio
 
@@ -27,7 +30,11 @@ lists_to_process = [
 # samples_mc12.alpgen_Zjet,
 # samples_mc12.ZZ,
 # samples_mc12.qcd,
-# samples_mc12.top,
+samples_mc12_signal.ggH_lowMass,
+samples_mc12_signal.VBF_lowMass,
+samples_mc12_signal.WH_lowMass,
+samples_mc12_signal.ZH_lowMass,
+####samples_mc12_p1230.Top,
 # DATA
 #  samples_data11.physics_Muons,
 #  samples_data11.physics_Egamma,
@@ -35,12 +42,6 @@ lists_to_process = [
 #  samples_data12.physics_Muons,
 #  samples_data12.physics_Egamma,
 #  samples_data12.debugrec_hlt,
-# tests_valerio.files_with_candidates,
-# tests_valerio.files_for_r17_2,
-# tests_valerio.files_for_deltar_check,
-  tests_valerio.missing_2012_mc,         ### IMPORTANT!! CONTAINS UPDATES NOT YET ADDED TO THE OTHER LISTS
-# tests_valerio.new_2012_data_Muons,
-# tests_valerio.new_2012_data_Egamma,
 ]
 
 
@@ -60,12 +61,11 @@ command_opts='--analysis rel_17_2 --useTopoIso --input input.txt --output %s'  %
 
 
 ### grid options
-##username=os.environ['CERN_USER'] # who is running the job
-username='arturos' # who is running the job
-
-mycodeversion='H4l000020'
+## username=os.environ['arturos'] # who is running the job
+username='arturos' # who is running the jo
+mycodeversion='Hllqq'
 #mycodeversion='Iso000007' # isolation studies [DO NOT USE but do not remove please]
-suffix='2012_campaign.01'
+suffix='2012.01'
 filename=command_outputname
 excludedSite=''
 useItCloud=True
