@@ -537,11 +537,9 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   m_generatedEntriesHisto->Fill("with_ggF_as_well", 0);
   m_generatedEntriesHisto->Fill("with_pu_and_vertex", 0);
   
-  Float_t entradas = 50000;
-  
   //Definition of the different cutflow histogram: Event, and per channel.
   h_cutflow = new TH1D("cutflow","",20,0,20);
-  h_cutflow->Fill("Entries",entradas);
+  h_cutflow->Fill("Entries",0);
   h_cutflow->Fill("HFOR",0);
   h_cutflow->Fill("GRL",0);
   h_cutflow->Fill("larError",0);
@@ -560,7 +558,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow->Fill("DiJetMass",0);
   
   h_cutflow_weight = new TH1D("cutflow_weight","",20,0,20);
-  h_cutflow_weight->Fill("Entries",entradas);
+  h_cutflow_weight->Fill("Entries",0);
   h_cutflow_weight->Fill("HFOR",0);
   h_cutflow_weight->Fill("GRL",0);
   h_cutflow_weight->Fill("larError",0);
@@ -1935,10 +1933,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_processedEntries++;
   m_called_getGoodLeptons = kFALSE;
   m_called_getGoodObjects = kFALSE;
-  
-  //Total Entries, internal var
-  tot_entries = 0;
-  
+    
   // bugfix for mc12a samples produced using FRONTIER
   if (analysis_version() == "rel_17_2" && isMC()) {
     if (getTriggerInfo("L1_RD0_FILLED") != 1) return kTRUE;
@@ -1962,8 +1957,6 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
     m_EventCutflow[chan].addCutCounter(last_event, 1);
     m_EventCutflow_rw[chan].addCutCounter(last_event, getEventWeight());//*getSFWeight());
     
-    
-    tot_entries++;
     if(i==0)
       {	
 	// Fill the cutflow histograms
@@ -2029,9 +2022,6 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   for (UInt_t k = 0; k < m_Jets.size(); k++)
     delete m_Jets.at(k);
   
-
-  h_cutflow->Fill("Entries",tot_entries);
-
   m_Muons.clear();
   m_Electrons.clear();
   m_Jets.clear();
@@ -2040,13 +2030,14 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_GoodJets.clear();
   m_Dileptons.clear();
   
-  tot_entries=0;
-
   return kTRUE;
 }
 
 Bool_t HiggsllqqAnalysis::finalize_analysis()
 {
+  h_cutflow->Fill("Entries",m_processedEntries);
+  h_cutflow_weight->Fill("Entries",m_processedEntries);
+  
   // print the number of processed entries
   Info("finalize_analysis", "Analysis terminated, processed %lld entries out of %lld available entries", m_processedEntries, m_entriesInChain);
   
