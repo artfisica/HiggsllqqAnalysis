@@ -551,10 +551,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Double_t>   *m_jets_Epdg;
   UInt_t m_run, m_event;
   Float_t m_weight, m_mu, m_truthH_pt, m_ggFweight;
-  Int_t m_cut, m_channel, m_qcdevent, m_NPV, m_Entries, m_HFOR;
-  
-  //Variables for HighMass selection
-  Int_t  m_highevent, m_highqcdevent;
+  Int_t m_cut, m_channel, m_qcdevent, m_NPV, m_Entries, m_HFOR, m_low_event;
   
   Float_t m_met_met, m_met_sumet, m_met_phi;
   Float_t m_trig_SF,m_trig_SF2,m_trig_SFC;
@@ -589,10 +586,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t m_dolowmass;
   Bool_t m_sysstudy;
   Bool_t m_doqcdselection;
-  
-  //Variables to setup HighMass selection
-  Bool_t m_dohighselection;
-  Bool_t m_dohighqcdselection;
   
   std::map<UInt_t, Int_t> fSampleMass;
   

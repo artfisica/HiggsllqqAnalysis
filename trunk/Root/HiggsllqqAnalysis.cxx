@@ -33,9 +33,9 @@ Bool_t cut_leptons   = kFALSE,
   NotPtConsistency   = kTRUE, 
   
 //Smearing Options:
-  MuonSmearing       = kTRUE, 
-  JetSmearing        = kTRUE, 
-  ElectronSmearing   = kTRUE,
+  MuonSmearing       = kFALSE, 
+  JetSmearing        = kFALSE, 
+  ElectronSmearing   = kFALSE,
   
   DoMETdataClean     = kTRUE, 
   TaggedChannel      = kFALSE, 
@@ -44,6 +44,8 @@ Bool_t cut_leptons   = kFALSE,
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
   JVF_new_cut        = kTRUE;
+
+int Print_low_OR_high = 0; // 0 for LowSelection ; 1 for HighSelection
 
 int count_events(0),eventNow(-1),overElectron(0),overMuon(0),overJet(0); int badevent=0, prebadevent = 0, ptchange=0, ptelecChange=0;
 int periodBD(0),periodEH(0),periodI(0),periodJK(0),periodLM(0);
@@ -62,8 +64,8 @@ Float_t Mjj_min      = 60000.;
 Float_t Mjj_max      = 115000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  =30000.;
-Float_t MET_high_cut =50000.;
+Float_t MET_low_cut  = 30000.;
+Float_t MET_high_cut = 50000.;
 
 int HFOR_value = -999;
 
@@ -292,10 +294,7 @@ Bool_t HiggsllqqAnalysis::change_input()
 
 
 Bool_t HiggsllqqAnalysis::initialize_tools()
-{  
-  //Set the Low or High Mass Analysis
-  SetDoLowMass(DoLowMass);
-  
+{    
   
   // initiate the calibration tool
   TString jetAlgo="AntiKt4TopoEM";
@@ -575,6 +574,8 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   Mean_jets =0.0;
   good_events =0.0;
   
+  if(ntuple->eventinfo.RunNumber() >= 160420)
+    Print_low_OR_high=1;
   
   // open the output file
   m_outputFile = new TFile(m_outputFileName, "RECREATE");
@@ -786,7 +787,6 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   if (hasGoodVertex()) last = HllqqCutFlow::Vertex;
   else return last;
   
-  
   //METHOD THAT GET ALL THE LEPTONS: First call to get the Jets and study the Cleaning of the Event  
   getGoodLeptons();
   
@@ -801,7 +801,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   //METHOD THAT GET ALL THE LEPTONS: Seconf Call the really get all the Good Object that will be past the different analysis requests!!
   getGoodLeptons();
-  
+
   
   //Number of Leptons Cut
   if ((getChannel() == HiggsllqqAnalysis::MU2 && m_GoodMuons.size()    == 2 && m_GoodElectrons.size() == 0)  ||
@@ -2190,13 +2190,15 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   
   
   if(dolowmass)
-    if (jet->rightpt()/1000. > 20. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
-    else return kFALSE;
-  
+    {
+      if (jet->rightpt()/1000. > 20. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
+      else return kFALSE;
+    }  
   else if (!dolowmass)
-    if(jet->rightpt()/1000. > 25. && TMath::Abs(jet->righteta()) < 4.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
-    else return kFALSE;
-  
+    {
+      if(jet->rightpt()/1000. > 25. && TMath::Abs(jet->righteta()) < 4.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
+      else return kFALSE;
+    }
   
   if( (TMath::Abs(Jet->jvtxf()) > 0.75 && !JVF_new_cut) || ((Jet->jvtxf() > 0.75) && JVF_new_cut)) jet->set_lastcut(HllqqJetQuality::Pileup);
   else return kFALSE;
@@ -2210,8 +2212,8 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   
   // internal utility counters/flags
   m_processedEntries++;
-  m_called_getGoodLeptons = kFALSE;
-  m_called_getGoodObjects = kFALSE;
+  //m_called_getGoodLeptons = kFALSE;
+  //m_called_getGoodObjects = kFALSE;
   
   
   // bugfix for mc12a samples produced using FRONTIER
@@ -2228,82 +2230,108 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_generatedEntriesHisto->Fill("with_pu_and_vertex", (!hasPowHegZZBug() && isMC()) ? getEventWeight() * getggFWeight() * getVertexZWeight() : 0);
   
   
-  
-  for (UInt_t i = 0; i < m_Channels.size(); i++) {
+  for (UInt_t i = 0; i < m_Channels.size(); i++) {    
     
     UInt_t chan = m_Channels.at(i);
+    
     setChannel(chan);
     
-    Int_t last_event = getLastCutPassed();
-    
-    // update cutflows
-    m_EventCutflow[chan].addCutCounter(last_event, 1);
-    m_EventCutflow_rw[chan].addCutCounter(last_event, getEventWeight());//*getSFWeight());
-    
-    
-    if(i==0 || i==2)
-      {	
-	// Fill the cutflow histograms
-	h_cutflow->Fill(last_event,1);
-	h_cutflow_weight->Fill(last_event,getEventWeight());
-      }
-    
-    
-    std::vector<Analysis::ChargedLepton*>::iterator lep;
-    for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep) {
-      if ((*lep)->lastcut() != -1)
-	m_MuonCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
-    }
-    
-    
-    for (lep = m_Electrons.begin(); lep != m_Electrons.end(); ++lep) {
-      if ((*lep)->lastcut() != -1)
-	m_ElectronCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
-    }
-    
-    
-    std::vector<Analysis::Jet*>::iterator jet;
-    for (jet = m_Jets.begin(); jet != m_Jets.end(); ++jet) {
-      if ((*jet)->lastcut() != -1)
-	m_JetCutflow[chan].addCutCounter((*jet)->lastcut(), 1);
-    }
-    
-    
-    //Set the QCD flag FALSE
-    SetDoQCDSelection(kFALSE);
-    
-    //Filling of the equivalent qqll tree (2011)
-    FillReducedNtuple(last_event,chan);    
-    
-    
-    m_Muons.clear();
-    m_Electrons.clear();
-    m_Jets.clear();
-    m_GoodMuons.clear();
-    m_GoodElectrons.clear();
-    m_GoodJets.clear();
-    
-    
-    /////////////////////
-    // QCD selection - only for data
-    /////////////////////
-    if(!isMC()) {
-      
-      m_called_getGoodLeptons = kFALSE;      
-      SetDoQCDSelection(kTRUE);
-      ResetReducedNtupleMembers();
-      last_event = getLastCutPassed();
-      FillReducedNtuple(last_event,chan);
-      last_event=-1;
-      
-      m_Muons.clear();
-      m_Electrons.clear();
-      m_Jets.clear();
-      m_GoodMuons.clear();
-      m_GoodElectrons.clear();
-      m_GoodJets.clear();
-      
-    } //end QCD selection
+    for(int sel=0; sel<2; sel++) //Looping on the Low/High Mass selections 
+      {
+	if(sel==0)
+	  {  //Set the Low or High Mass Analysis
+	    SetDoLowMass(kTRUE);
+	  }
+	else
+	  {  //Set the Low or High Mass Analysis
+	    SetDoLowMass(kFALSE);
+	  }
+	
+	
+	m_called_getGoodLeptons = kFALSE;      
+	m_called_getGoodObjects = kFALSE;
+	ResetReducedNtupleMembers();
+	Int_t last_event = getLastCutPassed();
+	
+	
+	if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
+	  {
+	    
+	    // update cutflows
+	    m_EventCutflow[chan].addCutCounter(last_event, 1);
+	    m_EventCutflow_rw[chan].addCutCounter(last_event, getEventWeight());//*getSFWeight());
+	    
+	
+	    // Fill the cutflow histograms	    
+	    if(i==0)
+	      h_cutflow->Fill(last_event,1);
+	    if(i==2)
+	      h_cutflow_weight->Fill(last_event,1/*getEventWeight()*/); //error: We are using the two histo to separate the cutflow per channel (MU2-E2)
+	      
+	    
+	    std::vector<Analysis::ChargedLepton*>::iterator lep;
+	    for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep) {
+	      if ((*lep)->lastcut() != -1)
+		m_MuonCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
+	    }
+	    
+	    
+	    for (lep = m_Electrons.begin(); lep != m_Electrons.end(); ++lep) {
+	      if ((*lep)->lastcut() != -1)
+		m_ElectronCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
+	    }
+	    
+	    
+	    std::vector<Analysis::Jet*>::iterator jet;
+	    for (jet = m_Jets.begin(); jet != m_Jets.end(); ++jet) {
+	      if ((*jet)->lastcut() != -1)
+		m_JetCutflow[chan].addCutCounter((*jet)->lastcut(), 1);
+	    }
+	    
+	  } //End Printing of the cutflow shows Low==0 OR High==1 !!!!
+	
+	
+	
+	//Set the QCD flag FALSE
+	SetDoQCDSelection(kFALSE);
+	
+	//Filling of the equivalent qqll tree (2011)
+	if(chan!=1)
+	  FillReducedNtuple(last_event,chan);    
+	last_event = -1;
+	
+	
+	m_Muons.clear();
+	m_Electrons.clear();
+	m_Jets.clear();
+	m_GoodMuons.clear();
+	m_GoodElectrons.clear();
+	m_GoodJets.clear();
+	
+	
+	/////////////////////
+	// QCD selection - only for data
+	/////////////////////
+	if(!isMC()) {
+	  
+	  m_called_getGoodLeptons = kFALSE;      
+	  m_called_getGoodObjects = kFALSE;
+	  ResetReducedNtupleMembers();
+	  SetDoQCDSelection(kTRUE);
+	  last_event = getLastCutPassed();
+	  FillReducedNtuple(last_event,chan);
+	  last_event = -1;
+	  
+	  m_Muons.clear();
+	  m_Electrons.clear();
+	  m_Jets.clear();
+	  m_GoodMuons.clear();
+	  m_GoodElectrons.clear();
+	  m_GoodJets.clear();
+	  
+	} //end QCD selection
+	
+      } //End of loop into the Low/high Selection
     
   } // end of loop into the different channels
   
@@ -3163,6 +3191,7 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("EventNumber",&m_event);
   m_reduced_ntuple->Branch("channel",&m_channel);
   m_reduced_ntuple->Branch("isqcdevent",&m_qcdevent);
+  m_reduced_ntuple->Branch("islowevent",&m_low_event);
   m_reduced_ntuple->Branch("last_cut",&m_cut);
   m_reduced_ntuple->Branch("jet_m",&m_jets_m);
   m_reduced_ntuple->Branch("jet_pt",&m_jets_pt);
@@ -3257,6 +3286,7 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_cut       = -1;
   m_channel   = -1;
   m_qcdevent  = -1;
+  m_low_event  = -1;
   m_met_met   = -9999.;
   m_met_phi   = -9999.;
   m_met_sumet = -9999.;
@@ -3398,6 +3428,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
     m_met_phi   = ntuple->MET_RefFinal.phi();
     m_met_sumet = ntuple->MET_RefFinal.sumet(); 
     m_qcdevent  = GetDoQCDSelection() ? 1 : 0;
+    m_low_event = GetDoLowMass() ? 1 : 0;
     m_NPV       = getNumberOfGoodVertices();
     
     
