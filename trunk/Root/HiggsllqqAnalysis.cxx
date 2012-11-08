@@ -591,7 +591,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   
   
   //Definition of the different cutflow histogram: Event, and per channel.
-  h_cutflow = new TH1D("cutflow","",20,0,20);
+  h_cutflow = new TH1D("cutflow_E2","",20,0,20);           //("cutflow","",20,0,20);
   h_cutflow->Fill("Entries",0);
   h_cutflow->Fill("HFOR",0);
   h_cutflow->Fill("GRL",0);
@@ -610,7 +610,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow->Fill("DileptonMass",0);
   h_cutflow->Fill("DiJetMass",0);
   
-  h_cutflow_weight = new TH1D("cutflow_weight","",20,0,20);
+  h_cutflow_weight = new TH1D("cutflow_MU2","",20,0,20); //("cutflow_weight","",20,0,20);
   h_cutflow_weight->Fill("Entries",0);
   h_cutflow_weight->Fill("HFOR",0);
   h_cutflow_weight->Fill("GRL",0);
@@ -632,6 +632,11 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   
   //Initialization of the qqll ntuple
   InitReducedNtuple();
+  
+  
+  // Set the TestSelection Tree
+  analysistree = new TTree("tree","complete analysis output tree");
+  SetAnalysisOutputBranches(&m_outevent);
   
   
   // reset the convenience event counter
@@ -660,6 +665,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   m_ElectronCutflow.clear();
   m_MuonCutflow.clear();
   m_JetCutflow.clear();
+    
   
   
   for (UInt_t i = 0; i < m_Channels.size(); i++) {
@@ -2251,7 +2257,11 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	m_called_getGoodLeptons = kFALSE;      
 	m_called_getGoodObjects = kFALSE;
 	ResetReducedNtupleMembers();
-	Int_t last_event = getLastCutPassed();
+	// TestSelection Reset 
+	ResetAnalysisOutputBranches(&m_outevent);
+	
+	
+	Int_t last_event = getLastCutPassed();	
 	
 	
 	if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
@@ -2261,13 +2271,13 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	    m_EventCutflow[chan].addCutCounter(last_event, 1);
 	    m_EventCutflow_rw[chan].addCutCounter(last_event, getEventWeight());//*getSFWeight());
 	    
-	
+	    
 	    // Fill the cutflow histograms	    
-	    if(i==0)
-	      h_cutflow->Fill(last_event,1);
-	    if(i==2)
-	      h_cutflow_weight->Fill(last_event,1/*getEventWeight()*/); //error: We are using the two histo to separate the cutflow per channel (MU2-E2)
-	      
+	    if(chan==2)
+	      h_cutflow->Fill(last_event+2,1);
+	    if(chan==0)
+	      h_cutflow_weight->Fill(last_event+2,1/*getEventWeight()*/); //error: We are using the two histo to separate the cutflow per channel (MU2-E2)
+	    
 	    
 	    std::vector<Analysis::ChargedLepton*>::iterator lep;
 	    for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep) {
@@ -2295,9 +2305,18 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	//Set the QCD flag FALSE
 	SetDoQCDSelection(kFALSE);
 	
-	//Filling of the equivalent qqll tree (2011)
-	if(chan!=1)
-	  FillReducedNtuple(last_event,chan);    
+	if(chan!=1)// error: repare the mixing MUE channel
+	  {
+	    //Filling of the equivalent qqll tree (2011)
+	    FillReducedNtuple(last_event,chan);    
+	    
+	    
+	    // TestSelection Filling candidate struct
+	    FillAnalysisOutputTree(&m_outevent);
+	    analysistree->Fill();
+	  }	
+	
+	
 	last_event = -1;
 	
 	
@@ -2317,9 +2336,23 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  m_called_getGoodLeptons = kFALSE;      
 	  m_called_getGoodObjects = kFALSE;
 	  ResetReducedNtupleMembers();
+	  // TestSelection Reset 
+	  ResetAnalysisOutputBranches(&m_outevent);
 	  SetDoQCDSelection(kTRUE);
 	  last_event = getLastCutPassed();
-	  FillReducedNtuple(last_event,chan);
+	  
+	  if(chan!=1)// error: repare the mixing MUE channel
+	    {
+	      // Filling of the equivalent qqll tree (2011)
+	      FillReducedNtuple(last_event,chan);    
+	      
+	      
+	      // TestSelection Reset and Filling candidate struct
+	      FillAnalysisOutputTree(&m_outevent);
+	      analysistree->Fill();
+	    }	
+	  
+	  
 	  last_event = -1;
 	  
 	  m_Muons.clear();
@@ -2360,14 +2393,14 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 
 
 Bool_t HiggsllqqAnalysis::finalize_analysis()
-{
-
-  h_cutflow->Fill("Entries",m_processedEntries);
-  h_cutflow_weight->Fill("Entries",m_processedEntries);
-  
+{  
   
   // print the number of processed entries
   Info("finalize_analysis", "Analysis terminated, processed %lld entries out of %lld available entries", m_processedEntries, m_entriesInChain);
+
+  //Filling the First bin of the cutflows
+  h_cutflow->Fill("Entries",m_processedEntries);
+  h_cutflow_weight->Fill("Entries",m_processedEntries);
   
   
   // print the cutflows
@@ -3587,8 +3620,9 @@ void HiggsllqqAnalysis::InitMasses() {
   // VBF samples not included since the reweight is only for ggH samples
 }
 
+
 /*
-std::pair<double, double> HiggsqqllAnalysis::getCandidateTriggerSF(Int_t option)
+std::pair<double, double> HiggsllqqAnalysis::getCandidateTriggerSF(Int_t option)
 // returns event SF,SF_err using GoodMuon or GoodElectron depending on channel
 // option:  
 //        0 standard code 
@@ -3653,3 +3687,590 @@ std::pair<double, double> HiggsqqllAnalysis::getCandidateTriggerSF(Int_t option)
 }
 
 */
+
+
+ // TestSelection ntuple Methods
+void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str) {
+  str->runnumber = -999;
+  str->eventnumber = -999;
+  str->istagged = -999;
+  str->channel = -999;
+  str->isqcdevent = -999;
+  if(0/*gluon()*/){
+    str->n_jets = -999;
+    str->n_b_jets = -999;
+  }
+  str->weight = -999.;
+  str->lep1_m = -999.;
+  str->lep1_pt = -999.;
+  str->lep1_eta = -999.;
+  str->lep1_phi = -999.;
+  str->lep1_charge = -999.;
+  str->lep1_caloiso = -999.;
+  str->lep1_trackiso = -999.;
+  str->lep1_quality = -9;
+  str->lep2_m = -999.;
+  str->lep2_m = -999.;
+  str->lep2_pt = -999.;
+  str->lep2_eta = -999.;
+  str->lep2_phi = -999.;
+  str->lep2_charge = -999.;
+  str->lep2_caloiso = -999.;
+  str->lep2_trackiso = -999.;
+  str->lep2_quality = -9;
+  str->lepZ_m = -999.;
+  str->lepZ_pt = -999.;
+  str->lepZ_eta = -999.;
+  str->lepZ_phi = -999.;
+  str->realJ1_m = -999.;
+  str->realJ1_pt = -999.;
+  str->realJ1_eta = -999.;
+  str->realJ1_eta_det = -999.;
+  str->realJ1_phi = -999.;
+  str->realJ1_flavortruth = -999.;
+  str->realJ1_MV1 = -999.;
+  str->realJ1_jvf = -999.;
+  if(0/*gluon()*/){
+    str->realJ1_pdg = -1000.;
+    str->realJ1_ntrk = -1;
+    str->realJ1_width = -1.;
+    str->realJ1_Fisher = -2.;
+  }
+  str->realJ2_m = -999.;
+  str->realJ2_pt = -999.;
+  str->realJ2_eta = -999.;
+  str->realJ2_eta_det = -999.;
+  str->realJ2_phi = -999.;
+  str->realJ2_flavortruth = -999.;
+  str->realJ2_MV1 = -999.;
+  str->realJ2_jvf = -999.;
+  if(0/*gluon()*/){
+    str->realJ2_pdg = -1000.;
+    str->realJ2_ntrk = -1;
+    str->realJ2_width = -1.;
+    str->realJ2_Fisher = -2.;
+    str->ll_2_jets = -1.;
+  }
+  str->realZ_m = -999.;
+  str->realZ_pt = -999.;
+  str->realZ_eta = -999.;
+  str->realZ_phi = -999.;
+  str->realH_m = -999.;
+  str->realH_pt = -999.;
+  str->realH_eta = -999.;
+  str->realH_phi = -999.;
+  str->corrJ1_m = -999.;
+  str->corrJ1_pt = -999.;
+  str->corrJ1_eta = -999.;
+  str->corrJ1_eta_det = -999.;
+  str->corrJ1_phi = -999.;
+  str->corrJ1_flavortruth = -999.;
+  if(0/*gluon()*/){str->corrJ1_Fisher = -2.;}
+  str->corrJ2_m = -999.;
+  str->corrJ2_pt = -999.;
+  str->corrJ2_eta = -999.;
+  str->corrJ2_eta_det = -999.;
+  str->corrJ2_phi = -999.;
+  str->corrJ2_flavortruth = -999.;
+  if(0/*gluon()*/){
+    str->corrJ2_Fisher = -2.;
+    str->ll_2_jets_corr=-1.;
+  }
+  str->corrZ_m = -999.;
+  str->corrZ_pt = -999.;
+  str->corrZ_eta = -999.;
+  str->corrZ_phi = -999.;
+  str->corrH_m = -999.;
+  str->corrH_pt = -999.;
+  str->corrH_eta = -999.;
+  str->corrH_phi = -999.;
+  str->chisquare = -999.;
+  str->met = -999.;
+  str->sumet = -999.;
+  str->btagSF = -999;
+  str->NPV = -999;
+  str->truthH_pt = -1.;
+  str->ggFweight = -1.;
+  str->mu = -1.;
+  str->trig_SF = 1.;
+  str->trig_SF2 = 1.;
+  str->trig_SFC = 1.;
+  str->trig_flag = -1;
+  str->HFOR = -1;
+  str->Entries = -1;
+  //Flavour Composition Variables
+  str->SecondJet_MV1_b = -1.; // b jets 
+  str->SecondJet_MV1_c = -1.; // c jets
+  str->SecondJet_MV1_l = -1.; // light jets
+  str->AllJet_MV1_b = -1.; // b jets 
+  str->AllJet_MV1_c = -1.; // c jets
+  str->AllJet_MV1_l = -1.; // light jets
+  if(0/*gluon()*/){
+    str->xWin_44p_4var = -1;
+    str->yWin_44p_4var = -1;
+    str->zWin_44p_4var = -1.;
+    str->gWin_44p_4var = -1.;
+    str->xWin_44p_6var = -1;
+    str->yWin_44p_6var = -1;
+    str->zWin_44p_6var = -1.;
+    str->gWin_44p_6var = -1.;
+    str->xWin_44h_4var = -1;
+    str->yWin_44h_4var = -1;
+    str->zWin_44h_4var = -1.;
+    str->gWin_44h_4var = -1.;
+    str->xWin_44h_6var = -1;
+    str->yWin_44h_6var = -1;
+    str->zWin_44h_6var = -1.;
+    str->gWin_44h_6var = -1.;
+    str->xWin_64p_4var = -1;
+    str->yWin_64p_4var = -1;
+    str->zWin_64p_4var = -1.;
+    str->gWin_64p_4var = -1.;
+    str->xWin_64p_6var = -1;
+    str->yWin_64p_6var = -1;
+    str->zWin_64p_6var = -1.;
+    str->gWin_64p_6var = -1.;
+    str->xWin_64h_4var = -1;
+    str->yWin_64h_4var = -1;
+    str->zWin_64h_4var = -1.;
+    str->gWin_64h_4var = -1.;
+    str->xWin_64h_6var = -1;
+    str->yWin_64h_6var = -1;
+    str->zWin_64h_6var = -1.;
+    str->gWin_64h_6var = -1.;
+  }
+}
+
+
+void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str) 
+{
+
+  analysistree->Branch("RunNumber",&(str->runnumber));
+  analysistree->Branch("EventNumber",&(str->eventnumber));
+  analysistree->Branch("isTagged",&(str->istagged));
+  analysistree->Branch("channel",&(str->channel));
+  analysistree->Branch("isqcdevent",&(str->isqcdevent));
+
+  if(/*gluon()*/0){
+    analysistree->Branch("n_jets",&(str->n_jets));
+    analysistree->Branch("n_b_jets",&(str->n_b_jets));
+  }
+  
+  analysistree->Branch("weight",&(str->weight));
+  analysistree->Branch("lep1_m",&(str->lep1_m));
+  analysistree->Branch("lep1_pt",&(str->lep1_pt));
+  analysistree->Branch("lep1_eta",&(str->lep1_eta));
+  analysistree->Branch("lep1_phi",&(str->lep1_phi));
+  analysistree->Branch("lep1_charge",&(str->lep1_charge));
+  analysistree->Branch("lep1_caloiso",&(str->lep1_caloiso));
+  analysistree->Branch("lep1_trackiso",&(str->lep1_trackiso));
+  analysistree->Branch("lep1_d0",&(str->lep1_d0));
+  analysistree->Branch("lep1_sigd0",&(str->lep1_sigd0));
+  analysistree->Branch("lep1_quality",&(str->lep1_quality));
+  analysistree->Branch("lep2_m",&(str->lep2_m));
+  analysistree->Branch("lep2_pt",&(str->lep2_pt));
+  analysistree->Branch("lep2_eta",&(str->lep2_eta));
+  analysistree->Branch("lep2_phi",&(str->lep2_phi));
+  analysistree->Branch("lep2_charge",&(str->lep2_charge));
+  analysistree->Branch("lep2_caloiso",&(str->lep2_caloiso));
+  analysistree->Branch("lep2_trackiso",&(str->lep2_trackiso));
+  analysistree->Branch("lep2_d0",&(str->lep2_d0));
+  analysistree->Branch("lep2_sigd0",&(str->lep2_sigd0));
+  analysistree->Branch("lep2_quality",&(str->lep2_quality));
+  analysistree->Branch("lepZ_m",&(str->lepZ_m));
+  analysistree->Branch("lepZ_pt",&(str->lepZ_pt));
+  analysistree->Branch("lepZ_eta",&(str->lepZ_eta));
+  analysistree->Branch("lepZ_phi",&(str->lepZ_phi));
+  analysistree->Branch("realJ1_m",&(str->realJ1_m));
+  analysistree->Branch("realJ1_pt",&(str->realJ1_pt));
+  analysistree->Branch("realJ1_eta",&(str->realJ1_eta));
+  analysistree->Branch("realJ1_eta_det",&(str->realJ1_eta_det));
+  analysistree->Branch("realJ1_phi",&(str->realJ1_phi));
+  analysistree->Branch("realJ1_flavortruth",&(str->realJ1_flavortruth));
+  analysistree->Branch("realJ1_MV1",&(str->realJ1_MV1));
+  analysistree->Branch("realJ1_jvf",&(str->realJ1_jvf));
+  
+  if(/*gluon()*/0){
+    analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
+    analysistree->Branch("realJ1_ntrk",&(str->realJ1_ntrk));
+    analysistree->Branch("realJ1_width",&(str->realJ1_width));
+    analysistree->Branch("realJ1_Fisher",&(str->realJ1_Fisher));
+  }
+  
+  analysistree->Branch("realJ2_m",&(str->realJ2_m));
+  analysistree->Branch("realJ2_pt",&(str->realJ2_pt));
+  analysistree->Branch("realJ2_eta",&(str->realJ2_eta));
+  analysistree->Branch("realJ2_eta_det",&(str->realJ2_eta_det));
+  analysistree->Branch("realJ2_phi",&(str->realJ2_phi));
+  analysistree->Branch("realJ2_flavortruth",&(str->realJ2_flavortruth));
+  analysistree->Branch("realJ2_MV1",&(str->realJ2_MV1));
+  analysistree->Branch("realJ2_jvf",&(str->realJ2_jvf));
+  
+  if(/*gluon()*/0){
+    analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
+    analysistree->Branch("realJ2_ntrk",&(str->realJ2_ntrk));
+    analysistree->Branch("realJ2_width",&(str->realJ2_width));
+    analysistree->Branch("realJ2_Fisher",&(str->realJ2_Fisher));
+    analysistree->Branch("ll_2_jets",&(str->ll_2_jets));
+  }
+  
+  analysistree->Branch("realZ_m",&(str->realZ_m));
+  analysistree->Branch("realZ_pt",&(str->realZ_pt));
+  analysistree->Branch("realZ_eta",&(str->realZ_eta));
+  analysistree->Branch("realZ_phi",&(str->realZ_phi));
+  analysistree->Branch("realH_m",&(str->realH_m));
+  analysistree->Branch("realH_pt",&(str->realH_pt));
+  analysistree->Branch("realH_eta",&(str->realH_eta));
+  analysistree->Branch("realH_phi",&(str->realH_phi));
+  analysistree->Branch("corrJ1_m",&(str->corrJ1_m));
+  analysistree->Branch("corrJ1_pt",&(str->corrJ1_pt));
+  analysistree->Branch("corrJ1_eta",&(str->corrJ1_eta));
+  analysistree->Branch("corrJ1_eta_det",&(str->corrJ1_eta_det));
+  analysistree->Branch("corrJ1_phi",&(str->corrJ1_phi));
+  analysistree->Branch("corrJ1_flavortruth",&(str->corrJ1_flavortruth));
+  
+  if(/*gluon()*/0){analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));}
+  
+  analysistree->Branch("corrJ2_m",&(str->corrJ2_m));
+  analysistree->Branch("corrJ2_pt",&(str->corrJ2_pt));
+  analysistree->Branch("corrJ2_eta",&(str->corrJ2_eta));
+  analysistree->Branch("corrJ2_eta_det",&(str->corrJ2_eta_det));
+  analysistree->Branch("corrJ2_phi",&(str->corrJ2_phi));
+  analysistree->Branch("corrJ2_flavortruth",&(str->corrJ2_flavortruth));
+  
+  if(/*gluon()*/0){
+    analysistree->Branch("corrJ2_Fisher",&(str->corrJ2_Fisher));
+    analysistree->Branch("ll_2_jets_corr",&(str->ll_2_jets_corr));
+  }
+  
+  analysistree->Branch("corrZ_m",&(str->corrZ_m));
+  analysistree->Branch("corrZ_pt",&(str->corrZ_pt));
+  analysistree->Branch("corrZ_eta",&(str->corrZ_eta));
+  analysistree->Branch("corrZ_phi",&(str->corrZ_phi));
+  analysistree->Branch("corrH_m",&(str->corrH_m));
+  analysistree->Branch("corrH_pt",&(str->corrH_pt));
+  analysistree->Branch("corrH_eta",&(str->corrH_eta));
+  analysistree->Branch("corrH_phi",&(str->corrH_phi));
+  analysistree->Branch("chisquare",&(str->chisquare));
+  analysistree->Branch("met",&(str->met));
+  analysistree->Branch("sumet",&(str->sumet));
+  analysistree->Branch("btagSF",&(str->btagSF));
+  analysistree->Branch("NPV",&(str->NPV));
+  analysistree->Branch("truthH_pt",&(str->truthH_pt));
+  analysistree->Branch("ggFweight",&(str->ggFweight));
+  analysistree->Branch("mu",&(str->mu));
+  analysistree->Branch("trig_SF",&(str->trig_SF));
+  analysistree->Branch("trig_SF2",&(str->trig_SF2));
+  analysistree->Branch("trig_SFC",&(str->trig_SFC));
+  analysistree->Branch("trig_flag",&(str->trig_flag));
+  analysistree->Branch("HFOR",&(str->HFOR));
+  analysistree->Branch("Entries",&(str->Entries));
+  
+  //Flavour Composition Variables
+  analysistree->Branch("SecondJet_MV1_b",&(str->SecondJet_MV1_b)); // b jets 
+  analysistree->Branch("SecondJet_MV1_c",&(str->SecondJet_MV1_c)); // c jets
+  analysistree->Branch("SecondJet_MV1_l",&(str->SecondJet_MV1_l)); // light jets
+  analysistree->Branch("AllJet_MV1_b",&(str->AllJet_MV1_b)); // b jets 
+  analysistree->Branch("AllJet_MV1_c",&(str->AllJet_MV1_c)); // c jets
+  analysistree->Branch("AllJet_MV1_l",&(str->AllJet_MV1_l)); // light jets
+  
+  if(/*gluon()*/0){
+    analysistree->Branch("xWin_44p_4var", &(str->xWin_44p_4var));
+    analysistree->Branch("yWin_44p_4var", &(str->yWin_44p_4var));
+    analysistree->Branch("zWin_44p_4var", &(str->zWin_44p_4var));
+    analysistree->Branch("gWin_44p_4var", &(str->gWin_44p_4var));
+    analysistree->Branch("xWin_44p_6var", &(str->xWin_44p_6var));
+    analysistree->Branch("yWin_44p_6var", &(str->yWin_44p_6var));
+    analysistree->Branch("zWin_44p_6var", &(str->zWin_44p_6var));
+    analysistree->Branch("gWin_44p_6var", &(str->gWin_44p_6var));
+    analysistree->Branch("xWin_44h_4var", &(str->xWin_44h_4var));
+    analysistree->Branch("yWin_44h_4var", &(str->yWin_44h_4var));
+    analysistree->Branch("zWin_44h_4var", &(str->zWin_44h_4var));
+    analysistree->Branch("gWin_44h_4var", &(str->gWin_44h_4var));
+    analysistree->Branch("xWin_44h_6var", &(str->xWin_44h_6var));
+    analysistree->Branch("yWin_44h_6var", &(str->yWin_44h_6var));
+    analysistree->Branch("zWin_44h_6var", &(str->zWin_44h_6var));
+    analysistree->Branch("gWin_44h_6var", &(str->gWin_44h_6var));
+    analysistree->Branch("xWin_64p_4var", &(str->xWin_64p_4var));
+    analysistree->Branch("yWin_64p_4var", &(str->yWin_64p_4var));
+    analysistree->Branch("zWin_64p_4var", &(str->zWin_64p_4var));
+    analysistree->Branch("gWin_64p_4var", &(str->gWin_64p_4var));
+    analysistree->Branch("xWin_64p_6var", &(str->xWin_64p_6var));
+    analysistree->Branch("yWin_64p_6var", &(str->yWin_64p_6var));
+    analysistree->Branch("zWin_64p_6var", &(str->zWin_64p_6var));
+    analysistree->Branch("gWin_64p_6var", &(str->gWin_64p_6var));
+    analysistree->Branch("xWin_64h_4var", &(str->xWin_64h_4var));
+    analysistree->Branch("yWin_64h_4var", &(str->yWin_64h_4var));
+    analysistree->Branch("zWin_64h_4var", &(str->zWin_64h_4var));
+    analysistree->Branch("gWin_64h_4var", &(str->gWin_64h_4var));
+    analysistree->Branch("xWin_64h_6var", &(str->xWin_64h_6var));
+    analysistree->Branch("yWin_64h_6var", &(str->yWin_64h_6var));
+    analysistree->Branch("zWin_64h_6var", &(str->zWin_64h_6var));
+    analysistree->Branch("gWin_64h_6var", &(str->gWin_64h_6var));
+  }
+}
+
+
+void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str) {
+  str->runnumber = ntuple->eventinfo.RunNumber();
+  str->eventnumber = ntuple->eventinfo.EventNumber();
+  
+  /*
+    str->istagged = IsTagged();
+    str->channel = channel;
+    str->isqcdevent = isqcdevent;
+    str->weight = weight;
+    
+  if(lep_pt->at(0) >= lep_pt->at(1)) {
+    str->lep1_m = lep_m->at(0);
+    str->lep1_pt = lep_pt->at(0);
+    str->lep1_eta = lep_eta->at(0);
+    str->lep1_phi = lep_phi->at(0);
+    str->lep1_charge = lep_charge->at(0);
+    str->lep1_caloiso = lep_caloiso->at(0);
+    str->lep1_trackiso = lep_trackiso->at(0);
+    str->lep1_d0 = lep_d0->at(0);
+    str->lep1_sigd0 = lep_sigd0->at(0);
+    str->lep1_quality = lep_quality->at(0);
+    str->lep2_m = lep_m->at(1);
+    str->lep2_pt = lep_pt->at(1);
+    str->lep2_eta = lep_eta->at(1);
+    str->lep2_phi = lep_phi->at(1);
+    str->lep2_charge = lep_charge->at(1);
+    str->lep2_caloiso = lep_caloiso->at(1);
+    str->lep2_trackiso = lep_trackiso->at(1);
+    str->lep2_d0 = lep_d0->at(1);
+    str->lep2_sigd0 = lep_sigd0->at(1);
+    str->lep2_quality = lep_quality->at(1);
+  }
+  else {
+    str->lep2_m = lep_m->at(0);
+    str->lep2_pt = lep_pt->at(0);
+    str->lep2_eta = lep_eta->at(0);
+    str->lep2_phi = lep_phi->at(0);
+    str->lep2_charge = lep_charge->at(0);
+    str->lep2_caloiso = lep_caloiso->at(0);
+    str->lep2_trackiso = lep_trackiso->at(0);
+    str->lep2_d0 = lep_d0->at(0);
+    str->lep2_sigd0 = lep_sigd0->at(0);
+    str->lep2_quality = lep_quality->at(0);
+    str->lep1_m = lep_m->at(1);
+    str->lep1_pt = lep_pt->at(1);
+    str->lep1_eta = lep_eta->at(1);
+    str->lep1_phi = lep_phi->at(1);
+    str->lep1_charge = lep_charge->at(1);
+    str->lep1_caloiso = lep_caloiso->at(1);
+    str->lep1_trackiso = lep_trackiso->at(1);
+    str->lep1_d0 = lep_d0->at(1);
+    str->lep1_sigd0 = lep_sigd0->at(1);
+    str->lep1_quality = lep_quality->at(1);
+  }
+  
+  
+  TLorentzVector lep1;
+  lep1.SetPtEtaPhiM(str->lep1_pt,str->lep1_eta,str->lep1_phi,str->lep1_m);
+  TLorentzVector lep2;
+  lep2.SetPtEtaPhiM(str->lep2_pt,str->lep2_eta,str->lep2_phi,str->lep2_m);
+  TLorentzVector lepZ = lep1 + lep2;
+  
+  str->lepZ_m = lepZ.M();
+  str->lepZ_pt = lepZ.Pt();
+  str->lepZ_eta = lepZ.Eta();
+  str->lepZ_phi = lepZ.Phi();
+  
+  
+  
+  if(m_jetindex.size()==1) {
+    str->realJ1_m = jet_m->at(m_jetindex.at(0));
+    str->realJ1_pt = jet_pt->at(m_jetindex.at(0));
+    str->realJ1_eta = jet_eta->at(m_jetindex.at(0));
+    str->realJ1_eta_det = jet_eta_det->at(m_jetindex.at(0));
+    str->realJ1_phi = jet_phi->at(m_jetindex.at(0));
+    str->realJ1_flavortruth = jet_flavortruth->at(m_jetindex.at(0));
+    str->realJ1_MV1 = jet_MV1->at(m_jetindex.at(0));
+    str->realJ1_jvf = jet_jvtxf->at(m_jetindex.at(0));
+    if(gluon()){
+      str->n_jets = m_jetindex.size();
+      str->n_b_jets = HowManyBJets(); 
+      str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(0));
+      str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(0));
+      str->realJ1_width = jet_width->at(m_jetindex.at(0));
+      str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(0)),jet_eta->at(m_jetindex.at(0)),jet_nTrk->at(m_jetindex.at(0)),jet_width->at(m_jetindex.at(0)));
+      str->ll_2_jets = -1.;
+    }
+  }
+  
+  else if (m_jetindex.size()>=2) {
+    int idx1 = m_bestdijet->index1!=-1 ? m_bestdijet->index1 : 0;
+    int idx2 = m_bestdijet->index2!=-1 ? m_bestdijet->index2 : 1;
+    str->realJ1_m = jet_m->at(m_jetindex.at(idx1));
+    str->realJ1_pt = jet_pt->at(m_jetindex.at(idx1));
+    str->realJ1_eta = jet_eta->at(m_jetindex.at(idx1));
+    str->realJ1_eta_det = jet_eta_det->at(m_jetindex.at(idx1));
+    str->realJ1_phi = jet_phi->at(m_jetindex.at(idx1));
+    str->realJ1_flavortruth = jet_flavortruth->at(m_jetindex.at(idx1));
+    str->realJ1_MV1 = jet_MV1->at(m_jetindex.at(idx1));
+    str->realJ1_jvf = jet_jvtxf->at(m_jetindex.at(idx1));
+    if(gluon()){
+      str->n_jets = m_jetindex.size();
+      str->n_b_jets = HowManyBJets(); 
+      str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
+      str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(idx1));
+      str->realJ1_width = jet_width->at(m_jetindex.at(idx1));
+      str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
+    }
+    str->realJ2_m = jet_m->at(m_jetindex.at(idx2));
+    str->realJ2_pt = jet_pt->at(m_jetindex.at(idx2));
+    str->realJ2_eta = jet_eta->at(m_jetindex.at(idx2));
+    str->realJ2_eta_det = jet_eta_det->at(m_jetindex.at(idx2));
+    str->realJ2_phi = jet_phi->at(m_jetindex.at(idx2));
+    str->realJ2_flavortruth = jet_flavortruth->at(m_jetindex.at(idx2));
+    str->realJ2_MV1 = jet_MV1->at(m_jetindex.at(idx2));
+    str->realJ2_jvf = jet_jvtxf->at(m_jetindex.at(idx2));
+    if(gluon()){
+      str->realJ2_pdg = jet_flavorpdg->at(m_jetindex.at(idx2));
+      str->realJ2_ntrk = jet_nTrk->at(m_jetindex.at(idx2));
+      str->realJ2_width = jet_width->at(m_jetindex.at(idx2));
+      str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+      str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+      if (CheckMap("44p_4var",idx1,idx2)) {
+	str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+	str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+	str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+	str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+      }
+      if (CheckMap("44p_6var",idx1,idx2)) {
+	str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+	str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+	str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+	str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+      }
+      if (CheckMap("44h_4var",idx1,idx2)) {
+	str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+	str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+	str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+	str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+      }
+      if (CheckMap("44h_6var",idx1,idx2)) {
+	str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+	str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+	str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+	str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+      }
+      if (CheckMap("64p_4var",idx1,idx2)) {
+	str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+	str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+	str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+	str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+      }
+      if (CheckMap("64p_6var",idx1,idx2)) {
+	str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+	str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+	str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+	str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+      }
+      if (CheckMap("64h_4var",idx1,idx2)) {
+	str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+	str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+	str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+	str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+      }
+      if (CheckMap("64h_6var",idx1,idx2)) {
+	str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+	str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+	str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+	str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+      }
+    }
+    
+    TLorentzVector j1;
+    j1.SetPtEtaPhiM(str->realJ1_pt,str->realJ1_eta,str->realJ1_phi,str->realJ1_m);
+    TLorentzVector j2;
+    j2.SetPtEtaPhiM(str->realJ2_pt,str->realJ2_eta,str->realJ2_phi,str->realJ2_m);
+    TLorentzVector hadZ = j1 + j2;
+    TLorentzVector H = lepZ + hadZ;
+    
+    str->realZ_m = hadZ.M();
+    str->realZ_pt = hadZ.Pt();
+    str->realZ_eta = hadZ.Eta();
+    str->realZ_phi = hadZ.Phi();
+    
+    str->realH_m = H.M();
+    str->realH_pt = H.Pt();
+    str->realH_eta = H.Eta();
+    str->realH_phi = H.Phi();
+    
+    if(idx1 != -1) {
+      str->corrJ1_m = jet_m->at(m_jetindex.at(idx1));
+      str->corrJ1_pt = m_bestdijet->refittedPt1;
+      str->corrJ1_eta = jet_eta->at(m_jetindex.at(idx1));
+      str->corrJ1_eta_det = jet_eta_det->at(m_jetindex.at(idx1));
+      str->corrJ1_phi = jet_phi->at(m_jetindex.at(idx1));
+      str->corrJ1_flavortruth = jet_flavortruth->at(m_jetindex.at(idx1));
+      if(gluon()){str->corrJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));}
+      str->corrJ2_m = jet_m->at(m_jetindex.at(idx2));
+      str->corrJ2_pt = m_bestdijet->refittedPt2;
+      str->corrJ2_eta = jet_eta->at(m_jetindex.at(idx2));
+      str->corrJ2_eta_det = jet_eta_det->at(m_jetindex.at(idx2));
+      str->corrJ2_phi = jet_phi->at(m_jetindex.at(idx2));
+      str->corrJ2_flavortruth = jet_flavortruth->at(m_jetindex.at(idx2));
+      if(gluon()){
+	str->corrJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	str->ll_2_jets_corr = getLikelihood(reader,var1,var2,var3,var4,str->corrJ1_pt,str->corrJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+      }
+      
+      j1.SetPtEtaPhiM(m_bestdijet->refittedPt1,str->corrJ1_eta,str->corrJ1_phi,str->corrJ1_m);
+      j2.SetPtEtaPhiM(m_bestdijet->refittedPt2,str->corrJ2_eta,str->corrJ2_phi,str->corrJ2_m);
+      hadZ = j1 + j2;
+      H = lepZ + hadZ;
+      
+      str->corrZ_m = hadZ.M();
+      str->corrZ_pt = hadZ.Pt();
+      str->corrZ_eta = hadZ.Eta();
+      str->corrZ_phi = hadZ.Phi();
+      
+      str->corrH_m = H.M();
+      str->corrH_pt = H.Pt();
+      str->corrH_eta = H.Eta();
+      str->corrH_phi = H.Phi();
+      
+      str->chisquare = m_bestdijet->chiSq;
+    }
+    
+    //Flavour Composition Variables
+    if (jet_flavortruth->at(mv1_jetindex.at(1))==4 || 
+	jet_flavortruth->at(mv1_jetindex.at(1))==15)     
+      str->SecondJet_MV1_c = jet_MV1->at(mv1_jetindex.at(1)); // c jets
+    else if (jet_flavortruth->at(mv1_jetindex.at(1))==5)  
+      str->SecondJet_MV1_b = jet_MV1->at(mv1_jetindex.at(1)); // b jets 
+    else 
+      str->SecondJet_MV1_l = jet_MV1->at(mv1_jetindex.at(1)); // light jets
+    
+    for(UInt_t i = 0; i < mv1_jetindex.size(); i++) 
+      {
+	if (jet_flavortruth->at(mv1_jetindex.at(i))==4 || 
+	    jet_flavortruth->at(mv1_jetindex.at(i))==15)
+	  str->AllJet_MV1_c = jet_MV1->at(mv1_jetindex.at(i)); // c jets
+	else if (jet_flavortruth->at(mv1_jetindex.at(i))==5)
+	  str->AllJet_MV1_b = jet_MV1->at(mv1_jetindex.at(i)); // b jets 
+	else 
+	  str->AllJet_MV1_l = jet_MV1->at(mv1_jetindex.at(i)); // light jets
+      }       
+  }
+  
+  str->met = met_met;
+  str->sumet = met_sumet;
+  str->btagSF = tmpbtagsf;
+  str->NPV = NPV;
+  str->truthH_pt = truthH_pt;
+  str->ggFweight = ggFweight;
+  str->mu = mu;
+  str->trig_SF = trig_SF;
+  str->trig_SF2 = trig_SF2;
+  str->trig_SFC = trig_SFC;
+  str->trig_flag = trig_flag;
+  str->HFOR = HFOR;
+  str->Entries = Entries;
+    
+  */
+}
