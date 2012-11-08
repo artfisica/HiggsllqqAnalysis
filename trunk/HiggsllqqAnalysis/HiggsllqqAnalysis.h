@@ -73,6 +73,8 @@
 //#include "TestSelection/JetKinematicFitter.h"
 //#include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
 
+using namespace std;
+
 
 namespace DataPeriod {
   enum {
@@ -195,6 +197,159 @@ namespace HllqqSystematics {
     ~ChargedLepton() {}
   };
 };
+
+
+//TestSelection Candidate Structures
+typedef struct {
+  unsigned int runnumber;
+  unsigned int eventnumber;
+  int istagged;
+  int channel;
+  int isqcdevent;
+  int n_jets;
+  int n_b_jets;
+  float weight;
+  float lep1_m;
+  float lep1_pt;
+  float lep1_eta;
+  float lep1_phi;
+  float lep1_charge;
+  float lep1_caloiso;
+  float lep1_trackiso;
+  float lep1_d0;
+  float lep1_sigd0;
+  int   lep1_quality;
+  float lep2_m;
+  float lep2_pt;
+  float lep2_eta;
+  float lep2_phi;
+  float lep2_charge;
+  float lep2_caloiso;
+  float lep2_trackiso;
+  float lep2_d0;
+  float lep2_sigd0;
+  int   lep2_quality;
+  float lepZ_m;
+  float lepZ_pt;
+  float lepZ_eta;
+  float lepZ_phi;
+  float realJ1_m;
+  float realJ1_pt;
+  float realJ1_eta;
+  float realJ1_eta_det;
+  float realJ1_phi;
+  float realJ1_flavortruth;
+  float realJ1_pdg;
+  float realJ1_jvf;
+  float realJ1_ntrk;
+  float realJ1_width;
+  float realJ1_MV1;
+  float realJ1_Fisher;
+  float realJ2_m;
+  float realJ2_pt;
+  float realJ2_eta;
+  float realJ2_eta_det;
+  float realJ2_phi;
+  float realJ2_flavortruth;
+  float realJ2_pdg;
+  float realJ2_jvf;
+  float realJ2_ntrk;
+  float realJ2_width;
+  float realJ2_MV1;
+  float realJ2_Fisher;
+  float ll_2_jets;
+  float realZ_m;
+  float realZ_pt;
+  float realZ_eta;
+  float realZ_phi;
+  float realH_m;
+  float realH_pt;
+  float realH_eta;
+  float realH_phi;
+  float corrJ1_m;
+  float corrJ1_pt;
+  float corrJ1_eta;
+  float corrJ1_eta_det;
+  float corrJ1_phi;
+  float corrJ1_flavortruth;
+  float corrJ1_Fisher;
+  float corrJ2_m;
+  float corrJ2_pt;
+  float corrJ2_eta;
+  float corrJ2_eta_det;
+  float corrJ2_phi;
+  float corrJ2_flavortruth;
+  float corrJ2_Fisher;
+  float ll_2_jets_corr;
+  float corrZ_m;
+  float corrZ_pt;
+  float corrZ_eta;
+  float corrZ_phi;
+  float corrH_m;
+  float corrH_pt;
+  float corrH_eta;
+  float corrH_phi;
+  float chisquare;
+  float met;
+  float sumet;
+  float btagSF;
+  int NPV;
+  float truthH_pt;
+  float ggFweight;
+  float xWin_44p_4var;
+  float yWin_44p_4var;
+  float zWin_44p_4var;
+  float gWin_44p_4var;
+  float xWin_44p_6var;
+  float yWin_44p_6var;
+  float zWin_44p_6var;
+  float gWin_44p_6var;
+  float xWin_44h_4var;
+  float yWin_44h_4var;
+  float zWin_44h_4var;
+  float gWin_44h_4var;
+  float xWin_44h_6var;
+  float yWin_44h_6var;
+  float zWin_44h_6var;
+  float gWin_44h_6var;
+  float xWin_64p_4var;
+  float yWin_64p_4var;
+  float zWin_64p_4var;
+  float gWin_64p_4var;
+  float xWin_64p_6var;
+  float yWin_64p_6var;
+  float zWin_64p_6var;
+  float gWin_64p_6var;
+  float xWin_64h_4var;
+  float yWin_64h_4var;
+  float zWin_64h_4var;
+  float gWin_64h_4var;
+  float xWin_64h_6var;
+  float yWin_64h_6var;
+  float zWin_64h_6var;
+  float gWin_64h_6var;
+  float mu;
+  float trig_SF;
+  float trig_SF2;
+  float trig_SFC;
+  int trig_flag;
+  int HFOR;
+  int Entries;
+  //Flavour Composition Variables
+  float SecondJet_MV1_b; // b jets 
+  float SecondJet_MV1_c; // c jets
+  float SecondJet_MV1_l; // light jets
+  float AllJet_MV1_b; // b jets 
+  float AllJet_MV1_c; // c jets
+  float AllJet_MV1_l; // light jets
+} analysis_output_struct;
+
+
+typedef struct SOMVar{
+  float Ntrk, width, JetMass;
+} SOMVar;
+
+
 
 class HiggsllqqAnalysis : public HiggsAnalysis {
  public:
@@ -475,6 +630,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   // Method to fill vectors to calculate the HFOR value
   void FillHFORvariables();
   
+
+  //Mthods to Set, Reset and Fill the TestSelection Struct
+  void SetAnalysisOutputBranches(analysis_output_struct *str);
+  void ResetAnalysisOutputBranches(analysis_output_struct *str);
+  void FillAnalysisOutputTree(analysis_output_struct *str);
+  
   
  protected:
   Bool_t m_called_getGoodLeptons;
@@ -506,6 +667,10 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TString m_outputFileName;
   TFile *m_outputFile;
   
+
+  //Definition of the TestSelection Struct
+  analysis_output_struct m_outevent;
+
   
   //Beginning
  protected:
@@ -523,8 +688,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   //HFOR TOOL
   HforToolD3PD *hforTool;
   
-  // FLS tree
+  // llqq Analysis tree
   TTree *m_reduced_ntuple;
+  
+  //TestSelection Tree
+  TTree *analysistree;
   
   Int_t m_lep_chargeproduct;
   std::vector<Float_t> *m_lep_m;
