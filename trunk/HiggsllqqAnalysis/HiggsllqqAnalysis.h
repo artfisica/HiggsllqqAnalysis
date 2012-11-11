@@ -491,7 +491,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t IsGoodMuon(Analysis::ChargedLepton *lep);
   Bool_t isGoodJet(Analysis::Jet *jet);
   
-  
+
   // utility functions for the selection
   virtual Bool_t isMC() {
     return ntuple->mc.n.IsAvailable();
