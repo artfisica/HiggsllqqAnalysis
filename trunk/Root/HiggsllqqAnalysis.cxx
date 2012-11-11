@@ -71,7 +71,7 @@ Float_t Mjj_min      = 60000.;
 Float_t Mjj_max      = 115000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  = 40000.;
+Float_t MET_low_cut  = 30000.;
 Float_t MET_high_cut = 50000.;
 
 int HFOR_value = -999;
@@ -1630,6 +1630,33 @@ void HiggsllqqAnalysis::getGoodJets()
     (*jet_itr)->set_lastcut(HllqqJetQuality::overlap);
     m_GoodJets.push_back((*jet_itr));
   } // jet loop
+
+
+  //Sort the jets by pt
+  if(m_GoodJets.size()>0)
+    SortIndex(m_GoodJets);
+}
+
+
+void HiggsllqqAnalysis::SortIndex(std::vector<Analysis::Jet *> &vec)
+{
+  bool change_made = true;
+  while (change_made) {
+    change_made = false;
+    
+    for (unsigned int i = 0; i < vec.size() - 1; i++) {
+      Analysis::Jet *jeta = vec.at(i);
+      Analysis::Jet *jetb = vec.at(i+1);
+      
+      
+      if (jeta->rightpt() < jetb->rightpt()) {
+	Analysis::Jet *jettmp = vec.at(i);
+        vec.at(i) = vec.at(i + 1);
+        vec.at(i + 1) = jettmp;
+        change_made = true;
+      }
+    }
+  }
 }
 
 
