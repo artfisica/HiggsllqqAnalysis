@@ -43,7 +43,14 @@ Bool_t cut_leptons   = kFALSE,
   METtype_RefFinal   = kTRUE, 
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
-  JVF_new_cut        = kTRUE;
+  JVF_new_cut        = kFALSE,
+  FillGluon          = kFALSE;
+
+
+//Global Jets Variables.
+int Pair_jet1(-1), Pair_jet2(-1);
+float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
+
 
 int Print_low_OR_high = 0; // 0 for LowSelection ; 1 for HighSelection
 
@@ -64,7 +71,7 @@ Float_t Mjj_min      = 60000.;
 Float_t Mjj_max      = 115000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  = 30000.;
+Float_t MET_low_cut  = 40000.;
 Float_t MET_high_cut = 50000.;
 
 int HFOR_value = -999;
@@ -2312,8 +2319,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	    
 	    
 	    // TestSelection Filling candidate struct
-	    FillAnalysisOutputTree(&m_outevent);
-	    analysistree->Fill();
+	    FillAnalysisOutputTree(&m_outevent,last_event,chan);
 	  }	
 	
 	
@@ -2347,9 +2353,8 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      FillReducedNtuple(last_event,chan);    
 	      
 	      
-	      // TestSelection Reset and Filling candidate struct
-	      FillAnalysisOutputTree(&m_outevent);
-	      analysistree->Fill();
+	      // TestSelection Filling candidate struct
+	      FillAnalysisOutputTree(&m_outevent,last_event,chan);
 	    }	
 	  
 	  
@@ -2978,6 +2983,19 @@ Bool_t HiggsllqqAnalysis::JetKinematicFitterResult() {
   *m_bestdijet = m_jetkinematicfitter->findBestPair();
   int idx1 = m_bestdijet->index1!=-1 ? m_bestdijet->index1 : 0;
   int idx2 = m_bestdijet->index2!=-1 ? m_bestdijet->index2 : 1;
+  
+  
+  //Filling Global variables with the index of the selected jets into the event to fill the TestSelection tree
+  Pair_jet1 = idx1;
+  Pair_jet2 = idx2;
+
+  if(m_bestdijet->index1!=-1)
+    {
+      corr_jet_pt1 = m_bestdijet->refittedPt1;
+      corr_jet_pt2 = m_bestdijet->refittedPt2;
+      ChiSq        = m_bestdijet->chiSq;;
+    }
+  
   
   TLorentzVector j1;
   TLorentzVector j2;
@@ -3696,7 +3714,9 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->istagged = -999;
   str->channel = -999;
   str->isqcdevent = -999;
-  if(0/*gluon()*/){
+  str->low_event = -999;
+
+  if(FillGluon){
     str->n_jets = -999;
     str->n_b_jets = -999;
   }
@@ -3730,7 +3750,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ1_flavortruth = -999.;
   str->realJ1_MV1 = -999.;
   str->realJ1_jvf = -999.;
-  if(0/*gluon()*/){
+  if(FillGluon){
     str->realJ1_pdg = -1000.;
     str->realJ1_ntrk = -1;
     str->realJ1_width = -1.;
@@ -3744,7 +3764,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ2_flavortruth = -999.;
   str->realJ2_MV1 = -999.;
   str->realJ2_jvf = -999.;
-  if(0/*gluon()*/){
+  if(FillGluon){
     str->realJ2_pdg = -1000.;
     str->realJ2_ntrk = -1;
     str->realJ2_width = -1.;
@@ -3765,14 +3785,14 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->corrJ1_eta_det = -999.;
   str->corrJ1_phi = -999.;
   str->corrJ1_flavortruth = -999.;
-  if(0/*gluon()*/){str->corrJ1_Fisher = -2.;}
+  if(FillGluon){str->corrJ1_Fisher = -2.;}
   str->corrJ2_m = -999.;
   str->corrJ2_pt = -999.;
   str->corrJ2_eta = -999.;
   str->corrJ2_eta_det = -999.;
   str->corrJ2_phi = -999.;
   str->corrJ2_flavortruth = -999.;
-  if(0/*gluon()*/){
+  if(FillGluon){
     str->corrJ2_Fisher = -2.;
     str->ll_2_jets_corr=-1.;
   }
@@ -3805,7 +3825,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->AllJet_MV1_b = -1.; // b jets 
   str->AllJet_MV1_c = -1.; // c jets
   str->AllJet_MV1_l = -1.; // light jets
-  if(0/*gluon()*/){
+  if(FillGluon){
     str->xWin_44p_4var = -1;
     str->yWin_44p_4var = -1;
     str->zWin_44p_4var = -1.;
@@ -3850,8 +3870,9 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("isTagged",&(str->istagged));
   analysistree->Branch("channel",&(str->channel));
   analysistree->Branch("isqcdevent",&(str->isqcdevent));
-
-  if(/*gluon()*/0){
+  analysistree->Branch("low_event",&(str->low_event));
+  
+  if(FillGluon){
     analysistree->Branch("n_jets",&(str->n_jets));
     analysistree->Branch("n_b_jets",&(str->n_b_jets));
   }
@@ -3890,7 +3911,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ1_MV1",&(str->realJ1_MV1));
   analysistree->Branch("realJ1_jvf",&(str->realJ1_jvf));
   
-  if(/*gluon()*/0){
+  if(FillGluon){
     analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
     analysistree->Branch("realJ1_ntrk",&(str->realJ1_ntrk));
     analysistree->Branch("realJ1_width",&(str->realJ1_width));
@@ -3906,7 +3927,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ2_MV1",&(str->realJ2_MV1));
   analysistree->Branch("realJ2_jvf",&(str->realJ2_jvf));
   
-  if(/*gluon()*/0){
+  if(FillGluon){
     analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
     analysistree->Branch("realJ2_ntrk",&(str->realJ2_ntrk));
     analysistree->Branch("realJ2_width",&(str->realJ2_width));
@@ -3929,7 +3950,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("corrJ1_phi",&(str->corrJ1_phi));
   analysistree->Branch("corrJ1_flavortruth",&(str->corrJ1_flavortruth));
   
-  if(/*gluon()*/0){analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));}
+  if(FillGluon){analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));}
   
   analysistree->Branch("corrJ2_m",&(str->corrJ2_m));
   analysistree->Branch("corrJ2_pt",&(str->corrJ2_pt));
@@ -3938,7 +3959,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("corrJ2_phi",&(str->corrJ2_phi));
   analysistree->Branch("corrJ2_flavortruth",&(str->corrJ2_flavortruth));
   
-  if(/*gluon()*/0){
+  if(FillGluon){
     analysistree->Branch("corrJ2_Fisher",&(str->corrJ2_Fisher));
     analysistree->Branch("ll_2_jets_corr",&(str->ll_2_jets_corr));
   }
@@ -3974,7 +3995,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("AllJet_MV1_c",&(str->AllJet_MV1_c)); // c jets
   analysistree->Branch("AllJet_MV1_l",&(str->AllJet_MV1_l)); // light jets
   
-  if(/*gluon()*/0){
+  if(FillGluon){
     analysistree->Branch("xWin_44p_4var", &(str->xWin_44p_4var));
     analysistree->Branch("yWin_44p_4var", &(str->yWin_44p_4var));
     analysistree->Branch("zWin_44p_4var", &(str->zWin_44p_4var));
@@ -4011,266 +4032,421 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
 }
 
 
-void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str) {
-  str->runnumber = ntuple->eventinfo.RunNumber();
-  str->eventnumber = ntuple->eventinfo.EventNumber();
+void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel) {
   
-  /*
-    str->istagged = IsTagged();
-    str->channel = channel;
-    str->isqcdevent = isqcdevent;
-    str->weight = weight;
+  
+  Int_t minimum_cut = 0;
+  
+  if(GetDoQCDSelection()) 
+    minimum_cut = HllqqCutFlow::DiJetMass; //DileptonMass; //DiJetMass; //NumTagJets;//PtLeptons;//MET;//NumberOfLeptons;
+  else 
+    minimum_cut = HllqqCutFlow::DiJetMass; //DileptonMass; //DiJetMass; //PtLeptons;
+  
+  str->istagged = GetNumOfTags();
+  //   if(GetNumOfTags()==2)
+  //     str->istagged = 1;
+  //   if(GetNumOfTags()<2)
+  //     str->istagged = 0;
+  //   if(GetNumOfTags()>2)
+  //     str->istagged = -1;
+  
+  
+  if(cut >= minimum_cut) {
     
-  if(lep_pt->at(0) >= lep_pt->at(1)) {
-    str->lep1_m = lep_m->at(0);
-    str->lep1_pt = lep_pt->at(0);
-    str->lep1_eta = lep_eta->at(0);
-    str->lep1_phi = lep_phi->at(0);
-    str->lep1_charge = lep_charge->at(0);
-    str->lep1_caloiso = lep_caloiso->at(0);
-    str->lep1_trackiso = lep_trackiso->at(0);
-    str->lep1_d0 = lep_d0->at(0);
-    str->lep1_sigd0 = lep_sigd0->at(0);
-    str->lep1_quality = lep_quality->at(0);
-    str->lep2_m = lep_m->at(1);
-    str->lep2_pt = lep_pt->at(1);
-    str->lep2_eta = lep_eta->at(1);
-    str->lep2_phi = lep_phi->at(1);
-    str->lep2_charge = lep_charge->at(1);
-    str->lep2_caloiso = lep_caloiso->at(1);
-    str->lep2_trackiso = lep_trackiso->at(1);
-    str->lep2_d0 = lep_d0->at(1);
-    str->lep2_sigd0 = lep_sigd0->at(1);
-    str->lep2_quality = lep_quality->at(1);
-  }
-  else {
-    str->lep2_m = lep_m->at(0);
-    str->lep2_pt = lep_pt->at(0);
-    str->lep2_eta = lep_eta->at(0);
-    str->lep2_phi = lep_phi->at(0);
-    str->lep2_charge = lep_charge->at(0);
-    str->lep2_caloiso = lep_caloiso->at(0);
-    str->lep2_trackiso = lep_trackiso->at(0);
-    str->lep2_d0 = lep_d0->at(0);
-    str->lep2_sigd0 = lep_sigd0->at(0);
-    str->lep2_quality = lep_quality->at(0);
-    str->lep1_m = lep_m->at(1);
-    str->lep1_pt = lep_pt->at(1);
-    str->lep1_eta = lep_eta->at(1);
-    str->lep1_phi = lep_phi->at(1);
-    str->lep1_charge = lep_charge->at(1);
-    str->lep1_caloiso = lep_caloiso->at(1);
-    str->lep1_trackiso = lep_trackiso->at(1);
-    str->lep1_d0 = lep_d0->at(1);
-    str->lep1_sigd0 = lep_sigd0->at(1);
-    str->lep1_quality = lep_quality->at(1);
-  }
-  
-  
-  TLorentzVector lep1;
-  lep1.SetPtEtaPhiM(str->lep1_pt,str->lep1_eta,str->lep1_phi,str->lep1_m);
-  TLorentzVector lep2;
-  lep2.SetPtEtaPhiM(str->lep2_pt,str->lep2_eta,str->lep2_phi,str->lep2_m);
-  TLorentzVector lepZ = lep1 + lep2;
-  
-  str->lepZ_m = lepZ.M();
-  str->lepZ_pt = lepZ.Pt();
-  str->lepZ_eta = lepZ.Eta();
-  str->lepZ_phi = lepZ.Phi();
-  
-  
-  
-  if(m_jetindex.size()==1) {
-    str->realJ1_m = jet_m->at(m_jetindex.at(0));
-    str->realJ1_pt = jet_pt->at(m_jetindex.at(0));
-    str->realJ1_eta = jet_eta->at(m_jetindex.at(0));
-    str->realJ1_eta_det = jet_eta_det->at(m_jetindex.at(0));
-    str->realJ1_phi = jet_phi->at(m_jetindex.at(0));
-    str->realJ1_flavortruth = jet_flavortruth->at(m_jetindex.at(0));
-    str->realJ1_MV1 = jet_MV1->at(m_jetindex.at(0));
-    str->realJ1_jvf = jet_jvtxf->at(m_jetindex.at(0));
-    if(gluon()){
-      str->n_jets = m_jetindex.size();
-      str->n_b_jets = HowManyBJets(); 
-      str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(0));
-      str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(0));
-      str->realJ1_width = jet_width->at(m_jetindex.at(0));
-      str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(0)),jet_eta->at(m_jetindex.at(0)),jet_nTrk->at(m_jetindex.at(0)),jet_width->at(m_jetindex.at(0)));
-      str->ll_2_jets = -1.;
-    }
-  }
-  
-  else if (m_jetindex.size()>=2) {
-    int idx1 = m_bestdijet->index1!=-1 ? m_bestdijet->index1 : 0;
-    int idx2 = m_bestdijet->index2!=-1 ? m_bestdijet->index2 : 1;
-    str->realJ1_m = jet_m->at(m_jetindex.at(idx1));
-    str->realJ1_pt = jet_pt->at(m_jetindex.at(idx1));
-    str->realJ1_eta = jet_eta->at(m_jetindex.at(idx1));
-    str->realJ1_eta_det = jet_eta_det->at(m_jetindex.at(idx1));
-    str->realJ1_phi = jet_phi->at(m_jetindex.at(idx1));
-    str->realJ1_flavortruth = jet_flavortruth->at(m_jetindex.at(idx1));
-    str->realJ1_MV1 = jet_MV1->at(m_jetindex.at(idx1));
-    str->realJ1_jvf = jet_jvtxf->at(m_jetindex.at(idx1));
-    if(gluon()){
-      str->n_jets = m_jetindex.size();
-      str->n_b_jets = HowManyBJets(); 
-      str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
-      str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(idx1));
-      str->realJ1_width = jet_width->at(m_jetindex.at(idx1));
-      str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
-    }
-    str->realJ2_m = jet_m->at(m_jetindex.at(idx2));
-    str->realJ2_pt = jet_pt->at(m_jetindex.at(idx2));
-    str->realJ2_eta = jet_eta->at(m_jetindex.at(idx2));
-    str->realJ2_eta_det = jet_eta_det->at(m_jetindex.at(idx2));
-    str->realJ2_phi = jet_phi->at(m_jetindex.at(idx2));
-    str->realJ2_flavortruth = jet_flavortruth->at(m_jetindex.at(idx2));
-    str->realJ2_MV1 = jet_MV1->at(m_jetindex.at(idx2));
-    str->realJ2_jvf = jet_jvtxf->at(m_jetindex.at(idx2));
-    if(gluon()){
-      str->realJ2_pdg = jet_flavorpdg->at(m_jetindex.at(idx2));
-      str->realJ2_ntrk = jet_nTrk->at(m_jetindex.at(idx2));
-      str->realJ2_width = jet_width->at(m_jetindex.at(idx2));
-      str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-      str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-      if (CheckMap("44p_4var",idx1,idx2)) {
-	str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
-	str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
-	str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
-	str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
-      }
-      if (CheckMap("44p_6var",idx1,idx2)) {
-	str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
-	str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
-	str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
-	str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
-      }
-      if (CheckMap("44h_4var",idx1,idx2)) {
-	str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
-	str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
-	str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
-	str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
-      }
-      if (CheckMap("44h_6var",idx1,idx2)) {
-	str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
-	str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
-	str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
-	str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
-      }
-      if (CheckMap("64p_4var",idx1,idx2)) {
-	str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
-	str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
-	str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
-	str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
-      }
-      if (CheckMap("64p_6var",idx1,idx2)) {
-	str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
-	str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
-	str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
-	str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
-      }
-      if (CheckMap("64h_4var",idx1,idx2)) {
-	str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
-	str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
-	str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
-	str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
-      }
-      if (CheckMap("64h_6var",idx1,idx2)) {
-	str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
-	str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
-	str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
-	str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
-      }
-    }
     
-    TLorentzVector j1;
-    j1.SetPtEtaPhiM(str->realJ1_pt,str->realJ1_eta,str->realJ1_phi,str->realJ1_m);
-    TLorentzVector j2;
-    j2.SetPtEtaPhiM(str->realJ2_pt,str->realJ2_eta,str->realJ2_phi,str->realJ2_m);
-    TLorentzVector hadZ = j1 + j2;
-    TLorentzVector H = lepZ + hadZ;
+    TLorentzVector lep1, lep2, lepZ;
     
-    str->realZ_m = hadZ.M();
-    str->realZ_pt = hadZ.Pt();
-    str->realZ_eta = hadZ.Eta();
-    str->realZ_phi = hadZ.Phi();
+    std::pair<float,float> jetsf;
+    jetsf.first = 1.;
+    jetsf.second = 1.;
     
-    str->realH_m = H.M();
-    str->realH_pt = H.Pt();
-    str->realH_eta = H.Eta();
-    str->realH_phi = H.Phi();
+    //Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut!
+    std::pair<int,int> SelectedJets;
+    SelectedJets.first  = Pair_jet1;
+    SelectedJets.second = Pair_jet2;
     
-    if(idx1 != -1) {
-      str->corrJ1_m = jet_m->at(m_jetindex.at(idx1));
-      str->corrJ1_pt = m_bestdijet->refittedPt1;
-      str->corrJ1_eta = jet_eta->at(m_jetindex.at(idx1));
-      str->corrJ1_eta_det = jet_eta_det->at(m_jetindex.at(idx1));
-      str->corrJ1_phi = jet_phi->at(m_jetindex.at(idx1));
-      str->corrJ1_flavortruth = jet_flavortruth->at(m_jetindex.at(idx1));
-      if(gluon()){str->corrJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));}
-      str->corrJ2_m = jet_m->at(m_jetindex.at(idx2));
-      str->corrJ2_pt = m_bestdijet->refittedPt2;
-      str->corrJ2_eta = jet_eta->at(m_jetindex.at(idx2));
-      str->corrJ2_eta_det = jet_eta_det->at(m_jetindex.at(idx2));
-      str->corrJ2_phi = jet_phi->at(m_jetindex.at(idx2));
-      str->corrJ2_flavortruth = jet_flavortruth->at(m_jetindex.at(idx2));
-      if(gluon()){
-	str->corrJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	str->ll_2_jets_corr = getLikelihood(reader,var1,var2,var3,var4,str->corrJ1_pt,str->corrJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+    
+    str->runnumber   = ntuple->eventinfo.RunNumber();
+    str->eventnumber = ntuple->eventinfo.EventNumber();
+    str->HFOR        = HFOR_value;
+    str->Entries     = fChain->GetEntries();      
+    str->low_event   = GetDoLowMass() ? 1 : 0;
+    str->channel     = channel;
+    str->isqcdevent  = GetDoQCDSelection() ? 1 : 0;
+    str->met         = getCorrectMETValue();
+    str->sumet       = ntuple->MET_RefFinal.sumet();
+    str->NPV         = getNumberOfGoodVertices();
+    str->truthH_pt   = getTruthHiggsPt();
+    str->ggFweight   = getggFWeight();
+    str->mu          = ntuple->eventinfo.averageIntPerXing();
+    str->weight      = 1.;
+    if(isMC()) 
+      str->weight   = 1.*getSFWeight()*getPileupWeight()*ntuple->eventinfo.mc_event_weight();
+    
+    
+    //  str->btagSF    = tmpbtagsf;
+    //  str->trig_SF   = trig_SF;
+    //  str->trig_SF2  = trig_SF2;
+    //  str->trig_SFC  = trig_SFC;
+    //  str->trig_flag = trig_flag;
+    
+    
+    if(channel == HiggsllqqAnalysis::MU2) {
+      
+      D3PDReader::MuonD3PDObjectElement *mu_1 = m_GoodMuons.at(0)->GetMuon();
+      D3PDReader::MuonD3PDObjectElement *mu_2 = m_GoodMuons.at(1)->GetMuon();
+      
+      if(m_GoodMuons.at(0)->Get4Momentum()->Pt() >= m_GoodMuons.at(1)->Get4Momentum()->Pt()) {
+	
+	//Filling leading Muon
+	str->lep1_m         = mu_pdg_mass;
+	str->lep1_pt        = mu_1->pt();
+	str->lep1_eta       = mu_1->eta();
+	str->lep1_phi       = mu_1->phi();
+	str->lep1_charge    = mu_1->charge();
+	str->lep1_caloiso   = mu_1->etcone20()/mu_1->pt();
+	str->lep1_trackiso  = mu_1->ptcone20()/mu_1->pt();
+	str->lep1_d0        = m_GoodMuons.at(0)->d0();
+	str->lep1_sigd0     = m_GoodMuons.at(0)->d0_sig();
+	
+	if (m_GoodMuons.at(0)->family() == Muon::MUID)
+	  str->lep1_quality = 1;
+	else if (m_GoodMuons.at(0)->family() == Muon::STACO)
+	  str->lep1_quality = 2;
+	else if (m_GoodMuons.at(0)->family() == Muon::CALO)
+	  str->lep1_quality = 3;
+	
+	
+	//Filling the Second Muon
+	str->lep2_m         = mu_pdg_mass;
+	str->lep2_pt        = mu_2->pt();
+	str->lep2_eta       = mu_2->eta();
+	str->lep2_phi       = mu_2->phi();
+	str->lep2_charge    = mu_2->charge();
+	str->lep2_caloiso   = mu_2->etcone20()/mu_2->pt();
+	str->lep2_trackiso  = mu_2->ptcone20()/mu_2->pt();
+	str->lep2_d0        = m_GoodMuons.at(1)->d0();
+	str->lep2_sigd0     = m_GoodMuons.at(1)->d0_sig();
+	
+	if (m_GoodMuons.at(1)->family() == Muon::MUID)
+	  str->lep2_quality = 1;
+	else if (m_GoodMuons.at(1)->family() == Muon::STACO)
+	  str->lep2_quality = 2;
+	else if (m_GoodMuons.at(1)->family() == Muon::CALO)
+	  str->lep2_quality = 3;
+	
+      }
+      else {
+	
+	//Filling leading Muon
+	str->lep1_m         = mu_pdg_mass;
+	str->lep1_pt        = mu_2->pt();
+	str->lep1_eta       = mu_2->eta();
+	str->lep1_phi       = mu_2->phi();
+	str->lep1_charge    = mu_2->charge();
+	str->lep1_caloiso   = mu_2->etcone20()/mu_2->pt();
+	str->lep1_trackiso  = mu_2->ptcone20()/mu_2->pt();
+	str->lep1_d0        = m_GoodMuons.at(1)->d0();
+	str->lep1_sigd0     = m_GoodMuons.at(1)->d0_sig();
+	
+	if (m_GoodMuons.at(1)->family() == Muon::MUID)
+	  str->lep1_quality = 1;
+	else if (m_GoodMuons.at(1)->family() == Muon::STACO)
+	  str->lep1_quality = 2;
+	else if (m_GoodMuons.at(1)->family() == Muon::CALO)
+	  str->lep1_quality = 3;
+	
+	
+	//Filling the Second Muon
+	str->lep2_m         = mu_pdg_mass;
+	str->lep2_pt        = mu_1->pt();
+	str->lep2_eta       = mu_1->eta();
+	str->lep2_phi       = mu_1->phi();
+	str->lep2_charge    = mu_1->charge();
+	str->lep2_caloiso   = mu_1->etcone20()/mu_1->pt();
+	str->lep2_trackiso  = mu_1->ptcone20()/mu_1->pt();
+	str->lep2_d0        = m_GoodMuons.at(0)->d0();
+	str->lep2_sigd0     = m_GoodMuons.at(0)->d0_sig();
+	
+	if (m_GoodMuons.at(0)->family() == Muon::MUID)
+	  str->lep2_quality = 1;
+	else if (m_GoodMuons.at(0)->family() == Muon::STACO)
+	  str->lep2_quality = 2;
+	else if (m_GoodMuons.at(0)->family() == Muon::CALO)
+	  str->lep2_quality = 3;	
       }
       
-      j1.SetPtEtaPhiM(m_bestdijet->refittedPt1,str->corrJ1_eta,str->corrJ1_phi,str->corrJ1_m);
-      j2.SetPtEtaPhiM(m_bestdijet->refittedPt2,str->corrJ2_eta,str->corrJ2_phi,str->corrJ2_m);
-      hadZ = j1 + j2;
-      H = lepZ + hadZ;
+      lep1.SetPtEtaPhiM(str->lep1_pt,str->lep1_eta,str->lep1_phi,str->lep1_m);
+      lep2.SetPtEtaPhiM(str->lep2_pt,str->lep2_eta,str->lep2_phi,str->lep2_m);
+      lepZ = lep1 + lep2;
       
-      str->corrZ_m = hadZ.M();
-      str->corrZ_pt = hadZ.Pt();
-      str->corrZ_eta = hadZ.Eta();
-      str->corrZ_phi = hadZ.Phi();
+      str->lepZ_m           = lepZ.M();
+      str->lepZ_pt          = lepZ.Pt();
+      str->lepZ_eta         = lepZ.Eta();
+      str->lepZ_phi         = lepZ.Phi();
       
-      str->corrH_m = H.M();
-      str->corrH_pt = H.Pt();
-      str->corrH_eta = H.Eta();
-      str->corrH_phi = H.Phi();
-      
-      str->chisquare = m_bestdijet->chiSq;
-    }
+    } //End of MU2 Channel if
     
-    //Flavour Composition Variables
-    if (jet_flavortruth->at(mv1_jetindex.at(1))==4 || 
-	jet_flavortruth->at(mv1_jetindex.at(1))==15)     
-      str->SecondJet_MV1_c = jet_MV1->at(mv1_jetindex.at(1)); // c jets
-    else if (jet_flavortruth->at(mv1_jetindex.at(1))==5)  
-      str->SecondJet_MV1_b = jet_MV1->at(mv1_jetindex.at(1)); // b jets 
-    else 
-      str->SecondJet_MV1_l = jet_MV1->at(mv1_jetindex.at(1)); // light jets
     
-    for(UInt_t i = 0; i < mv1_jetindex.size(); i++) 
+    if(channel == HiggsllqqAnalysis::E2) {
+      
+      D3PDReader::ElectronD3PDObjectElement *el_1 = m_GoodElectrons.at(0)->GetElectron();
+      D3PDReader::ElectronD3PDObjectElement *el_2 = m_GoodElectrons.at(1)->GetElectron();
+      
+      if(m_GoodElectrons.at(0)->Get4Momentum()->Pt() >= m_GoodElectrons.at(1)->Get4Momentum()->Pt()) {
+	
+	//Filling leading Electron
+	str->lep1_m         = el_pdg_mass;
+	str->lep1_pt        = el_1->pt();
+	str->lep1_eta       = el_1->eta();
+	str->lep1_phi       = el_1->phi();
+	str->lep1_charge    = el_1->charge();
+	str->lep1_caloiso   = el_1->Etcone20()/el_1->pt();
+	str->lep1_trackiso  = el_1->ptcone20()/el_1->pt();
+	str->lep1_d0        = m_GoodElectrons.at(0)->d0();
+	str->lep1_sigd0     = m_GoodElectrons.at(0)->d0_sig();
+	
+	if(el_1->tightPP() == 1)
+	  str->lep1_quality = 1;	  
+	else if(el_1->mediumPP() == 1)
+	  str->lep1_quality = 2;
+	else if(el_1->loosePP() == 1)
+	  str->lep1_quality = 3;
+	
+	
+	//Filling the Second Electron
+	str->lep2_m         = el_pdg_mass;
+	str->lep2_pt        = el_2->pt();
+	str->lep2_eta       = el_2->eta();
+	str->lep2_phi       = el_2->phi();
+	str->lep2_charge    = el_2->charge();
+	str->lep2_caloiso   = el_2->Etcone20()/el_2->pt();
+	str->lep2_trackiso  = el_2->ptcone20()/el_2->pt();
+	str->lep2_d0        = m_GoodElectrons.at(1)->d0();
+	str->lep2_sigd0     = m_GoodElectrons.at(1)->d0_sig();
+	
+	if(el_2->tightPP() == 1)
+	  str->lep2_quality = 1;	  
+	else if(el_2->mediumPP() == 1)
+	  str->lep2_quality = 2;
+	else if(el_2->loosePP() == 1)
+	  str->lep2_quality = 3;
+	
+      }
+      else {
+	
+	//Filling leading Electron
+	str->lep1_m         = el_pdg_mass;
+	str->lep1_pt        = el_2->pt();
+	str->lep1_eta       = el_2->eta();
+	str->lep1_phi       = el_2->phi();
+	str->lep1_charge    = el_2->charge();
+	str->lep1_caloiso   = el_2->Etcone20()/el_2->pt();
+	str->lep1_trackiso  = el_2->ptcone20()/el_2->pt();
+	str->lep1_d0        = m_GoodElectrons.at(1)->d0();
+	str->lep1_sigd0     = m_GoodElectrons.at(1)->d0_sig();
+	
+	if(el_2->tightPP() == 1)
+	  str->lep1_quality = 1;	  
+	else if(el_2->mediumPP() == 1)
+	  str->lep1_quality = 2;
+	else if(el_2->loosePP() == 1)
+	  str->lep1_quality = 3;
+	
+	
+	//Filling the Second Electron
+	str->lep2_m         = el_pdg_mass;
+	str->lep2_pt        = el_1->pt();
+	str->lep2_eta       = el_1->eta();
+	str->lep2_phi       = el_1->phi();
+	str->lep2_charge    = el_1->charge();
+	str->lep2_caloiso   = el_1->Etcone20()/el_1->pt();
+	str->lep2_trackiso  = el_1->ptcone20()/el_1->pt();
+	str->lep2_d0        = m_GoodElectrons.at(0)->d0();
+	str->lep2_sigd0     = m_GoodElectrons.at(0)->d0_sig();
+	
+	if(el_1->tightPP() == 1)
+	  str->lep2_quality = 1;	  
+	else if(el_1->mediumPP() == 1)
+	  str->lep2_quality = 2;
+	else if(el_1->loosePP() == 1)
+	  str->lep2_quality = 3;
+      }
+      
+      lep1.SetPtEtaPhiM(str->lep1_pt,str->lep1_eta,str->lep1_phi,str->lep1_m);
+      lep2.SetPtEtaPhiM(str->lep2_pt,str->lep2_eta,str->lep2_phi,str->lep2_m);
+      lepZ = lep1 + lep2;
+      
+      str->lepZ_m           = lepZ.M();
+      str->lepZ_pt          = lepZ.Pt();
+      str->lepZ_eta         = lepZ.Eta();
+      str->lepZ_phi         = lepZ.Phi();
+      
+    } //End of E2 Channel if
+    
+    
+    
+    //Getting the jet pair
+    D3PDReader::JetD3PDObjectElement *Jet_1 = m_GoodJets.at(SelectedJets.first)->GetJet();
+    D3PDReader::JetD3PDObjectElement *Jet_2 = m_GoodJets.at(SelectedJets.second)->GetJet();
+    
+    
+    if (m_GoodJets.size()>=2) 
       {
-	if (jet_flavortruth->at(mv1_jetindex.at(i))==4 || 
-	    jet_flavortruth->at(mv1_jetindex.at(i))==15)
-	  str->AllJet_MV1_c = jet_MV1->at(mv1_jetindex.at(i)); // c jets
-	else if (jet_flavortruth->at(mv1_jetindex.at(i))==5)
-	  str->AllJet_MV1_b = jet_MV1->at(mv1_jetindex.at(i)); // b jets 
-	else 
-	  str->AllJet_MV1_l = jet_MV1->at(mv1_jetindex.at(i)); // light jets
-      }       
-  }
-  
-  str->met = met_met;
-  str->sumet = met_sumet;
-  str->btagSF = tmpbtagsf;
-  str->NPV = NPV;
-  str->truthH_pt = truthH_pt;
-  str->ggFweight = ggFweight;
-  str->mu = mu;
-  str->trig_SF = trig_SF;
-  str->trig_SF2 = trig_SF2;
-  str->trig_SFC = trig_SFC;
-  str->trig_flag = trig_flag;
-  str->HFOR = HFOR;
-  str->Entries = Entries;
+	str->realJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
+	str->realJ1_pt          = m_GoodJets.at(SelectedJets.first)->rightpt();
+	str->realJ1_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
+	str->realJ1_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
+	str->realJ1_eta_det     = Jet_1->emscale_eta();
+	str->realJ1_flavortruth = Jet_1->flavor_truth_label();
+	str->realJ1_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.first));
+	str->realJ1_jvf         = Jet_1->jvtxf();
+	
+	str->realJ2_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
+	str->realJ2_pt          = m_GoodJets.at(SelectedJets.second)->rightpt();
+	str->realJ2_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
+	str->realJ2_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
+	str->realJ2_eta_det     = Jet_2->emscale_eta();
+	str->realJ2_flavortruth = Jet_2->flavor_truth_label();
+	str->realJ2_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.second));
+	str->realJ2_jvf         = Jet_2->jvtxf();
+	
+	
+	TLorentzVector j1;
+	j1.SetPtEtaPhiM(str->realJ1_pt,str->realJ1_eta,str->realJ1_phi,str->realJ1_m);
+	TLorentzVector j2;
+	j2.SetPtEtaPhiM(str->realJ2_pt,str->realJ2_eta,str->realJ2_phi,str->realJ2_m);
+	TLorentzVector hadZ = j1   +   j2;
+	TLorentzVector H    = lepZ + hadZ;
+	
+	str->realZ_m   = hadZ.M();
+	str->realZ_pt  = hadZ.Pt();
+	str->realZ_eta = hadZ.Eta();
+	str->realZ_phi = hadZ.Phi();
+	
+	str->realH_m   = H.M();
+	str->realH_pt  = H.Pt();
+	str->realH_eta = H.Eta();
+	str->realH_phi = H.Phi();
+	
+	
+	if(corr_jet_pt1 > 0. && corr_jet_pt2 > 0.) {
+	  
+	  str->corrJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
+	  str->corrJ1_pt          = corr_jet_pt1;
+	  str->corrJ1_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
+	  str->corrJ1_eta_det     = Jet_1->emscale_eta();
+	  str->corrJ1_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
+	  str->corrJ1_flavortruth = Jet_1->flavor_truth_label();
+	  
+	  str->corrJ2_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
+	  str->corrJ2_pt          = corr_jet_pt2;
+	  str->corrJ2_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
+	  str->corrJ2_eta_det     = Jet_2->emscale_eta();
+	  str->corrJ2_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
+	  str->corrJ2_flavortruth = Jet_2->flavor_truth_label();
+	  
+	  
+	  j1.SetPtEtaPhiM(str->corrJ1_pt,str->corrJ1_eta,str->corrJ1_phi,str->corrJ1_m);
+	  j2.SetPtEtaPhiM(str->corrJ2_pt,str->corrJ2_eta,str->corrJ2_phi,str->corrJ2_m);
+	  hadZ = j1   +   j2;
+	  H    = lepZ + hadZ;
+	  
+	  str->corrZ_m   = hadZ.M();
+	  str->corrZ_pt  = hadZ.Pt();
+	  str->corrZ_eta = hadZ.Eta();
+	  str->corrZ_phi = hadZ.Phi();
+	  
+	  str->corrH_m   = H.M();
+	  str->corrH_pt  = H.Pt();
+	  str->corrH_eta = H.Eta();
+	  str->corrH_phi = H.Phi();
+	  
+	  str->chisquare = ChiSq;
+	}
+	
+
+	
+	/*	
+	  if(FillGluon){
+	  
+	  str->n_jets = m_jetindex.size();
+	  str->n_b_jets = HowManyBJets(); 
+	  str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
+	  str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(idx1));
+	  str->realJ1_width = jet_width->at(m_jetindex.at(idx1));
+	  str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
+	  
+	  str->realJ2_pdg = jet_flavorpdg->at(m_jetindex.at(idx2));
+	  str->realJ2_ntrk = jet_nTrk->at(m_jetindex.at(idx2));
+	  str->realJ2_width = jet_width->at(m_jetindex.at(idx2));
+	  str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	  str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	  
+	  
+	  
+	  if (CheckMap("44p_4var",idx1,idx2)) {
+	  str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+	  str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+	  str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+	  str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+	  }
+	  if (CheckMap("44p_6var",idx1,idx2)) {
+	  str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+	  str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+	  str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+	  str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+	  }
+	  if (CheckMap("44h_4var",idx1,idx2)) {
+	  str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+	  str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+	  str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+	  str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+	  }
+	  if (CheckMap("44h_6var",idx1,idx2)) {
+	  str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+	  str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+	  str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+	  str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+	  }
+	  if (CheckMap("64p_4var",idx1,idx2)) {
+	  str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+	  str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+	  str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+	  str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+	  }
+	  if (CheckMap("64p_6var",idx1,idx2)) {
+	  str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+	  str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+	  str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+	  str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+	  }
+	  if (CheckMap("64h_4var",idx1,idx2)) {
+	  str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+	  str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+	  str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+	  str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+	  }
+	  if (CheckMap("64h_6var",idx1,idx2)) {
+	  str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+	  str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+	  str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+	  str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+	  }
+	  }
+	
+	  
+	  str->corrJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
+	  
+	  str->corrJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	  str->ll_2_jets_corr = getLikelihood(reader,var1,var2,var3,var4,str->corrJ1_pt,str->corrJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	  }
+	*/	
+	
+	
+      } //End of minimum number of Jets
     
-  */
+    // Fill the Tree
+    analysistree->Fill();
+  } // End of the If cut minimum!!!! 
 }
