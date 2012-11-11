@@ -206,6 +206,7 @@ typedef struct {
   int istagged;
   int channel;
   int isqcdevent;
+  int low_event;
   int n_jets;
   int n_b_jets;
   float weight;
@@ -634,8 +635,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   //Mthods to Set, Reset and Fill the TestSelection Struct
   void SetAnalysisOutputBranches(analysis_output_struct *str);
   void ResetAnalysisOutputBranches(analysis_output_struct *str);
-  void FillAnalysisOutputTree(analysis_output_struct *str);
-  
+  void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
+
   
  protected:
   Bool_t m_called_getGoodLeptons;
