@@ -71,10 +71,10 @@ Float_t Mjj_min      = 60000.;
 Float_t Mjj_max      = 115000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  = 30000.;
+Float_t MET_low_cut  = 50000.;
 Float_t MET_high_cut = 50000.;
 
-int HFOR_value = -999;
+int HFOR_value       = -999;
 
 
 HiggsllqqAnalysis::~HiggsllqqAnalysis()
@@ -4111,11 +4111,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       str->weight   = 1.*getSFWeight()*getPileupWeight()*ntuple->eventinfo.mc_event_weight();
     
     
+    //  Reset and fill trigger flag word
     //  str->btagSF    = tmpbtagsf;
     //  str->trig_SF   = trig_SF;
     //  str->trig_SF2  = trig_SF2;
     //  str->trig_SFC  = trig_SFC;
-    //  str->trig_flag = trig_flag;
     
     
     if(channel == HiggsllqqAnalysis::MU2) {
@@ -4123,6 +4123,13 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       D3PDReader::MuonD3PDObjectElement *mu_1 = m_GoodMuons.at(0)->GetMuon();
       D3PDReader::MuonD3PDObjectElement *mu_2 = m_GoodMuons.at(1)->GetMuon();
       
+
+      //Fill flag to distinguish single & double lepton trigger
+      if (passesSingleMuonTrigger() && passesDiMuonTrigger()) str->trig_flag = 3;
+      else if (passesDiMuonTrigger())                         str->trig_flag = 2;
+      else if (passesSingleMuonTrigger())                     str->trig_flag = 1;
+
+
       if(m_GoodMuons.at(0)->Get4Momentum()->Pt() >= m_GoodMuons.at(1)->Get4Momentum()->Pt()) {
 	
 	//Filling leading Muon
@@ -4220,6 +4227,15 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       D3PDReader::ElectronD3PDObjectElement *el_1 = m_GoodElectrons.at(0)->GetElectron();
       D3PDReader::ElectronD3PDObjectElement *el_2 = m_GoodElectrons.at(1)->GetElectron();
       
+
+      //Fill flag to distinguish single & double lepton trigger
+      if (passesSingleElectronTrigger() && passesDiElectronTrigger()) str->trig_flag = 3;
+      else if (passesDiElectronTrigger())                             str->trig_flag = 2;
+      else if (passesSingleElectronTrigger())                         str->trig_flag = 1;
+
+
+      
+      
       if(m_GoodElectrons.at(0)->Get4Momentum()->Pt() >= m_GoodElectrons.at(1)->Get4Momentum()->Pt()) {
 	
 	//Filling leading Electron
@@ -4234,11 +4250,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->lep1_sigd0     = m_GoodElectrons.at(0)->d0_sig();
 	
 	if(el_1->tightPP() == 1)
-	  str->lep1_quality = 1;	  
+	  str->lep1_quality = 3;	  
 	else if(el_1->mediumPP() == 1)
 	  str->lep1_quality = 2;
 	else if(el_1->loosePP() == 1)
-	  str->lep1_quality = 3;
+	  str->lep1_quality = 1;
 	
 	
 	//Filling the Second Electron
@@ -4253,11 +4269,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->lep2_sigd0     = m_GoodElectrons.at(1)->d0_sig();
 	
 	if(el_2->tightPP() == 1)
-	  str->lep2_quality = 1;	  
+	  str->lep2_quality = 3;	  
 	else if(el_2->mediumPP() == 1)
 	  str->lep2_quality = 2;
 	else if(el_2->loosePP() == 1)
-	  str->lep2_quality = 3;
+	  str->lep2_quality = 1;
 	
       }
       else {
@@ -4274,11 +4290,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->lep1_sigd0     = m_GoodElectrons.at(1)->d0_sig();
 	
 	if(el_2->tightPP() == 1)
-	  str->lep1_quality = 1;	  
+	  str->lep1_quality = 3;	  
 	else if(el_2->mediumPP() == 1)
 	  str->lep1_quality = 2;
 	else if(el_2->loosePP() == 1)
-	  str->lep1_quality = 3;
+	  str->lep1_quality = 1;
 	
 	
 	//Filling the Second Electron
@@ -4293,11 +4309,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->lep2_sigd0     = m_GoodElectrons.at(0)->d0_sig();
 	
 	if(el_1->tightPP() == 1)
-	  str->lep2_quality = 1;	  
+	  str->lep2_quality = 3;	  
 	else if(el_1->mediumPP() == 1)
 	  str->lep2_quality = 2;
 	else if(el_1->loosePP() == 1)
-	  str->lep2_quality = 3;
+	  str->lep2_quality = 1;
       }
       
       lep1.SetPtEtaPhiM(str->lep1_pt,str->lep1_eta,str->lep1_phi,str->lep1_m);
