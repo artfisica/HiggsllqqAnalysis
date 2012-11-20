@@ -71,7 +71,7 @@ Float_t Mjj_min      = 60000.;
 Float_t Mjj_max      = 115000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  = 50000.;
+Float_t MET_low_cut  = 30000.;
 Float_t MET_high_cut = 50000.;
 
 int HFOR_value       = -999;
