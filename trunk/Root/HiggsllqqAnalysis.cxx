@@ -62,17 +62,17 @@ Float_t Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electro
 
 // Definition of the Leptonic (dilepton) invariant mass window:
 Float_t Mll_low_min  = 20000.;
-Float_t Mll_low_max  = 76000.;
-Float_t Mll_high_min = 83000.;
-Float_t Mll_high_max = 99000.;
+Float_t Mll_low_max  = 80000.;
+Float_t Mll_high_min = 80000.;
+Float_t Mll_high_max = 100000.;
 
 // Definition of the Hadronic (dijet) invariant mass window:
 Float_t Mjj_min      = 60000.;
-Float_t Mjj_max      = 115000.;
+Float_t Mjj_max      = 120000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  = 30000.;
-Float_t MET_high_cut = 50000.;
+Float_t MET_low_cut  = 50000.;
+Float_t MET_high_cut = 60000.;
 
 int HFOR_value       = -999;
 
@@ -2342,7 +2342,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	if(chan!=1)// error: repare the mixing MUE channel
 	  {
 	    //Filling of the equivalent qqll tree (2011)
-	    FillReducedNtuple(last_event,chan);    
+	    //**** FillReducedNtuple(last_event,chan);    
 	    
 	    
 	    // TestSelection Filling candidate struct
@@ -2377,7 +2377,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  if(chan!=1)// error: repare the mixing MUE channel
 	    {
 	      // Filling of the equivalent qqll tree (2011)
-	      FillReducedNtuple(last_event,chan);    
+	      //**** FillReducedNtuple(last_event,chan);    
 	      
 	      
 	      // TestSelection Filling candidate struct
@@ -4062,35 +4062,29 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
 void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel) {
   
   
-  Int_t minimum_cut = 0;
+  Int_t minimum_cut(0), second_cut(0); 
   
   if(GetDoQCDSelection()) 
-    minimum_cut = HllqqCutFlow::DiJetMass; //DileptonMass; //DiJetMass; //NumTagJets;//PtLeptons;//MET;//NumberOfLeptons;
-  else 
-    minimum_cut = HllqqCutFlow::DiJetMass; //DileptonMass; //DiJetMass; //PtLeptons;
-  
-  str->istagged = GetNumOfTags();
-  //   if(GetNumOfTags()==2)
-  //     str->istagged = 1;
-  //   if(GetNumOfTags()<2)
-  //     str->istagged = 0;
-  //   if(GetNumOfTags()>2)
-  //     str->istagged = -1;
+    {
+      minimum_cut = HllqqCutFlow::PtLeptons;//DiJetMass; //DileptonMass; //NumTagJets; //MET; //NumberOfLeptons;
+      second_cut  = HllqqCutFlow::DiJetMass;
+    }
+  else
+    { 
+      minimum_cut = HllqqCutFlow::PtLeptons;
+      second_cut  = HllqqCutFlow::DiJetMass;    
+    }
   
   
   if(cut >= minimum_cut) {
     
-    
-    TLorentzVector lep1, lep2, lepZ;
+    str->n_jets   = m_GoodJets.size();
     
     std::pair<float,float> jetsf;
-    jetsf.first = 1.;
-    jetsf.second = 1.;
+    jetsf.first  = -1.;
+    jetsf.second = -1.;
     
-    //Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut!
-    std::pair<int,int> SelectedJets;
-    SelectedJets.first  = Pair_jet1;
-    SelectedJets.second = Pair_jet2;
+    TLorentzVector lep1, lep2, lepZ;
     
     
     str->runnumber   = ntuple->eventinfo.RunNumber();
@@ -4123,13 +4117,13 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       D3PDReader::MuonD3PDObjectElement *mu_1 = m_GoodMuons.at(0)->GetMuon();
       D3PDReader::MuonD3PDObjectElement *mu_2 = m_GoodMuons.at(1)->GetMuon();
       
-
+      
       //Fill flag to distinguish single & double lepton trigger
       if (passesSingleMuonTrigger() && passesDiMuonTrigger()) str->trig_flag = 3;
       else if (passesDiMuonTrigger())                         str->trig_flag = 2;
       else if (passesSingleMuonTrigger())                     str->trig_flag = 1;
-
-
+      
+      
       if(m_GoodMuons.at(0)->Get4Momentum()->Pt() >= m_GoodMuons.at(1)->Get4Momentum()->Pt()) {
 	
 	//Filling leading Muon
@@ -4227,13 +4221,13 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       D3PDReader::ElectronD3PDObjectElement *el_1 = m_GoodElectrons.at(0)->GetElectron();
       D3PDReader::ElectronD3PDObjectElement *el_2 = m_GoodElectrons.at(1)->GetElectron();
       
-
+      
       //Fill flag to distinguish single & double lepton trigger
       if (passesSingleElectronTrigger() && passesDiElectronTrigger()) str->trig_flag = 3;
       else if (passesDiElectronTrigger())                             str->trig_flag = 2;
       else if (passesSingleElectronTrigger())                         str->trig_flag = 1;
-
-
+      
+      
       
       
       if(m_GoodElectrons.at(0)->Get4Momentum()->Pt() >= m_GoodElectrons.at(1)->Get4Momentum()->Pt()) {
@@ -4329,13 +4323,32 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
     
     
     
-    //Getting the jet pair
-    D3PDReader::JetD3PDObjectElement *Jet_1 = m_GoodJets.at(SelectedJets.first)->GetJet();
-    D3PDReader::JetD3PDObjectElement *Jet_2 = m_GoodJets.at(SelectedJets.second)->GetJet();
     
-    
-    if (m_GoodJets.size()>=2) 
+    if (cut >= second_cut /*m_GoodJets.size()>=2*/) 
       {
+	str->n_b_jets = GetNumOfTags();
+	
+	
+	if(GetNumOfTags()==2)
+	  str->istagged = 1;
+	if(GetNumOfTags()<2)
+	  str->istagged = 0;
+	if(GetNumOfTags()>2)
+	  str->istagged = -1;
+	
+       	
+	//Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+	std::pair<int,int> SelectedJets;
+	SelectedJets.first  = Pair_jet1;
+	SelectedJets.second = Pair_jet2;
+	
+	
+	//Getting the jet pair
+	D3PDReader::JetD3PDObjectElement *Jet_1 = m_GoodJets.at(SelectedJets.first)->GetJet();
+	D3PDReader::JetD3PDObjectElement *Jet_2 = m_GoodJets.at(SelectedJets.second)->GetJet();
+	
+	
+	
 	str->realJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
 	str->realJ1_pt          = m_GoodJets.at(SelectedJets.first)->rightpt();
 	str->realJ1_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
@@ -4413,8 +4426,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	/*	
 	  if(FillGluon){
 	  
-	  str->n_jets = m_jetindex.size();
-	  str->n_b_jets = HowManyBJets(); 
 	  str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
 	  str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(idx1));
 	  str->realJ1_width = jet_width->at(m_jetindex.at(idx1));
