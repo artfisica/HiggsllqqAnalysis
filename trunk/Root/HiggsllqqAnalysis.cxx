@@ -2342,7 +2342,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	if(chan!=1)// error: repare the mixing MUE channel
 	  {
 	    //Filling of the equivalent qqll tree (2011)
-	    //**** FillReducedNtuple(last_event,chan);    
+	    FillReducedNtuple(last_event,chan);    
 	    
 	    
 	    // TestSelection Filling candidate struct
@@ -2377,7 +2377,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  if(chan!=1)// error: repare the mixing MUE channel
 	    {
 	      // Filling of the equivalent qqll tree (2011)
-	      //**** FillReducedNtuple(last_event,chan);    
+	      FillReducedNtuple(last_event,chan);    
 	      
 	      
 	      // TestSelection Filling candidate struct
