@@ -56,8 +56,8 @@ samples_mc12_p1230.ZZ_4lep,
 #  samples_data11.physics_Muons,
 #  samples_data11.physics_Egamma,
 #  samples_data11.debugrec_hltacc,
-#  samples_data12.physics_Muons,
-#  samples_data12.physics_Egamma,
+samples_data12.physics_Muons,
+samples_data12.physics_Egamma,
 #  samples_data12.debugrec_hlt,
 ]
 
@@ -82,7 +82,7 @@ command_opts='--analysis rel_17_2 --useTopoIso --input input.txt --output %s'  %
 username='arturos' # who is running the jo
 mycodeversion='Hllqq'
 #mycodeversion='Iso000007' # isolation studies [DO NOT USE but do not remove please]
-suffix='2012.02'
+suffix='2012.022'
 filename=command_outputname
 excludedSite=''
 useItCloud=True
