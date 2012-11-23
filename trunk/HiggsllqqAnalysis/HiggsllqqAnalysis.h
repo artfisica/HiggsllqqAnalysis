@@ -71,7 +71,7 @@
 #include <TMath.h>
 #include "Math/Interpolator.h"
 //#include "TestSelection/JetKinematicFitter.h"
-//#include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
+#include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
 
 using namespace std;
 
@@ -632,11 +632,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   void FillHFORvariables();
   
 
-  //Mthods to Set, Reset and Fill the TestSelection Struct
+  //Methods to Set, Reset and Fill the TestSelection Struct
   void SetAnalysisOutputBranches(analysis_output_struct *str);
   void ResetAnalysisOutputBranches(analysis_output_struct *str);
   void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
-
+  pair <double,double> GetJetSFsvalue(int jetindex);
+  
   
  protected:
   Bool_t m_called_getGoodLeptons;
@@ -667,6 +668,10 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TTree *m_TreeCutflow;
   TString m_outputFileName;
   TFile *m_outputFile;
+
+  Analysis::CalibrationDataInterfaceROOT *calib;
+  Analysis::CalibrationDataVariables ajet;
+  Analysis::Uncertainty uncertainty;
   
 
   //Definition of the TestSelection Struct
