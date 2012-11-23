@@ -10,11 +10,11 @@ atlasoff/Trigger/TrigAnalysis/TrigRootAnalysis/tags/TrigRootAnalysis-00-01-05
 svn+ssh://svn.cern.ch/reps/vippolitsvn/Higgs/HiggsAnalysis/trunk
 #svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/Jet/ApplyJetCalibration/tags/
 
-atlasgrp/CombPerf/JetETMiss/JetCalibrationTools/ApplyJetCalibration/tags/ApplyJetCalibration-00-00-09
+atlasoff/Reconstruction/Jet/ApplyJetCalibration/tags/ApplyJetCalibration-00-02-07
 atlasgrp/CombPerf/JetETMiss/JetCalibrationTools/ApplyJetResolutionSmearing/tags/ApplyJetResolutionSmearing-00-00-03
 atlasoff/Reconstruction/Jet/JetResolution/trunk
 atlasgrp/CombPerf/FlavorTag/JetTagAlgorithms/trunk
 atlasoff/Reconstruction/egamma/egammaEvent/tags/egammaEvent-03-06-29
 atlasoff/PhysicsAnalysis/JetTagging/JetTagCalibration/tags/JetTagCalibration-00-02-07
-atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-01-03
+atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-01-02
 
