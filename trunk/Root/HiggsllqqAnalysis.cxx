@@ -40,7 +40,7 @@ Bool_t cut_leptons   = kFALSE,
   DoMETdataClean     = kTRUE, 
   TaggedChannel      = kFALSE, 
   is4lepGood         = kFALSE, 
-  METtype_RefFinal   = kTRUE, 
+  METtype_RefFinal   = kTRUE,
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
   JVF_new_cut        = kFALSE,
@@ -76,6 +76,8 @@ Float_t MET_high_cut = 60000.;
 
 int HFOR_value       = -999;
 
+//MV1 operating point 70%
+Float_t MV1_OP70 = 0.795; //0.601713; //  
 
 HiggsllqqAnalysis::~HiggsllqqAnalysis()
 {
@@ -500,6 +502,12 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   // delay ggF tool initialization
   m_ggFReweighter = 0;
+
+  
+  //initiate the bTag SFs tool
+  calib = new Analysis::CalibrationDataInterfaceROOT("MV1","BTagCalibration.env","./HiggsllqqAnalysis/util/btagSF/"); 
+  ajet.jetAuthor = "AntiKt4TopoEM";
+  uncertainty = Analysis::Total;
   
   
   return kTRUE;
@@ -3173,7 +3181,7 @@ Int_t HiggsllqqAnalysis::GetNumOfTags()
   std::vector<Analysis::Jet *>::iterator jet_itr_i;
   
   for (jet_itr_i = m_GoodJets.begin(); jet_itr_i != m_GoodJets.end(); ++jet_itr_i) {
-    if(GetMV1value(*jet_itr_i) > 0.601713){
+    if(GetMV1value(*jet_itr_i) > MV1_OP70){
       tags++;
     }
   }
@@ -3192,12 +3200,12 @@ Bool_t HiggsllqqAnalysis::JetDimassTagged() {
   
   for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr) {
     
-    if((GetMV1value(*jet_itr) > 0.601713) && first)
+    if((GetMV1value(*jet_itr) > MV1_OP70) && first)
       {
 	first =kFALSE;
 	j1.SetPtEtaPhiM(b_rescaling*(*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
       }
-    if((GetMV1value(*jet_itr) > 0.601713) && !first)
+    if((GetMV1value(*jet_itr) > MV1_OP70) && !first)
       {
 	j2.SetPtEtaPhiM(b_rescaling*(*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
       }
@@ -3387,16 +3395,16 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
   
   if(cut >= minimum_cut) {
     
-    m_run       = ntuple->eventinfo.RunNumber();
-    m_event     = ntuple->eventinfo.EventNumber();
-    m_cut       = cut;
-    m_weight    = 1.;
-    m_mu        = 1.;
-    m_NPV       = 0;
-    m_truthH_pt = -1.;
-    m_ggFweight =  1.;
-    m_channel   = channel;
-    
+    m_run         = ntuple->eventinfo.RunNumber();
+    m_event       = ntuple->eventinfo.EventNumber();
+    m_cut         = cut;
+    m_weight      = 1.;
+    m_mu          = 1.;
+    m_NPV         = 0;
+    m_truthH_pt   = -1.;
+    m_ggFweight   =  1.;
+    m_channel     = channel;
+
     
     if(channel == HiggsllqqAnalysis::MU2) {
       m_lep_charge->push_back((m_GoodMuons.at(0))->charge());
@@ -4106,7 +4114,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
     
     
     //  Reset and fill trigger flag word
-    //  str->btagSF    = tmpbtagsf;
     //  str->trig_SF   = trig_SF;
     //  str->trig_SF2  = trig_SF2;
     //  str->trig_SFC  = trig_SFC;
@@ -4321,8 +4328,13 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
     } //End of E2 Channel if
     
-    
-    
+
+
+
+
+    ///////////////////    JET FILLING!    ////////////////////
+   
+    float tmpbtagsf = 1.;
     
     if (cut >= second_cut /*m_GoodJets.size()>=2*/) 
       {
@@ -4337,16 +4349,23 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  str->istagged = -1;
 	
        	
-	//Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+	// Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
 	std::pair<int,int> SelectedJets;
 	SelectedJets.first  = Pair_jet1;
 	SelectedJets.second = Pair_jet2;
 	
 	
-	//Getting the jet pair
+	// Getting the jet pair
 	D3PDReader::JetD3PDObjectElement *Jet_1 = m_GoodJets.at(SelectedJets.first)->GetJet();
 	D3PDReader::JetD3PDObjectElement *Jet_2 = m_GoodJets.at(SelectedJets.second)->GetJet();
 	
+	
+	// Looping to find the btagging SFs into the GoodJets selected into the event
+	for (int w = 0; w < m_GoodJets.size(); w++)
+	  {	
+	    //pair<double,double> thisjetSF = GetJetSFsvalue(w);
+	    //tmpbtagsf *= thisjetSF.first;
+	  }
 	
 	
 	str->realJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
@@ -4500,7 +4519,52 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	
       } //End of minimum number of Jets
     
+    // btagging SF filling
+    str->btagSF = tmpbtagsf;
+    
     // Fill the Tree
     analysistree->Fill();
   } // End of the If cut minimum!!!! 
+}
+
+
+pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
+{
+  
+  //Getting the jet Object
+  D3PDReader::JetD3PDObjectElement *Jet_ = m_GoodJets.at(jetindex)->GetJet();
+  
+  ajet.jetPt  = m_GoodJets.at(jetindex)->rightpt();
+  ajet.jetEta = m_GoodJets.at(jetindex)->righteta();
+  
+  Analysis::CalibResult res;
+  
+  std::string OperatingPoint;
+  if(MV1_OP70==0.795)
+    OperatingPoint = "0_795";
+  
+  else if(MV1_OP70==0.601713)
+    OperatingPoint = "0_601713";
+  
+  
+  if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70)
+    { 
+      // jet flavor truth values checked on lxr
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet, "B", OperatingPoint, uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet, "C", OperatingPoint, uncertainty);
+      else res = calib->getScaleFactor(ajet, "Light", OperatingPoint, uncertainty);
+    } 
+  else
+    {
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet, "B", OperatingPoint, uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet, "C", OperatingPoint, uncertainty);
+      else res = calib->getInefficiencyScaleFactor(ajet, "Light", OperatingPoint, uncertainty);
+    }
+  
+  pair <double,double> result;
+  
+  result.first=res.first;
+  result.second=res.second;
+  
+  return result;
 }
