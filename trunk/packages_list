@@ -16,4 +16,5 @@ atlasoff/Reconstruction/Jet/JetResolution/trunk
 atlasgrp/CombPerf/FlavorTag/JetTagAlgorithms/trunk
 atlasoff/Reconstruction/egamma/egammaEvent/tags/egammaEvent-03-06-29
 atlasoff/PhysicsAnalysis/JetTagging/JetTagCalibration/tags/JetTagCalibration-00-02-07
+atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-01-03
 
