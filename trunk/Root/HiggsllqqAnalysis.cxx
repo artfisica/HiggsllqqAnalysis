@@ -44,8 +44,9 @@ Bool_t cut_leptons   = kFALSE,
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
   JVF_new_cut        = kFALSE,
-  FillGluon          = kFALSE;
-
+  FillGluon          = kFALSE,
+  Look_b_SFs         = kFALSE;
+ 
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1);
@@ -63,12 +64,12 @@ Float_t Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electro
 // Definition of the Leptonic (dilepton) invariant mass window:
 Float_t Mll_low_min  = 20000.;
 Float_t Mll_low_max  = 80000.;
-Float_t Mll_high_min = 80000.;
-Float_t Mll_high_max = 100000.;
+Float_t Mll_high_min = 70000.;
+Float_t Mll_high_max = 110000.;
 
 // Definition of the Hadronic (dijet) invariant mass window:
-Float_t Mjj_min      = 60000.;
-Float_t Mjj_max      = 120000.;
+Float_t Mjj_min      = 40000.;
+Float_t Mjj_max      = 130000.;
 
 //Definition of the MET cut:
 Float_t MET_low_cut  = 50000.;
@@ -504,10 +505,13 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_ggFReweighter = 0;
 
   
-  //initiate the bTag SFs tool
-  calib = new Analysis::CalibrationDataInterfaceROOT("MV1","BTagCalibration.env","./HiggsllqqAnalysis/util/btagSF/"); 
-  ajet.jetAuthor = "AntiKt4TopoEM";
-  uncertainty = Analysis::Total;
+  
+  if(Look_b_SFs) //initiate the bTag SFs tool
+    {
+      calib = new Analysis::CalibrationDataInterfaceROOT("MV1","BTagCalibration.env","./HiggsllqqAnalysis/util/btagSF/"); 
+      ajet.jetAuthor = "AntiKt4TopoEM";
+      uncertainty = Analysis::Total;
+    } 
   
   
   return kTRUE;
@@ -3750,11 +3754,8 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->channel = -999;
   str->isqcdevent = -999;
   str->low_event = -999;
-
-  if(FillGluon){
-    str->n_jets = -999;
-    str->n_b_jets = -999;
-  }
+  str->n_jets = -999;
+  str->n_b_jets = -999;
   str->weight = -999.;
   str->lep1_m = -999.;
   str->lep1_pt = -999.;
@@ -3785,12 +3786,10 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ1_flavortruth = -999.;
   str->realJ1_MV1 = -999.;
   str->realJ1_jvf = -999.;
-  if(FillGluon){
-    str->realJ1_pdg = -1000.;
-    str->realJ1_ntrk = -1;
-    str->realJ1_width = -1.;
-    str->realJ1_Fisher = -2.;
-  }
+  str->realJ1_pdg = -1000.;
+  str->realJ1_ntrk = -1;
+  str->realJ1_width = -1.;
+  str->realJ1_Fisher = -2.;
   str->realJ2_m = -999.;
   str->realJ2_pt = -999.;
   str->realJ2_eta = -999.;
@@ -3799,13 +3798,11 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ2_flavortruth = -999.;
   str->realJ2_MV1 = -999.;
   str->realJ2_jvf = -999.;
-  if(FillGluon){
-    str->realJ2_pdg = -1000.;
-    str->realJ2_ntrk = -1;
-    str->realJ2_width = -1.;
-    str->realJ2_Fisher = -2.;
-    str->ll_2_jets = -1.;
-  }
+  str->realJ2_pdg = -1000.;
+  str->realJ2_ntrk = -1;
+  str->realJ2_width = -1.;
+  str->realJ2_Fisher = -2.;
+  str->ll_2_jets = -1.;
   str->realZ_m = -999.;
   str->realZ_pt = -999.;
   str->realZ_eta = -999.;
@@ -3820,17 +3817,15 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->corrJ1_eta_det = -999.;
   str->corrJ1_phi = -999.;
   str->corrJ1_flavortruth = -999.;
-  if(FillGluon){str->corrJ1_Fisher = -2.;}
+  str->corrJ1_Fisher = -2.;
   str->corrJ2_m = -999.;
   str->corrJ2_pt = -999.;
   str->corrJ2_eta = -999.;
   str->corrJ2_eta_det = -999.;
   str->corrJ2_phi = -999.;
   str->corrJ2_flavortruth = -999.;
-  if(FillGluon){
-    str->corrJ2_Fisher = -2.;
-    str->ll_2_jets_corr=-1.;
-  }
+  str->corrJ2_Fisher = -2.;
+  str->ll_2_jets_corr=-1.;
   str->corrZ_m = -999.;
   str->corrZ_pt = -999.;
   str->corrZ_eta = -999.;
@@ -3853,14 +3848,17 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->trig_flag = -1;
   str->HFOR = -1;
   str->Entries = -1;
-  //Flavour Composition Variables
-  str->SecondJet_MV1_b = -1.; // b jets 
-  str->SecondJet_MV1_c = -1.; // c jets
-  str->SecondJet_MV1_l = -1.; // light jets
-  str->AllJet_MV1_b = -1.; // b jets 
-  str->AllJet_MV1_c = -1.; // c jets
-  str->AllJet_MV1_l = -1.; // light jets
+
   if(FillGluon){
+    //Flavour Composition Variables    
+    str->SecondJet_MV1_b = -1.; // b jets 
+    str->SecondJet_MV1_c = -1.; // c jets
+    str->SecondJet_MV1_l = -1.; // light jets
+    str->AllJet_MV1_b = -1.; // b jets 
+    str->AllJet_MV1_c = -1.; // c jets
+    str->AllJet_MV1_l = -1.; // light jets
+    
+    
     str->xWin_44p_4var = -1;
     str->yWin_44p_4var = -1;
     str->zWin_44p_4var = -1.;
@@ -3906,12 +3904,8 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("channel",&(str->channel));
   analysistree->Branch("isqcdevent",&(str->isqcdevent));
   analysistree->Branch("low_event",&(str->low_event));
-  
-  if(FillGluon){
-    analysistree->Branch("n_jets",&(str->n_jets));
-    analysistree->Branch("n_b_jets",&(str->n_b_jets));
-  }
-  
+  analysistree->Branch("n_jets",&(str->n_jets));
+  analysistree->Branch("n_b_jets",&(str->n_b_jets));
   analysistree->Branch("weight",&(str->weight));
   analysistree->Branch("lep1_m",&(str->lep1_m));
   analysistree->Branch("lep1_pt",&(str->lep1_pt));
@@ -3945,14 +3939,10 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ1_flavortruth",&(str->realJ1_flavortruth));
   analysistree->Branch("realJ1_MV1",&(str->realJ1_MV1));
   analysistree->Branch("realJ1_jvf",&(str->realJ1_jvf));
-  
-  if(FillGluon){
     analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
     analysistree->Branch("realJ1_ntrk",&(str->realJ1_ntrk));
     analysistree->Branch("realJ1_width",&(str->realJ1_width));
     analysistree->Branch("realJ1_Fisher",&(str->realJ1_Fisher));
-  }
-  
   analysistree->Branch("realJ2_m",&(str->realJ2_m));
   analysistree->Branch("realJ2_pt",&(str->realJ2_pt));
   analysistree->Branch("realJ2_eta",&(str->realJ2_eta));
@@ -3961,15 +3951,11 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ2_flavortruth",&(str->realJ2_flavortruth));
   analysistree->Branch("realJ2_MV1",&(str->realJ2_MV1));
   analysistree->Branch("realJ2_jvf",&(str->realJ2_jvf));
-  
-  if(FillGluon){
     analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
     analysistree->Branch("realJ2_ntrk",&(str->realJ2_ntrk));
     analysistree->Branch("realJ2_width",&(str->realJ2_width));
     analysistree->Branch("realJ2_Fisher",&(str->realJ2_Fisher));
     analysistree->Branch("ll_2_jets",&(str->ll_2_jets));
-  }
-  
   analysistree->Branch("realZ_m",&(str->realZ_m));
   analysistree->Branch("realZ_pt",&(str->realZ_pt));
   analysistree->Branch("realZ_eta",&(str->realZ_eta));
@@ -3984,21 +3970,15 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("corrJ1_eta_det",&(str->corrJ1_eta_det));
   analysistree->Branch("corrJ1_phi",&(str->corrJ1_phi));
   analysistree->Branch("corrJ1_flavortruth",&(str->corrJ1_flavortruth));
-  
-  if(FillGluon){analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));}
-  
+    analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));
   analysistree->Branch("corrJ2_m",&(str->corrJ2_m));
   analysistree->Branch("corrJ2_pt",&(str->corrJ2_pt));
   analysistree->Branch("corrJ2_eta",&(str->corrJ2_eta));
   analysistree->Branch("corrJ2_eta_det",&(str->corrJ2_eta_det));
   analysistree->Branch("corrJ2_phi",&(str->corrJ2_phi));
   analysistree->Branch("corrJ2_flavortruth",&(str->corrJ2_flavortruth));
-  
-  if(FillGluon){
     analysistree->Branch("corrJ2_Fisher",&(str->corrJ2_Fisher));
     analysistree->Branch("ll_2_jets_corr",&(str->ll_2_jets_corr));
-  }
-  
   analysistree->Branch("corrZ_m",&(str->corrZ_m));
   analysistree->Branch("corrZ_pt",&(str->corrZ_pt));
   analysistree->Branch("corrZ_eta",&(str->corrZ_eta));
@@ -4022,15 +4002,15 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("HFOR",&(str->HFOR));
   analysistree->Branch("Entries",&(str->Entries));
   
-  //Flavour Composition Variables
-  analysistree->Branch("SecondJet_MV1_b",&(str->SecondJet_MV1_b)); // b jets 
-  analysistree->Branch("SecondJet_MV1_c",&(str->SecondJet_MV1_c)); // c jets
-  analysistree->Branch("SecondJet_MV1_l",&(str->SecondJet_MV1_l)); // light jets
-  analysistree->Branch("AllJet_MV1_b",&(str->AllJet_MV1_b)); // b jets 
-  analysistree->Branch("AllJet_MV1_c",&(str->AllJet_MV1_c)); // c jets
-  analysistree->Branch("AllJet_MV1_l",&(str->AllJet_MV1_l)); // light jets
-  
   if(FillGluon){
+    //Flavour Composition Variables
+    analysistree->Branch("SecondJet_MV1_b",&(str->SecondJet_MV1_b)); // b jets 
+    analysistree->Branch("SecondJet_MV1_c",&(str->SecondJet_MV1_c)); // c jets
+    analysistree->Branch("SecondJet_MV1_l",&(str->SecondJet_MV1_l)); // light jets
+    analysistree->Branch("AllJet_MV1_b",&(str->AllJet_MV1_b)); // b jets 
+    analysistree->Branch("AllJet_MV1_c",&(str->AllJet_MV1_c)); // c jets
+    analysistree->Branch("AllJet_MV1_l",&(str->AllJet_MV1_l)); // light jets
+    
     analysistree->Branch("xWin_44p_4var", &(str->xWin_44p_4var));
     analysistree->Branch("yWin_44p_4var", &(str->yWin_44p_4var));
     analysistree->Branch("zWin_44p_4var", &(str->zWin_44p_4var));
@@ -4335,21 +4315,22 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
     ///////////////////    JET FILLING!    ////////////////////
    
     float tmpbtagsf = 1.;
+    int howmanytags = GetNumOfTags();
+    str->n_b_jets   = howmanytags;
+    
+    if(howmanytags==2)
+      str->istagged = 1;
+    if(howmanytags<2)
+      str->istagged = 0;
+    if(howmanytags>2)
+      str->istagged = -1;
+    
+    
+	// Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
     
     if (cut >= second_cut /*m_GoodJets.size()>=2*/) 
       {
-	str->n_b_jets = GetNumOfTags();
-	
-	
-	if(GetNumOfTags()==2)
-	  str->istagged = 1;
-	if(GetNumOfTags()<2)
-	  str->istagged = 0;
-	if(GetNumOfTags()>2)
-	  str->istagged = -1;
-	
-       	
-	// Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+
 	std::pair<int,int> SelectedJets;
 	SelectedJets.first  = Pair_jet1;
 	SelectedJets.second = Pair_jet2;
@@ -4360,11 +4341,14 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	D3PDReader::JetD3PDObjectElement *Jet_2 = m_GoodJets.at(SelectedJets.second)->GetJet();
 	
 	
-	// Looping to find the btagging SFs into the GoodJets selected into the event
-	for (int w = 0; w < m_GoodJets.size(); w++)
-	  {	
-	    //pair<double,double> thisjetSF = GetJetSFsvalue(w);
-	    //tmpbtagsf *= thisjetSF.first;
+
+	if (Look_b_SFs) // Looping to find the btagging SFs into the GoodJets selected into the event
+	  {
+	    for (int w = 0; w < m_GoodJets.size(); w++)
+	      {	
+		pair<double,double> thisjetSF = GetJetSFsvalue(w);
+		tmpbtagsf *= thisjetSF.first;
+	      }
 	  }
 	
 	
