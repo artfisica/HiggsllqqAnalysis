@@ -4360,6 +4360,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->realJ1_flavortruth = Jet_1->flavor_truth_label();
 	str->realJ1_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.first));
 	str->realJ1_jvf         = Jet_1->jvtxf();
+	str->realJ1_ntrk        = Jet_1->nTrk();
+	str->realJ1_width       = Jet_1->WIDTH();
+
 	
 	str->realJ2_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
 	str->realJ2_pt          = m_GoodJets.at(SelectedJets.second)->rightpt();
@@ -4369,6 +4372,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->realJ2_flavortruth = Jet_2->flavor_truth_label();
 	str->realJ2_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.second));
 	str->realJ2_jvf         = Jet_2->jvtxf();
+	str->realJ2_ntrk        = Jet_2->nTrk();
+	str->realJ2_width       = Jet_2->WIDTH();
 	
 	
 	TLorentzVector j1;
