@@ -242,7 +242,7 @@ typedef struct {
   float realJ1_flavortruth;
   float realJ1_pdg;
   float realJ1_jvf;
-  float realJ1_ntrk;
+  int   realJ1_ntrk;
   float realJ1_width;
   float realJ1_MV1;
   float realJ1_Fisher;
@@ -254,7 +254,7 @@ typedef struct {
   float realJ2_flavortruth;
   float realJ2_pdg;
   float realJ2_jvf;
-  float realJ2_ntrk;
+  int   realJ2_ntrk;
   float realJ2_width;
   float realJ2_MV1;
   float realJ2_Fisher;
