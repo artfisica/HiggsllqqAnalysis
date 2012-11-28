@@ -45,7 +45,7 @@ Bool_t cut_leptons   = kFALSE,
   DoCaloMuons        = kTRUE,
   JVF_new_cut        = kFALSE,
   FillGluon          = kFALSE,
-  Look_b_SFs         = kFALSE;
+  Look_b_SFs         = kTRUE;
  
 
 //Global Jets Variables.
@@ -824,7 +824,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   else last = HllqqCutFlow::LArHole;
   
   
-  //METHOD THAT GET ALL THE LEPTONS: Seconf Call the really get all the Good Object that will be past the different analysis requests!!
+  //METHOD THAT GET ALL THE LEPTONS: Second Call the really get all the Good Object that will be past the different analysis requests!!
   getGoodLeptons();
 
   
@@ -4528,26 +4528,27 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   
   Analysis::CalibResult res;
   
+  /*
   std::string OperatingPoint;
   if(MV1_OP70==0.795)
     OperatingPoint = "0_795";
   
   else if(MV1_OP70==0.601713)
     OperatingPoint = "0_601713";
-  
+  */
   
   if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70)
     { 
       // jet flavor truth values checked on lxr
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet, "B", OperatingPoint, uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet, "C", OperatingPoint, uncertainty);
-      else res = calib->getScaleFactor(ajet, "Light", OperatingPoint, uncertainty);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , "0_795"/*OperatingPoint*/, uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet,  "C"  , "0_795"/*OperatingPoint*/, uncertainty);
+      else                                                                            res = calib->getScaleFactor(ajet,"Light", "0_795"/*OperatingPoint*/, uncertainty);
     } 
   else
     {
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet, "B", OperatingPoint, uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet, "C", OperatingPoint, uncertainty);
-      else res = calib->getInefficiencyScaleFactor(ajet, "Light", OperatingPoint, uncertainty);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , "0_795"/*OperatingPoint*/, uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , "0_795"/*OperatingPoint*/, uncertainty);
+      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", "0_795"/*OperatingPoint*/, uncertainty);
     }
   
   pair <double,double> result;
