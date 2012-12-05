@@ -2834,46 +2834,47 @@ void HiggsllqqAnalysis::initCrossSections()  //To be updated . Error
   m_CrossSection[125101] = 0.159;
   
   // sample masses (values are in GeV)
-  m_SignalSampleMass[116611] = 130;
-  m_SignalSampleMass[116612] = 200;
-  m_SignalSampleMass[116761] = 110;
-  m_SignalSampleMass[116762] = 115;
-  m_SignalSampleMass[116763] = 120;
-  m_SignalSampleMass[116764] = 125;
-  m_SignalSampleMass[116765] = 135;
-  m_SignalSampleMass[116766] = 140;
-  m_SignalSampleMass[116767] = 145;
-  m_SignalSampleMass[116768] = 150;
-  m_SignalSampleMass[116769] = 155;
-  m_SignalSampleMass[116770] = 160;
-  m_SignalSampleMass[116771] = 165;
-  m_SignalSampleMass[116772] = 170;
-  m_SignalSampleMass[116773] = 175;
-  m_SignalSampleMass[116774] = 180;
-  m_SignalSampleMass[116775] = 185;
-  m_SignalSampleMass[116776] = 190;
-  m_SignalSampleMass[116777] = 195;
-  m_SignalSampleMass[116779] = 210;
-  m_SignalSampleMass[116780] = 220;
-  m_SignalSampleMass[116781] = 240;
-  m_SignalSampleMass[116782] = 260;
-  m_SignalSampleMass[116783] = 280;
-  m_SignalSampleMass[116784] = 300;
-  m_SignalSampleMass[116785] = 320;
-  m_SignalSampleMass[116786] = 340;
-  m_SignalSampleMass[116787] = 360;
-  m_SignalSampleMass[116788] = 380;
-  m_SignalSampleMass[116789] = 400;
-  m_SignalSampleMass[116790] = 420;
-  m_SignalSampleMass[116791] = 440;
-  m_SignalSampleMass[116792] = 460;
-  m_SignalSampleMass[116793] = 480;
-  m_SignalSampleMass[116794] = 500;
-  m_SignalSampleMass[116795] = 520;
-  m_SignalSampleMass[116796] = 540;
-  m_SignalSampleMass[116797] = 560;
-  m_SignalSampleMass[116798] = 580;
-  m_SignalSampleMass[116799] = 600;
+  m_SignalSampleMass[160402] = 110;
+  m_SignalSampleMass[160403] = 115;
+  m_SignalSampleMass[160404] = 120;
+  m_SignalSampleMass[160405] = 125;
+  m_SignalSampleMass[160406] = 130;
+  m_SignalSampleMass[160407] = 135;
+  m_SignalSampleMass[160408] = 140;
+  m_SignalSampleMass[160409] = 145;
+  m_SignalSampleMass[160410] = 150;
+  m_SignalSampleMass[160411] = 155;
+  m_SignalSampleMass[160412] = 160;
+  m_SignalSampleMass[160413] = 165;
+  m_SignalSampleMass[160414] = 170;
+  m_SignalSampleMass[160415] = 175;
+  m_SignalSampleMass[160416] = 180;
+  m_SignalSampleMass[160417] = 185;
+  m_SignalSampleMass[160418] = 190;
+  m_SignalSampleMass[160419] = 195;
+  m_SignalSampleMass[160420] = 200;
+  m_SignalSampleMass[160421] = 220;
+  m_SignalSampleMass[160422] = 240;
+  m_SignalSampleMass[160423] = 260;
+  m_SignalSampleMass[160424] = 280;
+  m_SignalSampleMass[160425] = 300;
+  m_SignalSampleMass[160426] = 320;
+  m_SignalSampleMass[160427] = 340;
+  m_SignalSampleMass[160428] = 360;
+  m_SignalSampleMass[160429] = 380;
+  m_SignalSampleMass[160430] = 400;
+  /*
+    m_SignalSampleMass[160431] = 420;
+    m_SignalSampleMass[160432] = 440;
+    m_SignalSampleMass[160433] = 460;
+    m_SignalSampleMass[160434] = 480;
+    m_SignalSampleMass[160435] = 500;
+    m_SignalSampleMass[160436] = 520;
+    m_SignalSampleMass[160437] = 540;
+    m_SignalSampleMass[160438] = 560;
+    m_SignalSampleMass[160439] = 580;
+    m_SignalSampleMass[160440] = 600;
+  */
 }
 
 
@@ -3796,12 +3797,10 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ1_flavortruth = -999.;
   str->realJ1_MV1 = -999.;
   str->realJ1_jvf = -999.;
-  str->realJ1_pdg = -1000.;
   str->realJ1_ntrk = -1;
   str->realJ1_width = -1.;
   str->realJ1_ntrk12 = -1;
   str->realJ1_width12 = -1.;
-  str->realJ1_Fisher = -2.;
   str->realJ2_m = -999.;
   str->realJ2_pt = -999.;
   str->realJ2_eta = -999.;
@@ -3810,13 +3809,10 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ2_flavortruth = -999.;
   str->realJ2_MV1 = -999.;
   str->realJ2_jvf = -999.;
-  str->realJ2_pdg = -1000.;
   str->realJ2_ntrk = -1;
   str->realJ2_width = -1.;
   str->realJ2_ntrk12 = -1;
   str->realJ2_width12 = -1.;
-  str->realJ2_Fisher = -2.;
-  str->ll_2_jets = -1.;
   str->realZ_m = -999.;
   str->realZ_pt = -999.;
   str->realZ_eta = -999.;
@@ -3831,15 +3827,12 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->corrJ1_eta_det = -999.;
   str->corrJ1_phi = -999.;
   str->corrJ1_flavortruth = -999.;
-  str->corrJ1_Fisher = -2.;
   str->corrJ2_m = -999.;
   str->corrJ2_pt = -999.;
   str->corrJ2_eta = -999.;
   str->corrJ2_eta_det = -999.;
   str->corrJ2_phi = -999.;
   str->corrJ2_flavortruth = -999.;
-  str->corrJ2_Fisher = -2.;
-  str->ll_2_jets_corr=-1.;
   str->corrZ_m = -999.;
   str->corrZ_pt = -999.;
   str->corrZ_eta = -999.;
@@ -3864,6 +3857,16 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->Entries = -1;
 
   if(FillGluon){
+
+    str->realJ1_pdg = -1000.;
+    str->realJ2_pdg = -1000.;
+    str->realJ1_Fisher = -2.;
+    str->realJ2_Fisher = -2.;
+    str->ll_2_jets = -1.;
+    str->corrJ1_Fisher = -2.;
+    str->corrJ2_Fisher = -2.;
+    str->ll_2_jets_corr=-1.;
+    
     //Flavour Composition Variables    
     str->SecondJet_MV1_b = -1.; // b jets 
     str->SecondJet_MV1_c = -1.; // c jets
@@ -3953,12 +3956,10 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ1_flavortruth",&(str->realJ1_flavortruth));
   analysistree->Branch("realJ1_MV1",&(str->realJ1_MV1));
   analysistree->Branch("realJ1_jvf",&(str->realJ1_jvf));
-  analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
   analysistree->Branch("realJ1_ntrk",&(str->realJ1_ntrk));
   analysistree->Branch("realJ1_width",&(str->realJ1_width));
   analysistree->Branch("realJ1_ntrk12",&(str->realJ1_ntrk12));
   analysistree->Branch("realJ1_width12",&(str->realJ1_width12));
-  analysistree->Branch("realJ1_Fisher",&(str->realJ1_Fisher));
   analysistree->Branch("realJ2_m",&(str->realJ2_m));
   analysistree->Branch("realJ2_pt",&(str->realJ2_pt));
   analysistree->Branch("realJ2_eta",&(str->realJ2_eta));
@@ -3967,13 +3968,10 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ2_flavortruth",&(str->realJ2_flavortruth));
   analysistree->Branch("realJ2_MV1",&(str->realJ2_MV1));
   analysistree->Branch("realJ2_jvf",&(str->realJ2_jvf));
-  analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
   analysistree->Branch("realJ2_ntrk",&(str->realJ2_ntrk));
   analysistree->Branch("realJ2_width",&(str->realJ2_width));
   analysistree->Branch("realJ2_ntrk12",&(str->realJ2_ntrk12));
   analysistree->Branch("realJ2_width12",&(str->realJ2_width12));
-  analysistree->Branch("realJ2_Fisher",&(str->realJ2_Fisher));
-  analysistree->Branch("ll_2_jets",&(str->ll_2_jets));
   analysistree->Branch("realZ_m",&(str->realZ_m));
   analysistree->Branch("realZ_pt",&(str->realZ_pt));
   analysistree->Branch("realZ_eta",&(str->realZ_eta));
@@ -3988,15 +3986,12 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("corrJ1_eta_det",&(str->corrJ1_eta_det));
   analysistree->Branch("corrJ1_phi",&(str->corrJ1_phi));
   analysistree->Branch("corrJ1_flavortruth",&(str->corrJ1_flavortruth));
-    analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));
   analysistree->Branch("corrJ2_m",&(str->corrJ2_m));
   analysistree->Branch("corrJ2_pt",&(str->corrJ2_pt));
   analysistree->Branch("corrJ2_eta",&(str->corrJ2_eta));
   analysistree->Branch("corrJ2_eta_det",&(str->corrJ2_eta_det));
   analysistree->Branch("corrJ2_phi",&(str->corrJ2_phi));
   analysistree->Branch("corrJ2_flavortruth",&(str->corrJ2_flavortruth));
-    analysistree->Branch("corrJ2_Fisher",&(str->corrJ2_Fisher));
-    analysistree->Branch("ll_2_jets_corr",&(str->ll_2_jets_corr));
   analysistree->Branch("corrZ_m",&(str->corrZ_m));
   analysistree->Branch("corrZ_pt",&(str->corrZ_pt));
   analysistree->Branch("corrZ_eta",&(str->corrZ_eta));
@@ -4021,6 +4016,16 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("Entries",&(str->Entries));
   
   if(FillGluon){
+
+    analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
+    analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
+    analysistree->Branch("realJ1_Fisher",&(str->realJ1_Fisher));
+    analysistree->Branch("realJ2_Fisher",&(str->realJ2_Fisher));
+    analysistree->Branch("ll_2_jets",&(str->ll_2_jets));
+    analysistree->Branch("corrJ1_Fisher",&(str->corrJ1_Fisher));
+    analysistree->Branch("corrJ2_Fisher",&(str->corrJ2_Fisher));
+    analysistree->Branch("ll_2_jets_corr",&(str->ll_2_jets_corr));
+    
     //Flavour Composition Variables
     analysistree->Branch("SecondJet_MV1_b",&(str->SecondJet_MV1_b)); // b jets 
     analysistree->Branch("SecondJet_MV1_c",&(str->SecondJet_MV1_c)); // c jets
@@ -4480,13 +4485,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  if(FillGluon){
 	  
 	  str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
-	  str->realJ1_ntrk = jet_nTrk->at(m_jetindex.at(idx1));
-	  str->realJ1_width = jet_width->at(m_jetindex.at(idx1));
 	  str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
 	  
 	  str->realJ2_pdg = jet_flavorpdg->at(m_jetindex.at(idx2));
-	  str->realJ2_ntrk = jet_nTrk->at(m_jetindex.at(idx2));
-	  str->realJ2_width = jet_width->at(m_jetindex.at(idx2));
 	  str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
 	  str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
 	  
