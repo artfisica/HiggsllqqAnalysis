@@ -244,6 +244,8 @@ typedef struct {
   float realJ1_jvf;
   int   realJ1_ntrk;
   float realJ1_width;
+  int   realJ1_ntrk12;
+  float realJ1_width12;
   float realJ1_MV1;
   float realJ1_Fisher;
   float realJ2_m;
@@ -256,6 +258,8 @@ typedef struct {
   float realJ2_jvf;
   int   realJ2_ntrk;
   float realJ2_width;
+  int   realJ2_ntrk12;
+  float realJ2_width12;
   float realJ2_MV1;
   float realJ2_Fisher;
   float ll_2_jets;
@@ -554,6 +558,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     Info("printAllOptions", "========================");
   }
   
+
   
   // Methods from the qqll analysis
   Bool_t ApplyChangesMuon(Analysis::ChargedLepton *lep);
@@ -581,43 +586,73 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t GetMV1value(Analysis::Jet *jet);
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
   
+
+
+  // Favors Jets Methods
   Bool_t isHeavyJet(Int_t pdg);
   Bool_t isLightJet(Int_t pdg);
   Bool_t isGluonJet(Int_t pdg);
+
+
+
+  // Higgs MC (weight) Methods
   Float_t GetggFWeight();
   void InitMasses();
   Float_t GetTruthHiggsPt();
   
+
+
+  //Tracks and Widths 2012 methods
+  Float_t isInTheJet(Int_t Index, Int_t JetIndex, vector<float> *whatinjet_eta, vector<float> *whatinjet_phi);
+  std::pair<Float_t, Float_t>InfoTracks(Int_t JetIndex);
+  Bool_t isGoodTrack(Int_t TrackIndex);
   
+
+
+
   // Trigger SF 
   std::pair<double, double> getCandidateTriggerSF(Int_t option);
   
+
   //Method to count the number of that events into the GoodJets vector.
   Int_t GetNumOfTags();
+
   
   //2 Methods to evaluate the impact of the Jet kinematic cuts in the selection
   Bool_t GoodPtJets();
   Bool_t GoodEtaJets();
+
   
   //Method to evaluate the isolation mu-jet
   Bool_t MuonJetOR();
+
   
   //Method to find the best DiJets using JetKinematicFitter
   Bool_t JetKinematicFitterResult();
+
   
   //Method to calculate the DiJet invariant mass for the tagged Jets!
   Bool_t JetDimassTagged();
+
   
+  //Method to flag/control the QCD selection  
   Bool_t GetDoQCDSelection() { 
     if(!isMC()) return m_doqcdselection; 
     return kFALSE;
   }  
-  
-  
-  void SetDoLowMass(Bool_t val) { m_dolowmass = val; }
-  void SetSysStudy(Bool_t val) { m_sysstudy = val; }
+
   void SetDoQCDSelection(Bool_t val) { m_doqcdselection = val; }
   
+
+  //Method to flag/control the Low or High Mass selection    
+  void SetDoLowMass(Bool_t val) { m_dolowmass = val; }
+
+
+  // Method to setup the Systematic Jet Studies (JES-JER)
+  void SetSysStudy(Bool_t val) { m_sysstudy = val; }
+  
+
+  //Methods to sort the Jets or Leptons by pt
   void SortIndex(std::vector<Analysis::Jet *> &vec);
   void SortIndex(std::vector<Analysis::ChargedLepton *> &vec);
   
