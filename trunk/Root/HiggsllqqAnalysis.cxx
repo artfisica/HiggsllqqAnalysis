@@ -55,6 +55,7 @@ float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
 
 int Print_low_OR_high = 0; // 0 for LowSelection ; 1 for HighSelection
 
+
 int count_events(0),eventNow(-1),overElectron(0),overMuon(0),overJet(0); int badevent=0, prebadevent = 0, ptchange=0, ptelecChange=0;
 int periodBD(0),periodEH(0),periodI(0),periodJK(0),periodLM(0);
 Float_t Muon0(0),Muon1(0),Muon2(0),Muon3(0),Muon4(0),Muon5(0),Muon6(0),Muon7(0),Muon8(0);
@@ -79,6 +80,10 @@ int HFOR_value       = -999;
 
 //MV1 operating point 70%
 Float_t MV1_OP70 = 0.795; //0.601713; //  
+
+//Actual Jet Cone Size in used
+Float_t Cone_size= 0.4;
+
 
 HiggsllqqAnalysis::~HiggsllqqAnalysis()
 {
@@ -3648,45 +3653,50 @@ void HiggsllqqAnalysis::InitMasses() {
   
   // sample masses (in GeV/c2)
   
-  // gg samples
-  fSampleMass[116826] = 110;
-  fSampleMass[116828] = 120;
-  fSampleMass[116828] = 120;
-  fSampleMass[116830] = 130;
-  fSampleMass[116832] = 140;
-  fSampleMass[116834] = 150;
-  fSampleMass[116834] = 150;
-  fSampleMass[116836] = 160;
-  fSampleMass[116836] = 160;
-  fSampleMass[116838] = 170;
-  fSampleMass[116840] = 180;
-  fSampleMass[116840] = 180;
-  fSampleMass[116841] = 185;
-  fSampleMass[116842] = 190;
-  fSampleMass[116843] = 195;
-  fSampleMass[116843] = 195;
-  fSampleMass[116849] = 260;
-  fSampleMass[116851] = 300;
-  fSampleMass[116852] = 320;
-  fSampleMass[116855] = 380;
-  fSampleMass[116860] = 500;
-  fSampleMass[116863] = 560;
-  fSampleMass[116864] = 580;
-  fSampleMass[116865] = 600;
+  // gg samples ZZ->llqq
+  fSampleMass[160402] = 110;
+  fSampleMass[160403] = 115;
+  fSampleMass[160404] = 120;
+  fSampleMass[160405] = 125;
+  fSampleMass[160406] = 130;
+  fSampleMass[160407] = 135;
+  fSampleMass[160408] = 140;
+  fSampleMass[160409] = 145;
+  fSampleMass[160410] = 150;
+  fSampleMass[160411] = 155;
+  fSampleMass[160412] = 160;
+  fSampleMass[160413] = 165;
+  fSampleMass[160414] = 170;
+  fSampleMass[160415] = 175;
+  fSampleMass[160416] = 180;
+  fSampleMass[160417] = 185;
+  fSampleMass[160418] = 190;
+  fSampleMass[160419] = 195;
+  fSampleMass[160420] = 200;
+  fSampleMass[160421] = 220;
+  fSampleMass[160422] = 240;
+  fSampleMass[160423] = 260;
+  fSampleMass[160424] = 280;
+  fSampleMass[160425] = 300;
+  fSampleMass[160426] = 320;
+  fSampleMass[160427] = 340;
+  fSampleMass[160428] = 360;
+  fSampleMass[160429] = 380;
+  fSampleMass[160430] = 400;
   
   // VBF samples not included since the reweight is only for ggH samples
 }
 
 
 /*
-std::pair<double, double> HiggsllqqAnalysis::getCandidateTriggerSF(Int_t option)
-// returns event SF,SF_err using GoodMuon or GoodElectron depending on channel
-// option:  
-//        0 standard code 
-//        1 single code (presently as 0)
-//        2 dilepton code 
-//        3 combined code 
-{
+  std::pair<double, double> HiggsllqqAnalysis::getCandidateTriggerSF(Int_t option)
+  // returns event SF,SF_err using GoodMuon or GoodElectron depending on channel
+  // option:  
+  //        0 standard code 
+  //        1 single code (presently as 0)
+  //        2 dilepton code 
+  //        3 combined code 
+  {
   std::pair<double, double> result;
   result.first=1.;
   result.second=0.;
@@ -3789,6 +3799,8 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ1_pdg = -1000.;
   str->realJ1_ntrk = -1;
   str->realJ1_width = -1.;
+  str->realJ1_ntrk12 = -1;
+  str->realJ1_width12 = -1.;
   str->realJ1_Fisher = -2.;
   str->realJ2_m = -999.;
   str->realJ2_pt = -999.;
@@ -3801,6 +3813,8 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ2_pdg = -1000.;
   str->realJ2_ntrk = -1;
   str->realJ2_width = -1.;
+  str->realJ2_ntrk12 = -1;
+  str->realJ2_width12 = -1.;
   str->realJ2_Fisher = -2.;
   str->ll_2_jets = -1.;
   str->realZ_m = -999.;
@@ -3939,10 +3953,12 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ1_flavortruth",&(str->realJ1_flavortruth));
   analysistree->Branch("realJ1_MV1",&(str->realJ1_MV1));
   analysistree->Branch("realJ1_jvf",&(str->realJ1_jvf));
-    analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
-    analysistree->Branch("realJ1_ntrk",&(str->realJ1_ntrk));
-    analysistree->Branch("realJ1_width",&(str->realJ1_width));
-    analysistree->Branch("realJ1_Fisher",&(str->realJ1_Fisher));
+  analysistree->Branch("realJ1_pdg",&(str->realJ1_pdg));
+  analysistree->Branch("realJ1_ntrk",&(str->realJ1_ntrk));
+  analysistree->Branch("realJ1_width",&(str->realJ1_width));
+  analysistree->Branch("realJ1_ntrk12",&(str->realJ1_ntrk12));
+  analysistree->Branch("realJ1_width12",&(str->realJ1_width12));
+  analysistree->Branch("realJ1_Fisher",&(str->realJ1_Fisher));
   analysistree->Branch("realJ2_m",&(str->realJ2_m));
   analysistree->Branch("realJ2_pt",&(str->realJ2_pt));
   analysistree->Branch("realJ2_eta",&(str->realJ2_eta));
@@ -3951,11 +3967,13 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ2_flavortruth",&(str->realJ2_flavortruth));
   analysistree->Branch("realJ2_MV1",&(str->realJ2_MV1));
   analysistree->Branch("realJ2_jvf",&(str->realJ2_jvf));
-    analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
-    analysistree->Branch("realJ2_ntrk",&(str->realJ2_ntrk));
-    analysistree->Branch("realJ2_width",&(str->realJ2_width));
-    analysistree->Branch("realJ2_Fisher",&(str->realJ2_Fisher));
-    analysistree->Branch("ll_2_jets",&(str->ll_2_jets));
+  analysistree->Branch("realJ2_pdg",&(str->realJ2_pdg));
+  analysistree->Branch("realJ2_ntrk",&(str->realJ2_ntrk));
+  analysistree->Branch("realJ2_width",&(str->realJ2_width));
+  analysistree->Branch("realJ2_ntrk12",&(str->realJ2_ntrk12));
+  analysistree->Branch("realJ2_width12",&(str->realJ2_width12));
+  analysistree->Branch("realJ2_Fisher",&(str->realJ2_Fisher));
+  analysistree->Branch("ll_2_jets",&(str->ll_2_jets));
   analysistree->Branch("realZ_m",&(str->realZ_m));
   analysistree->Branch("realZ_pt",&(str->realZ_pt));
   analysistree->Branch("realZ_eta",&(str->realZ_eta));
@@ -4313,7 +4331,24 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 
 
     ///////////////////    JET FILLING!    ////////////////////
-   
+    /*   
+    std::vector<Analysis::Jet *>::iterator jet_itr;
+    for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr) {
+      D3PDReader::JetD3PDObjectElement *Jet = (*jet_itr)->GetJet();
+      
+      m_jets_m->push_back((*jet_itr)->Get4Momentum()->M());
+      m_jets_pt->push_back((*jet_itr)->rightpt());
+      m_jets_eta->push_back((*jet_itr)->righteta());
+      m_jets_eta_det->push_back(Jet->emscale_eta());
+      m_jets_phi->push_back((*jet_itr)->rightphi());
+      m_jets_MV1->push_back(GetMV1value(*jet_itr));
+      m_jets_jvtxf->push_back(Jet->jvtxf());
+      m_jets_nTrk->push_back(Jet->nTrk());
+      m_jets_width->push_back(Jet->WIDTH());
+    }
+    */
+    
+    
     float tmpbtagsf = 1.;
     int howmanytags = GetNumOfTags();
     str->n_b_jets   = howmanytags;
@@ -4326,11 +4361,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       str->istagged = -1;
     
     
-	// Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+    // Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
     
     if (cut >= second_cut /*m_GoodJets.size()>=2*/) 
       {
-
+	
 	std::pair<int,int> SelectedJets;
 	SelectedJets.first  = Pair_jet1;
 	SelectedJets.second = Pair_jet2;
@@ -4344,12 +4379,17 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 
 	if (Look_b_SFs) // Looping to find the btagging SFs into the GoodJets selected into the event
 	  {
-	    for (int w = 0; w < m_GoodJets.size(); w++)
+	    for (UInt_t w = 0; w < m_GoodJets.size(); w++)
 	      {	
 		pair<double,double> thisjetSF = GetJetSFsvalue(w);
 		tmpbtagsf *= thisjetSF.first;
 	      }
 	  }
+	
+	
+	//Filling the new definitions of Tracks and Width
+	std::pair<Float_t, Float_t> InfoNtracksWidthJ1 = InfoTracks(SelectedJets.first);
+	std::pair<Float_t, Float_t> InfoNtracksWidthJ2 = InfoTracks(SelectedJets.second);
 	
 	
 	str->realJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
@@ -4362,6 +4402,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->realJ1_jvf         = Jet_1->jvtxf();
 	str->realJ1_ntrk        = Jet_1->nTrk();
 	str->realJ1_width       = Jet_1->WIDTH();
+	str->realJ1_ntrk12      = InfoNtracksWidthJ1.first;
+	str->realJ1_width12     = InfoNtracksWidthJ1.second;
 
 	
 	str->realJ2_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
@@ -4374,6 +4416,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	str->realJ2_jvf         = Jet_2->jvtxf();
 	str->realJ2_ntrk        = Jet_2->nTrk();
 	str->realJ2_width       = Jet_2->WIDTH();
+	str->realJ2_ntrk12      = InfoNtracksWidthJ2.first;
+	str->realJ2_width12     = InfoNtracksWidthJ2.second;
+	
 	
 	
 	TLorentzVector j1;
@@ -4511,9 +4556,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
     // btagging SF filling
     str->btagSF = tmpbtagsf;
     
-    // Fill the Tree
+    // Fill the Tree    
     analysistree->Fill();
-  } // End of the If cut minimum!!!! 
+  } // End of the If cut minimum!!!!  
 }
 
 
@@ -4529,11 +4574,11 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   Analysis::CalibResult res;
   
   /*
-  std::string OperatingPoint;
-  if(MV1_OP70==0.795)
+    std::string OperatingPoint;
+    if(MV1_OP70==0.795)
     OperatingPoint = "0_795";
-  
-  else if(MV1_OP70==0.601713)
+    
+    else if(MV1_OP70==0.601713)
     OperatingPoint = "0_601713";
   */
   
@@ -4557,4 +4602,76 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   result.second=res.second;
   
   return result;
+}
+
+
+
+
+/////////////////////////////////////////////////////////////////
+// NTRK E WIDTH CALCULATION//
+std::pair<Float_t, Float_t> HiggsllqqAnalysis::InfoTracks(Int_t JetIndex)
+{  
+  Float_t Ntracks=0.,W=0., Width=0., N=-1., dr=Cone_size; 
+  
+  for(Int_t i=0; i<ntuple->trk.n();i++){ //loop on tracks in the event    
+    
+    if(isGoodTrack(i)){//passes only good tracks      
+      
+      if(isInTheJet(i,JetIndex,ntuple->trk.eta(),ntuple->trk.phi_wrtPV())<dr){//check if track is inside jet 	
+	
+	Ntracks++;//count tracks	
+	W+=ntuple->trk.pt()->at(i)*isInTheJet(i,JetIndex,ntuple->trk.eta(),ntuple->trk.phi_wrtPV());	
+	N+=ntuple->trk.pt()->at(i);      
+      }    
+    }  
+  }  
+  
+  Width=W/N;//track Width  
+  
+  pair<Float_t,Float_t> info;  
+  info.first = Ntracks;  
+  info.second = Width;  
+  
+  return info;
+}
+
+
+//GOOD TRACK//
+Bool_t HiggsllqqAnalysis::isGoodTrack(Int_t TrackIndex)
+{
+  
+  //  D3PDReader::TrackD3PDObject *track_branch(0);
+  //  track_branch = &(ntuple->trk);
+  
+  Bool_t quality = ((ntuple->trk.chi2()->at(TrackIndex)/ntuple->trk.ndof()->at(TrackIndex)) <= 3);  
+  Bool_t d0      = (ntuple->trk.d0_wrtPV()->at(TrackIndex) <= 1.0);  
+  Bool_t pixel   = (ntuple->trk.nPixHits()->at(TrackIndex)>1);  
+  Bool_t sct     = (ntuple->trk.nSCTHits()->at(TrackIndex)>6);  
+  Bool_t pt      = (ntuple->trk.pt()->at(TrackIndex)>1000);  
+  
+  return (quality && d0 && pixel && sct && pt);
+}
+
+
+//IN THE JET..THIS METHOD CALCULATE DR...YOU CAN MODIFY WITH TLORENTZ VECTOR THAT HAS DR CALCULATION INSIDE!
+Float_t HiggsllqqAnalysis::isInTheJet(Int_t Index, Int_t JetIndex, vector<float> *whatinjet_eta, vector<float> *whatinjet_phi)
+{  
+  Float_t deltar=0,deltaphi=0,deltaeta=0, deltaphi_tmp=0;  
+  
+  deltaphi_tmp = whatinjet_phi->at(Index) - m_GoodJets.at(JetIndex)->rightphi();  
+  
+  if(TMath::Abs(deltaphi_tmp)<TMath::Pi()) {
+    deltaphi=deltaphi_tmp;
+  }  
+  else if(deltaphi_tmp>TMath::Pi()) {
+    deltaphi=TMath::Pi()-deltaphi_tmp;
+  }  
+  else if(deltaphi_tmp<-TMath::Pi()) {
+    deltaphi=-TMath::Pi()-deltaphi_tmp;
+  }
+  
+  deltaeta = whatinjet_eta->at(Index)-m_GoodJets.at(JetIndex)->righteta();
+  deltar   = sqrt((deltaeta*deltaeta)+(deltaphi*deltaphi));  
+  
+  return deltar;
 }
