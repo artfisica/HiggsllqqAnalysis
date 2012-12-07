@@ -4393,8 +4393,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	
 	
 	//Filling the new definitions of Tracks and Width
-	std::pair<Float_t, Float_t> InfoNtracksWidthJ1 = InfoTracks(SelectedJets.first);
-	std::pair<Float_t, Float_t> InfoNtracksWidthJ2 = InfoTracks(SelectedJets.second);
+	std::pair<Float_t, Float_t> InfoNtracksWidthJ1 = -100; //InfoTracks(SelectedJets.first);
+	std::pair<Float_t, Float_t> InfoNtracksWidthJ2 = -100; //InfoTracks(SelectedJets.second);
 	
 	
 	str->realJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
