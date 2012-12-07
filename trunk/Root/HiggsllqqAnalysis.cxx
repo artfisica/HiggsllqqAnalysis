@@ -53,7 +53,7 @@ int Pair_jet1(-1), Pair_jet2(-1);
 float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
 
 
-int Print_low_OR_high = 0; // 0 for LowSelection ; 1 for HighSelection
+int Print_low_OR_high = 1; // 0 for LowSelection ; 1 for HighSelection
 
 
 int count_events(0),eventNow(-1),overElectron(0),overMuon(0),overJet(0); int badevent=0, prebadevent = 0, ptchange=0, ptelecChange=0;
@@ -598,8 +598,8 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   Mean_jets =0.0;
   good_events =0.0;
   
-  if(ntuple->eventinfo.RunNumber() >= 160420)
-    Print_low_OR_high=1;
+  if(ntuple->eventinfo.mc_channel_number() < 160420)
+    Print_low_OR_high=0;
   
   // open the output file
   m_outputFile = new TFile(m_outputFileName, "RECREATE");
@@ -4393,8 +4393,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	
 	
 	//Filling the new definitions of Tracks and Width
-	std::pair<Float_t, Float_t> InfoNtracksWidthJ1 = -100; //InfoTracks(SelectedJets.first);
-	std::pair<Float_t, Float_t> InfoNtracksWidthJ2 = -100; //InfoTracks(SelectedJets.second);
+	std::pair<Float_t, Float_t> InfoNtracksWidthJ1 = InfoTracks(SelectedJets.first);
+	std::pair<Float_t, Float_t> InfoNtracksWidthJ2 = InfoTracks(SelectedJets.second);
 	
 	
 	str->realJ1_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
@@ -4646,8 +4646,8 @@ Bool_t HiggsllqqAnalysis::isGoodTrack(Int_t TrackIndex)
   
   Bool_t quality = ((ntuple->trk.chi2()->at(TrackIndex)/ntuple->trk.ndof()->at(TrackIndex)) <= 3);  
   Bool_t d0      = (ntuple->trk.d0_wrtPV()->at(TrackIndex) <= 1.0);  
-  Bool_t pixel   = (ntuple->trk.nPixHits()->at(TrackIndex)>1);  
-  Bool_t sct     = (ntuple->trk.nSCTHits()->at(TrackIndex)>6);  
+  Bool_t pixel   = (1/*ntuple->trk.nPixHits()->at(TrackIndex)>1*/);  
+  Bool_t sct     = (1/*ntuple->trk.nSCTHits()->at(TrackIndex)>6*/);  
   Bool_t pt      = (ntuple->trk.pt()->at(TrackIndex)>1000);  
   
   return (quality && d0 && pixel && sct && pt);
