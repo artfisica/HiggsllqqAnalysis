@@ -33,9 +33,9 @@ Bool_t cut_leptons   = kFALSE,
   NotPtConsistency   = kTRUE, 
   
 //Smearing Options:
-  MuonSmearing       = kFALSE, 
-  JetSmearing        = kFALSE, 
-  ElectronSmearing   = kFALSE,
+  MuonSmearing       = kTRUE, 
+  JetSmearing        = kTRUE, 
+  ElectronSmearing   = kTRUE,
   
   DoMETdataClean     = kTRUE, 
   TaggedChannel      = kFALSE, 
