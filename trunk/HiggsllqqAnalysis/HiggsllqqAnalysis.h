@@ -672,6 +672,37 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   void ResetAnalysisOutputBranches(analysis_output_struct *str);
   void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
   pair <double,double> GetJetSFsvalue(int jetindex);
+
+
+
+
+  //SOM METHODS (Dec 2012)
+  int GetSOMx(TString which_map, int jetidx1, int jetidx2) { return (GetSOMWinner(which_map, jetidx1, jetidx2)).first;}
+  
+  int GetSOMy(TString which_map, int jetidx1, int jetidx2) { return (GetSOMWinner(which_map, jetidx1, jetidx2)).second;}
+  
+  float GetSOMz(TString which_map, int jetidx1, int jetidx2) {return GetSOMWinnerDist(which_map, jetidx1, jetidx2);}
+  
+  int GetSOMg(TString which_map, int jetidx1, int jetidx2);
+  
+  pair <int, int> GetSOMWinner(TString which_map, int jetidx1, int jetidx2);
+  
+  float GetSOMWinnerDist(TString which_map, int jetidx1, int jetidx2);
+  
+  pair <SOMVar, SOMVar> GetSOMVariables(int jetidx1, int jetidx2);
+  
+  pair<int, float> GetWinnerInfo(std::vector< pair<SOMVar,SOMVar> > SOMVectors, pair <SOMVar,SOMVar> Event);
+  
+  std::vector< pair<SOMVar,SOMVar> > GetSOMVectors(TString which_map, int jetidx1, int jetidx2);
+  
+  TString GetCorrectMap (TString which_map, int jetidx1, int jetidx2);
+  
+  std::vector< pair <int,int> > GetCoordinates(TString which_map);
+  
+  Bool_t CheckMap(TString which_map, int jetidx1, int jetidx2);
+  
+  Float_t Rightcut(Int_t efficiency, Float_t pt_jet, Float_t eta_jet);
+
   
   
  protected:
