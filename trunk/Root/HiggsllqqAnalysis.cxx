@@ -44,7 +44,7 @@ Bool_t cut_leptons   = kFALSE,
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
   JVF_new_cut        = kFALSE,
-  FillGluon          = kFALSE,
+  FillGluon          = kTRUE,
   Look_b_SFs         = kTRUE;
  
 
@@ -4479,78 +4479,78 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  str->chisquare = ChiSq;
 	}
 	
-
 	
-	/*	
-	  if(FillGluon){
-	  
-	  str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
-	  str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
-	  
-	  str->realJ2_pdg = jet_flavorpdg->at(m_jetindex.at(idx2));
-	  str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	  str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	  
-	  
+	int idx1 = Pair_jet1;
+	int idx2 = Pair_jet2;
+	
+	if(FillGluon){	  
 	  
 	  if (CheckMap("44p_4var",idx1,idx2)) {
-	  str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
-	  str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
-	  str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
-	  str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+	    str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+	    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+	    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+	    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
 	  }
 	  if (CheckMap("44p_6var",idx1,idx2)) {
-	  str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
-	  str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
-	  str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
-	  str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+	    str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+	    str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+	    str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+	    str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
 	  }
 	  if (CheckMap("44h_4var",idx1,idx2)) {
-	  str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
-	  str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
-	  str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
-	  str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+	    str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+	    str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+	    str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+	    str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
 	  }
 	  if (CheckMap("44h_6var",idx1,idx2)) {
-	  str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
-	  str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
-	  str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
-	  str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+	    str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+	    str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+	    str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+	    str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
 	  }
 	  if (CheckMap("64p_4var",idx1,idx2)) {
-	  str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
-	  str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
-	  str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
-	  str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+	    str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+	    str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+	    str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+	    str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
 	  }
 	  if (CheckMap("64p_6var",idx1,idx2)) {
-	  str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
-	  str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
-	  str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
-	  str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+	    str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+	    str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+	    str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+	    str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
 	  }
 	  if (CheckMap("64h_4var",idx1,idx2)) {
-	  str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
-	  str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
-	  str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
-	  str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+	    str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+	    str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+	    str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+	    str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
 	  }
 	  if (CheckMap("64h_6var",idx1,idx2)) {
-	  str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
-	  str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
-	  str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
-	  str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+	    str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+	    str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+	    str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+	    str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
 	  }
-	  }
+	} // End of the FillGluon variables
 	
+	
+	/*
 	  
-	  str->corrJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
-	  
-	  str->corrJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	  str->ll_2_jets_corr = getLikelihood(reader,var1,var2,var3,var4,str->corrJ1_pt,str->corrJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	  }
+	str->realJ1_pdg = jet_flavorpdg->at(m_jetindex.at(idx1));
+	str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
+	
+	str->realJ2_pdg = jet_flavorpdg->at(m_jetindex.at(idx2));
+	str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	
+	str->corrJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
+	
+	str->corrJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	str->ll_2_jets_corr = getLikelihood(reader,var1,var2,var3,var4,str->corrJ1_pt,str->corrJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
+	
 	*/	
-	
 	
       } //End of minimum number of Jets
     
@@ -4646,8 +4646,8 @@ Bool_t HiggsllqqAnalysis::isGoodTrack(Int_t TrackIndex)
   
   Bool_t quality = ((ntuple->trk.chi2()->at(TrackIndex)/ntuple->trk.ndof()->at(TrackIndex)) <= 3);  
   Bool_t d0      = (ntuple->trk.d0_wrtPV()->at(TrackIndex) <= 1.0);  
-  Bool_t pixel   = (1/*ntuple->trk.nPixHits()->at(TrackIndex)>1*/);  
-  Bool_t sct     = (1/*ntuple->trk.nSCTHits()->at(TrackIndex)>6*/);  
+  Bool_t pixel   = (ntuple->trk.nPixHits()->at(TrackIndex)>1);  
+  Bool_t sct     = (ntuple->trk.nSCTHits()->at(TrackIndex)>6);  
   Bool_t pt      = (ntuple->trk.pt()->at(TrackIndex)>1000);  
   
   return (quality && d0 && pixel && sct && pt);
@@ -4676,3 +4676,334 @@ Float_t HiggsllqqAnalysis::isInTheJet(Int_t Index, Int_t JetIndex, vector<float>
   
   return deltar;
 }
+
+
+
+
+
+
+// SOM METHODS (dec 2012)
+
+
+int HiggsllqqAnalysis::GetSOMg(TString which_map, int jetidx1, int jetidx2)
+{
+  
+  int g=0;
+  pair <int, int> WinnerNode = GetSOMWinner(which_map, jetidx1,jetidx2); 
+  std::vector< pair<int,int> > LinearMap;
+  LinearMap.clear();
+  
+  LinearMap = GetCoordinates(which_map); //// change function for others linearization 
+  
+  for(UInt_t i=0; i<LinearMap.size(); i++) if (LinearMap.at(i)==WinnerNode) g=i;
+  
+  return g;
+}
+
+
+pair <int, int> HiggsllqqAnalysis::GetSOMWinner(TString which_map, int jetidx1, int jetidx2){
+  
+  pair <SOMVar, SOMVar> EventSOMVar = GetSOMVariables(jetidx1, jetidx2);
+  std::vector< pair<SOMVar,SOMVar> > SOMVectors;
+  std::vector< pair<int,int> > Map;
+  SOMVectors.clear();
+  Map.clear();
+  
+  SOMVectors = GetSOMVectors(which_map, jetidx1, jetidx2);
+  Map = GetCoordinates(which_map);
+  
+  return Map.at(GetWinnerInfo(SOMVectors, EventSOMVar).first);
+  
+}
+
+float HiggsllqqAnalysis::GetSOMWinnerDist(TString which_map, int jetidx1, int jetidx2){
+  
+  pair <SOMVar, SOMVar> EventSOMVar = GetSOMVariables(jetidx1, jetidx2);
+  std::vector< pair <SOMVar, SOMVar> > SOMVectors;
+  SOMVectors.clear();
+  SOMVectors = GetSOMVectors(which_map, jetidx1, jetidx2);
+  
+  return GetWinnerInfo(SOMVectors, EventSOMVar).second;
+  
+}
+
+pair <SOMVar, SOMVar> HiggsllqqAnalysis::GetSOMVariables(int jetidx1, int jetidx2){
+  
+  pair <SOMVar, SOMVar> result;
+  SOMVar jet1SOM, jet2SOM;
+  
+  std::pair<Float_t, Float_t> InfoNtracksWidthJet1 = InfoTracks(jetidx1);
+  std::pair<Float_t, Float_t> InfoNtracksWidthJet2 = InfoTracks(jetidx2);
+  
+  
+  jet1SOM.Ntrk    = InfoNtracksWidthJet1.first;
+  jet1SOM.width   = InfoNtracksWidthJet1.second;
+  jet1SOM.JetMass = m_GoodJets.at(jetidx1)->Get4Momentum()->M();
+  jet2SOM.Ntrk    = InfoNtracksWidthJet2.first;
+  jet2SOM.width   = InfoNtracksWidthJet2.second;
+  jet2SOM.JetMass = m_GoodJets.at(jetidx2)->Get4Momentum()->M();
+  
+  
+  result.first = jet1SOM;
+  result.second = jet2SOM;
+  
+  return result;
+}
+
+pair<int, float> HiggsllqqAnalysis::GetWinnerInfo(std::vector< pair<SOMVar, SOMVar> > SOMVectors, pair <SOMVar,SOMVar> Event){
+  
+  std::vector<float> distances;
+  distances.clear();
+  
+  for (UInt_t i=0; i<SOMVectors.size(); i++){
+
+    float dist2 = 
+      pow(SOMVectors.at(i).first.Ntrk   - Event.first.Ntrk,2)  + 
+      pow(SOMVectors.at(i).first.width  - Event.first.width,2) +
+      pow(SOMVectors.at(i).second.Ntrk  - Event.second.Ntrk,2) +
+      pow(SOMVectors.at(i).second.width - Event.second.width,2);
+    if (SOMVectors.at(i).first.JetMass != -1. && SOMVectors.at(i).second.JetMass != -1.) dist2 += pow(SOMVectors.at(i).first.JetMass - Event.first.JetMass,2) + pow(SOMVectors.at(i).second.JetMass - Event.second.JetMass,2); 
+    distances.push_back(sqrt(dist2));
+  }
+  
+  float tmp_dist = distances.at(0);
+  int idx_min    = 0;
+  
+  for (UInt_t i=1; i<distances.size(); i++) if (distances.at(i) < tmp_dist ) {idx_min = i; tmp_dist=distances.at(i);}
+  
+  pair <int, float> result;
+  result.first  = idx_min;
+  result.second = distances.at(idx_min);
+  return result;
+}
+
+
+
+std::vector< pair<SOMVar,SOMVar> > HiggsllqqAnalysis::GetSOMVectors(TString which_map, int jetidx1, int jetidx2){
+  
+  TString maps_path    = "./HiggsllqqAnalysis/SOMmaps/";
+  TString map_filename = GetCorrectMap(which_map, jetidx1, jetidx2);
+  TString ps_dim;
+  pair<SOMVar, SOMVar> tmp;
+  std::vector< pair<SOMVar, SOMVar> > SOMVectors; 
+  SOMVectors.clear();
+  
+  ifstream map;
+  map.open(maps_path+map_filename);
+  
+  if      (which_map=="44p_4var" || which_map=="44h_4var" || which_map=="64p_4var" || which_map=="64h_4var") ps_dim = "4var";
+  else if (which_map=="44p_6var" || which_map=="44h_6var" || which_map=="64p_6var" || which_map=="64h_6var") ps_dim = "6var";
+  
+  float Ntrk1, Ntrk2, width1, width2, JetMass1, JetMass2; 
+  
+  while (1){
+    if      (ps_dim == "4var") map >> Ntrk1 >> width1 >> Ntrk2 >> width2;
+    else if (ps_dim == "6var") map >> Ntrk1 >> width1 >> JetMass1 >> Ntrk2 >> width2 >> JetMass2;
+    if (!map.good()) break;
+    tmp.first.Ntrk   = Ntrk1;
+    tmp.second.Ntrk  = Ntrk2;
+    tmp.first.width  = width1;
+    tmp.second.width = width2;
+    if      (ps_dim == "6var") {tmp.first.JetMass = JetMass1; tmp.first.JetMass = JetMass2;}
+    else if (ps_dim == "4var") {tmp.first.JetMass = -1.; tmp.first.JetMass = -1;}
+    SOMVectors.push_back(tmp);
+  }
+  map.close();
+  
+  return SOMVectors;
+}
+
+TString HiggsllqqAnalysis::GetCorrectMap (TString which_map, int jetidx1, int jetidx2){
+  
+  float jet1_pt = m_GoodJets.at(jetidx1)->rightpt();
+  float jet2_pt = m_GoodJets.at(jetidx2)->rightpt();
+  TString name  = which_map;
+  
+  name += "/QGmap_";
+  
+  if ((20000.<jet1_pt) && (jet1_pt<40000.) && (20000.<jet2_pt) && (jet2_pt<40000.)){ name += "20_40";}
+  else if ((40000.<jet1_pt) && (jet1_pt<60000.)) { name += "40_60"; }
+  else if ((60000.<jet1_pt) && (jet1_pt<90000.)) { name += "60_90"; }
+  else if ((90000.<jet1_pt) && (jet1_pt<120000.)){ name += "90_120";}
+  else {name += "90_120";}
+  
+  return name+".cod";
+}
+
+std::vector< pair<int,int> > HiggsllqqAnalysis::GetCoordinates(TString which_map){
+  
+  pair<int, int> point;
+  std::vector< pair<int,int> > result;
+  int xDimension=0, yDimension=0;
+  
+  if (which_map == "44p_4var" || which_map == "44h_4var" || which_map == "44p_6var" || which_map == "44h_6var") {xDimension = 4; yDimension = 4;}
+  else if (which_map == "64p_4var" || which_map == "64h_4var" || which_map == "64p_6var" || which_map == "64h_6var") {xDimension = 6; yDimension = 4;}
+  
+  for (int j=0; j<yDimension; j++){
+    for (int i=0; i<xDimension; i++){
+      point.first = i;
+      point.second = j;
+      result.push_back(point);
+    }
+  }
+  
+  return result;
+}
+
+Bool_t HiggsllqqAnalysis::CheckMap(TString which_map, int jetidx1, int jetidx2){
+  
+  TString maps_path = "./HiggsllqqAnalysis/SOMmaps/";
+  Bool_t opened = false;
+  ifstream file;
+  TString map_name = GetCorrectMap(which_map, jetidx1,jetidx2);
+  TString name = maps_path+map_name;
+  file.open(name);
+  if (file.good()) opened = true; 
+  file.close();
+  
+  return opened;
+}
+
+
+Float_t HiggsllqqAnalysis::Rightcut(Int_t efficiency, Float_t pt_jet, Float_t eta_jet)
+{
+  Int_t likebin = -1;
+  Float_t cut[15]={0};
+  Float_t cut0[15]={0.969,0.961,0.956,0.978,0.964,0.957,0.986,0.985,0.978,0.987,0.982,0.983,0.992,0.991,0.979};
+  Float_t cut10[15]={0.895,0.88,0.875,0.914,0.899,0.89,0.949,0.93,0.914,0.961,0.949,0.94,0.966,0.954,0.938};
+  Float_t cut20[15]={0.849,0.833,0.825,0.871,0.855,0.845,0.912,0.887,0.868,0.933,0.916,0.901,0.937,0.919,0.9};
+  Float_t cut30[15]={0.802,0.788,0.772,0.823,0.805,0.795,0.867,0.837,0.815,0.895,0.874,0.855,0.895,0.875,0.852};
+  Float_t cut40[15]={0.755,0.743,0.715,0.769,0.747,0.732,0.809,0.776,0.751,0.845,0.82,0.8,0.836,0.815,0.788};
+  Float_t cut50[15]={0.704,0.695,0.658,0.702,0.686,0.663,0.731,0.7,0.676,0.772,0.752,0.727,0.752,0.732,0.71};
+  Float_t cut60[15]={0.649,0.645,0.599,0.625,0.61,0.58,0.632,0.613,0.588,0.669,0.657,0.633,0.635,0.625,0.613};
+  Float_t cut70[15]={0.588,0.588,0.537,0.533,0.518,0.487,0.512,0.502,0.492,0.537,0.537,0.52,0.488,0.498,0.495};
+  Float_t cut80[15]={0.519,0.519,0.468,0.423,0.41,0.387,0.385,0.376,0.375,0.372,0.387,0.38,0.332,0.348,0.358};
+  Float_t cut90[15]={0.425,0.426,0.376,0.285,0.279,0.265,0.243,0.235,0.241,0.211,0.221,0.229,0.191,0.203,0.213};
+  
+  Float_t right=0;
+  
+  if(efficiency==90)
+    {
+      memcpy(cut,cut90,sizeof(cut)); 
+    }
+  else if(efficiency==80)
+    {
+      memcpy(cut,cut80,sizeof(cut));  
+    }
+  else if(efficiency==70)
+    {
+      memcpy(cut,cut70,sizeof(cut)); 
+    }
+  else if(efficiency==60)
+    {
+      memcpy(cut,cut60,sizeof(cut)); 
+    }
+  else if(efficiency==50)
+    {
+      memcpy(cut,cut50,sizeof(cut)); 
+    }
+  else if(efficiency==40)
+    {
+      memcpy(cut,cut40,sizeof(cut)); 
+    }
+  else if(efficiency==30)
+    {
+      memcpy(cut,cut30,sizeof(cut)); 
+    }
+  else if(efficiency==20)
+    {
+      memcpy(cut,cut20,sizeof(cut)); 
+    }
+  else if(efficiency==10)
+    {
+      memcpy(cut,cut10,sizeof(cut)); 
+    }
+  else if(efficiency==0)
+    {
+      memcpy(cut,cut0,sizeof(cut)); 
+    }
+
+  if((pt_jet/1000.>19. && pt_jet/1000.<40.)&&(eta_jet>-0.8&& eta_jet<0.8))
+    {
+      likebin = 0;
+    }
+  else if((pt_jet/1000.>19. && pt_jet/1000.<40.)&&((eta_jet>-1.6&& eta_jet<-0.8)||(eta_jet>0.8&&eta_jet<1.6)))
+    {
+      likebin = 1;
+    }
+  else if((pt_jet/1000.>19. && pt_jet/1000.<40.)&&((eta_jet>-2.5&& eta_jet<-1.6)||(eta_jet>1.6&&eta_jet<2.5)))
+    {
+      likebin = 2;
+    }
+  else if((pt_jet/1000.>19. && pt_jet/1000.<40.)&&(eta_jet<-2.5&& eta_jet>2.5))
+    {
+      likebin = 2;
+    }
+  else if((pt_jet/1000.>40. && pt_jet/1000.<60.)&&(eta_jet>-0.8&& eta_jet<0.8))
+    {
+      likebin = 3;
+    }
+  else if((pt_jet/1000.>40. && pt_jet/1000.<60.)&&((eta_jet>-1.6&& eta_jet<-0.8)||(eta_jet>0.8&&eta_jet<1.6)))
+    {
+      likebin = 4;
+    }
+  else if((pt_jet/1000.>40. && pt_jet/1000.<60.)&&((eta_jet>-2.5&& eta_jet<-1.6)||(eta_jet>1.6&&eta_jet<2.5)))
+    {
+      likebin = 5;
+    }
+  else if((pt_jet/1000.>40. && pt_jet/1000.<60.)&&(eta_jet<-2.5&& eta_jet>2.5))
+    {
+      likebin = 5;
+    }
+  else if((pt_jet/1000.>60. && pt_jet/1000.<90.)&&(eta_jet>-0.8&& eta_jet<0.8))
+    {
+      likebin = 6;
+    }
+  else if((pt_jet/1000.>60. && pt_jet/1000.<90.)&&((eta_jet>-1.6&& eta_jet<-0.8)||(eta_jet>0.8&&eta_jet<1.6)))
+    {
+      likebin = 7;
+    }
+  else if((pt_jet/1000.>60. && pt_jet/1000.<90.)&&((eta_jet>-2.5&& eta_jet<-1.6)||(eta_jet>1.6&&eta_jet<2.5)))
+    {
+      likebin = 8;
+    }
+  else if((pt_jet/1000.>60. && pt_jet/1000.<90.)&&(eta_jet<-2.5&& eta_jet>2.5))
+    {
+      likebin = 8;
+    }
+  else if((pt_jet/1000.>90. && pt_jet/1000.<120.)&&(eta_jet>-0.8&& eta_jet<0.8))
+    {
+      likebin = 9;
+    }
+  else if((pt_jet/1000.>90. && pt_jet/1000.<120.)&&((eta_jet>-1.6&& eta_jet<-0.8)||(eta_jet>0.8&&eta_jet<1.6)))
+    {
+      likebin = 10;
+    }
+  else if((pt_jet/1000.>90. && pt_jet/1000.<120.)&&((eta_jet>-2.5&& eta_jet<-1.6)||(eta_jet>1.6&&eta_jet<2.5)))
+    {
+      likebin = 11;
+    }
+  else if((pt_jet/1000.>90. && pt_jet/1000.<120.)&&(eta_jet<-2.5&& eta_jet>2.5))
+    {
+      likebin = 11;
+    }
+  else if((pt_jet/1000.>120. && pt_jet/1000.<180.)&&(eta_jet>-0.8&& eta_jet<0.8))
+    {
+      likebin = 12;
+    }
+  else if((pt_jet/1000.>120. && pt_jet/1000.<180.)&&((eta_jet>-1.6&& eta_jet<-0.8)||(eta_jet>0.8&&eta_jet<1.6)))
+    {
+      likebin = 13;
+    }
+  else if((pt_jet/1000.>120. && pt_jet/1000.<180.)&&((eta_jet>-2.5&& eta_jet<-1.6)||(eta_jet>1.6&&eta_jet<2.5)))
+    {
+      likebin = 14;
+    }
+  else 
+    {
+      likebin = 14;
+    }  
+  right=cut[likebin];
+  return right;
+}
+
