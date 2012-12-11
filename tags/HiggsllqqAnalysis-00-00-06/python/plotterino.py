@@ -639,6 +639,12 @@ plot = scaleQCD(plot,'mllqq_High',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integ
 plot = scaleQCD(plot,'mllqq_sb_High',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
 plot = scaleQCD(plot,'mllqq_lsb_High',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
 plot = scaleQCD(plot,'mllqq_hsb_High',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
+## plot = scaleQCD(plot,'gWin20_40',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
+## plot = scaleQCD(plot,'gWin40_60',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
+## plot = scaleQCD(plot,'gWin60_90',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
+## plot = scaleQCD(plot,'gWin90_120',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
+## plot = scaleQCD(plot,'gWin120_180',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
+## plot = scaleQCD(plot,'gWin180',chan,'untag',nmc_2j[f_index]*tff_data_2j.Integral()/tff_totmc_2j.Integral(),nqcd_2j[f_index]*tff_data_2j.Integral()/tff_qcd_2j.Integral())
 ############################################################################################################
 
 
@@ -850,6 +856,13 @@ dumpyields(plot,'mllqq_lsb_High',chan,'incl')
 
 plotinorder(plot,'mllqq_hsb_High',chan,'untag',False)
 dumpyields(plot,'mllqq_hsb_High',chan,'incl')
+
+## plotinorder(plot,'gWin20_40',chan,'untag',False)
+## plotinorder(plot,'gWin40_60',chan,'untag',False)
+## plotinorder(plot,'gWin60_90',chan,'untag',False)
+## plotinorder(plot,'gWin90_120',chan,'untag',False)
+## plotinorder(plot,'gWin120_180',chan,'untag',False)
+## plotinorder(plot,'gWin180',chan,'untag',False)
 ##########################################################################################################
 
 
@@ -876,3 +889,89 @@ for extsample in extsamplelist:
     plot[extsample]['mllqq_High'][lepindex][tagindex].Write()
 fileuntag.Write()
 fileuntag.Close()
+
+
+## ###save file for som optimization
+## print 'SAVING SOM FILES'
+## tagindex = 0 #untag
+## lepindex = lepindexlist[0]
+## SigXNode = open("SigXNode_20_40_"+chan+".txt", "w")
+## BkgXNode = open("BkgXNode_20_40_"+chan+".txt", "w")
+## for extsample in extsamplelist:
+##   if extsample.name=='totbkg':
+##     for bin in range(1,17):
+##       BkgXNode.write('%15f\n' % (plot[extsample]['gWin20_40'][lepindex][tagindex].GetBinContent(bin)))
+##   elif extsample.name=='Signal_ggH':
+##     for bin in range(1,17): 
+##       SigXNode.write('%15f\n' % (plot[extsample]['gWin20_40'][lepindex][tagindex].GetBinContent(bin)))
+## print 'Writing done'
+
+## print 'SAVING SOM FILES2'
+## tagindex = 0 #untag
+## lepindex = lepindexlist[0]
+## SigXNode2 = open("SigXNode_40_60_"+chan+".txt", "w")
+## BkgXNode2 = open("BkgXNode_40_60_"+chan+".txt", "w")
+## for extsample in extsamplelist:
+##   if extsample.name=='totbkg':
+##     for bin in range(1,17):
+##       BkgXNode2.write('%15f\n' % (plot[extsample]['gWin40_60'][lepindex][tagindex].GetBinContent(bin)))
+##   elif extsample.name=='Signal_ggH':
+##     for bin in range(1,17): 
+##       SigXNode2.write('%15f\n' % (plot[extsample]['gWin40_60'][lepindex][tagindex].GetBinContent(bin)))
+## print 'Writing done 2'
+
+## print 'SAVING SOM FILES3'
+## tagindex = 0 #untag
+## lepindex = lepindexlist[0]
+## SigXNode3 = open("SigXNode_60_90_"+chan+".txt", "w")
+## BkgXNode3 = open("BkgXNode_60_90_"+chan+".txt", "w")
+## for extsample in extsamplelist:
+##   if extsample.name=='totbkg':
+##     for bin in range(1,17):
+##       BkgXNode3.write('%15f\n' % (plot[extsample]['gWin60_90'][lepindex][tagindex].GetBinContent(bin)))
+##   elif extsample.name=='Signal_ggH':
+##     for bin in range(1,17): 
+##       SigXNode3.write('%15f\n' % (plot[extsample]['gWin60_90'][lepindex][tagindex].GetBinContent(bin)))
+## print 'Writing done 3'
+
+## print 'SAVING SOM FILES4'
+## tagindex = 0 #untag
+## lepindex = lepindexlist[0]
+## SigXNode4 = open("SigXNode_90_120_"+chan+".txt", "w")
+## BkgXNode4 = open("BkgXNode_90_120_"+chan+".txt", "w")
+## for extsample in extsamplelist:
+##   if extsample.name=='totbkg':
+##     for bin in range(1,17):
+##       BkgXNode4.write('%15f\n' % (plot[extsample]['gWin90_120'][lepindex][tagindex].GetBinContent(bin)))
+##   elif extsample.name=='Signal_ggH':
+##     for bin in range(1,17): 
+##       SigXNode4.write('%15f\n' % (plot[extsample]['gWin90_120'][lepindex][tagindex].GetBinContent(bin)))
+## print 'Writing done 4'
+
+## print 'SAVING SOM FILES5'
+## tagindex = 0 #untag
+## lepindex = lepindexlist[0]
+## SigXNode5 = open("SigXNode_120_180"+chan+".txt", "w")
+## BkgXNode5 = open("BkgXNode_120_180"+chan+".txt", "w")
+## for extsample in extsamplelist:
+##   if extsample.name=='totbkg':
+##     for bin in range(1,17):
+##       BkgXNode5.write('%15f\n' % (plot[extsample]['gWin120_180'][lepindex][tagindex].GetBinContent(bin)))
+##   elif extsample.name=='Signal_ggH':
+##     for bin in range(1,17): 
+##       SigXNode5.write('%15f\n' % (plot[extsample]['gWin120_180'][lepindex][tagindex].GetBinContent(bin)))
+## print 'Writing done 5'
+
+## print 'SAVING SOM FILES6'
+## tagindex = 0 #untag
+## lepindex = lepindexlist[0]
+## SigXNode6 = open("SigXNode_180"+chan+".txt", "w")
+## BkgXNode6 = open("BkgXNode_180"+chan+".txt", "w")
+## for extsample in extsamplelist:
+##   if extsample.name=='totbkg':
+##     for bin in range(1,17):
+##       BkgXNode6.write('%15f\n' % (plot[extsample]['gWin180'][lepindex][tagindex].GetBinContent(bin)))
+##   elif extsample.name=='Signal_ggH':
+##     for bin in range(1,17): 
+##       SigXNode6.write('%15f\n' % (plot[extsample]['gWin180'][lepindex][tagindex].GetBinContent(bin)))
+## print 'Writing done 6'

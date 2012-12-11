@@ -79,6 +79,12 @@ plotlist = [
     'mllqq_sb_High',
     'mllqq_lsb_High',
     'mllqq_hsb_High',
+    ## 'gWin20_40',
+##     'gWin40_60',
+##     'gWin60_90',
+##     'gWin90_120',
+##     'gWin120_180',
+##     'gWin180',
 ]
 
 whattodraw = [
@@ -152,6 +158,12 @@ whattodraw = [
     'corrH_m',
     'corrH_m',
     'corrH_m',
+    ##     'gWin_44g',
+    ##     'gWin_44g',
+    ##     'gWin_44g',
+    ##     'gWin_44g',
+    ##     'gWin_44g',
+    ##     'gWin_44g',
 ]
 
 
@@ -297,6 +309,18 @@ basecondition = [
     '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>83000 && lepZ_m<99000 && chisquare>=0 && realZ_m>40000  && realZ_m<70000  && met<60000 && weight>=0',
     ## 'mllqq_hsb_High'
     '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>83000 && lepZ_m<99000 && chisquare>=0 && realZ_m>105000 && realZ_m<160000 && met<60000 && weight>=0',
+    ## 'gWin20_40'
+##     '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>20000 && lepZ_m<76000 && chisquare>=0 && realZ_m>60000 && realZ_m<115000 && met<30000 && weight>=0 && n_jets>=2 && realJ1_pt<40000 && realJ2_pt<40000',
+    ## 'gWin40_60'
+##   '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>20000 && lepZ_m<76000 && chisquare>=0 && realZ_m>60000 && realZ_m<115000 && met<30000 && weight>=0 && n_jets>=2 && realJ1_pt>40000 && realJ1_pt<60000',
+    ## 'gWin60_90'
+##   '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>20000 && lepZ_m<76000 && chisquare>=0 && realZ_m>60000 && realZ_m<115000 && met<30000 && weight>=0 && n_jets>=2 && realJ1_pt>60000 && realJ1_pt<90000',
+    ## 'gWin90_120'
+##   '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>20000 && lepZ_m<76000 && chisquare>=0 && realZ_m>60000 && realZ_m<115000 && met<30000 && weight>=0 && n_jets>=2 && realJ1_pt>90000 && realJ1_pt<120000',
+    ## 'gWin120_180'
+##   '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>20000 && lepZ_m<76000 && chisquare>=0 && realZ_m>60000 && realZ_m<115000 && met<30000 && weight>=0 && n_jets>=2 && realJ1_pt>120000 && realJ1_pt<180000',
+    ## 'gWin180'
+##    '((lep1_pt>20000 && lep2_pt>7000 && (trig_flag==1 || trig_flag==3)) || (lep1_pt>12000 && lep2_pt>12000 && channel==0 && (trig_flag==2 || trig_flag==3)) || (lep1_pt>14000 && lep2_pt>14000 && channel==2 && (trig_flag==2 || trig_flag==3)) || channel==1) && lepZ_m>20000 && lepZ_m<76000 && chisquare>=0 && realZ_m>60000 && realZ_m<115000 && met<30000 && weight>=0 && n_jets>=2 && realJ1_pt>180000',
 ]
 
 
@@ -442,6 +466,18 @@ btagsf = [
     '*btagSF',
     ## 'mllqq_hsb_High'
     '*btagSF',
+    ## 'gWin20_40'
+    ##'*btagSF',
+    ## 'gWin40_60'
+    ##'*btagSF',
+    ## 'gWin60_90'
+    ##'*btagSF',
+    ## 'gWin90_120'
+    ##'*btagSF',
+    ## 'gWin120_180'
+    ##'*btagSF',
+    ## 'gWin180'
+    ##'*btagSF',
 ]
 
 
@@ -586,6 +622,18 @@ nbins = [
     200,
     ## 'mllqq_hsb_High'
     200,
+    ## 'gWin20_40'
+  ##  16,
+    ## 'gWin40_60'
+    ##16,
+    ## 'gWin60_90'
+    ##16,
+    ## 'gWin90_120'
+    ##16,
+    ## 'gWin120_180'
+    ##16,
+    ## 'gWin180'
+    ##16,
 ]
 
 
@@ -730,6 +778,18 @@ binmin = [
     20000,
     ## 'mllqq_hsb_High'
     20000,
+    ## 'gWin20_40'
+  ##  0,
+    ## 'gWin40_60'
+    ##0,
+    ## 'gWin60_90'
+    ##0,
+    ## 'gWin90_120'
+    ##0,
+    ## 'gWin120_180'
+    ##0,
+    ## 'gWin180'
+    ##0,
 ]
 
 
@@ -875,4 +935,16 @@ binmax = [
     1000000,
     ## 'mllqq_hsb_High'
     1000000,
+    ## 'gWin20_40'
+  ##  16,
+    ## 'gWin40_60'
+    ##16,
+    ## 'gWin60_90'
+    ##16,
+    ## 'gWin90_120'
+    ##16,
+    ## 'gWin120_180'
+    ##16,
+    ## 'gWin180'
+    ##16,
 ]
