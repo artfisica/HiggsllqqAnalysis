@@ -4822,10 +4822,11 @@ TString HiggsllqqAnalysis::GetCorrectMap (TString which_map, int jetidx1, int je
   name += "/QGmap_";
   
   if ((20000.<jet1_pt) && (jet1_pt<40000.) && (20000.<jet2_pt) && (jet2_pt<40000.)){ name += "20_40";}
-  else if ((40000.<jet1_pt) && (jet1_pt<60000.)) { name += "40_60"; }
-  else if ((60000.<jet1_pt) && (jet1_pt<90000.)) { name += "60_90"; }
-  else if ((90000.<jet1_pt) && (jet1_pt<120000.)){ name += "90_120";}
-  else {name += "90_120";}
+  else if ((40000.<jet1_pt) && (jet1_pt<75000.)) { name += "40_75"; }
+  else if ((75000.<jet1_pt) && (jet1_pt<120000.)) { name += "75_120"; }
+  else if ((120000.<jet1_pt) && (jet1_pt<180000.)){ name += "120_180";}
+  else if ((180000.<jet1_pt) && (jet1_pt<240000.)){ name += "180_240";}
+  else if (240000.<jet1_pt) {name += "240";}
   
   return name+".cod";
 }
