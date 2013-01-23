@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    August 10th 2012
+    January 20th 2013
 */
 
 Bool_t cut_leptons   = kFALSE, 
@@ -46,7 +46,7 @@ Bool_t cut_leptons   = kFALSE,
   JVF_new_cut        = kFALSE,
   FillGluon          = kTRUE,
   Look_b_SFs         = kTRUE;
- 
+
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1);
@@ -64,17 +64,19 @@ Float_t Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electro
 
 // Definition of the Leptonic (dilepton) invariant mass window:
 Float_t Mll_low_min  = 20000.;
-Float_t Mll_low_max  = 80000.;
+Float_t Mll_low_max  = 83000.;
 Float_t Mll_high_min = 70000.;
-Float_t Mll_high_max = 110000.;
+Float_t Mll_high_max = 99000.;
 
-// Definition of the Hadronic (dijet) invariant mass window:
-Float_t Mjj_min      = 40000.;
-Float_t Mjj_max      = 130000.;
+// Definition of the Hadronic (dijet) invariant mass window:  70 (60) GeV < Mjj < 105 (115) GeV 
+Float_t Mjj_low_min       = 60000.;
+Float_t Mjj_low_max       = 115000.;
+Float_t Mjj_high_min      = 70000.;
+Float_t Mjj_high_max      = 105000.;
 
 //Definition of the MET cut:
-Float_t MET_low_cut  = 50000.;
-Float_t MET_high_cut = 60000.;
+Float_t MET_low_cut  = 30000.;
+Float_t MET_high_cut = 50000.;
 
 int HFOR_value       = -999;
 
@@ -84,6 +86,8 @@ Float_t MV1_OP70 = 0.795; //0.601713; //
 //Actual Jet Cone Size in used
 Float_t Cone_size= 0.4;
 
+//Actual (2012) JVF CUT
+Float_t JVF_CUT = 0.5; // 0.75
 
 HiggsllqqAnalysis::~HiggsllqqAnalysis()
 {
@@ -141,7 +145,7 @@ Bool_t HiggsllqqAnalysis::ApplyChangesMuon(Analysis::ChargedLepton *lep)
 
 Bool_t HiggsllqqAnalysis::ApplyChangesElectron(Analysis::ChargedLepton *lep)
 {
-  Int_t SYST_FLAG = 0; //SYST_FLAG is 0 for nominal scale, 1 or 2 for 1-sigma variations.
+  // Int_t SYST_FLAG = 0; //SYST_FLAG is 0 for nominal scale, 1 or 2 for 1-sigma variations.
   
   if (lep->flavor() == Analysis::ChargedLepton::ELECTRON) {  
     
@@ -149,8 +153,9 @@ Bool_t HiggsllqqAnalysis::ApplyChangesElectron(Analysis::ChargedLepton *lep)
     
     // first of all one must rescale energy in the crack! (both data and MC but only for 2011 so far)
     Float_t tmp_calibration(1.);
+    
     if (analysis_version() == "rel_17") // rel. 17
-      tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibrationMeV(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), "ELECTRON");
+      tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
     Float_t tmp_E = el->cl_E() * TMath::Abs(tmp_calibration);
     Float_t tmp_Et = tmp_E / TMath::CosH(el->tracketa());
     Float_t tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
@@ -160,25 +165,27 @@ Bool_t HiggsllqqAnalysis::ApplyChangesElectron(Analysis::ChargedLepton *lep)
       m_ElectronEnergyRescaler->SetRandomSeed(ntuple->eventinfo.EventNumber() + 100 * (Int_t)el->GetIndex());
       
       // false here means the MC is mc11c (no constant term)
-      Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrectionMeV(el->cl_eta(), tmp_E, SYST_FLAG, false, "2011");
+      Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::NOMINAL);
       
       tmp_E = tmp_E * smearcorr;
       tmp_Et = tmp_E / TMath::CosH(el->tracketa());
       tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
     }
-    if (!isMC() && ElectronSmearing) {
-      tmp_E = m_ElectronEnergyRescaler->applyEnergyCorrectionMeV(el->cl_eta(), el->cl_phi(), tmp_E, tmp_Et, SYST_FLAG, "ELECTRON");
+    
+    if (!isMC() && doSmearing() && ElectronSmearing) {
+      tmp_E = m_ElectronEnergyRescaler->applyEnergyCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::Electron, egRescaler::EnergyRescalerUpgrade::ZeeAllDown, 1.0, ntuple->eventinfo.RunNumber());
       tmp_Et = tmp_E / TMath::CosH(el->tracketa());
       tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
     }
     
-    Float_t tmp_pt = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->tracketa())));
+    Float_t tmp_pt    = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->tracketa())));
     Float_t tmp_pt_cl = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->cl_eta())));
     
     // correct lepton 4-momenta
     lep->Get4Momentum()->SetPtEtaPhiM(tmp_pt, el->tracketa(), el->trackphi(), lep->Get4Momentum()->M());
     lep->Get4Momentum_ID()->SetPtEtaPhiM(el->trackpt(), el->tracketa(), el->trackphi(), lep->Get4Momentum()->M()); // untouched by energy corrections!
     lep->Get4Momentum_SA()->SetPtEtaPhiM(tmp_pt_cl, el->cl_eta(), el->cl_phi(), lep->Get4Momentum()->M());
+    
     return kTRUE;
   }
   else{
@@ -186,6 +193,7 @@ Bool_t HiggsllqqAnalysis::ApplyChangesElectron(Analysis::ChargedLepton *lep)
     return kFALSE;
   }
 }
+
 
 Bool_t HiggsllqqAnalysis::ApplyChangesJet(Analysis::Jet *jet)
 {
@@ -235,21 +243,23 @@ Bool_t HiggsllqqAnalysis::ApplyChangesJet(Analysis::Jet *jet)
   return kTRUE;  
 }
 
+
 void HiggsllqqAnalysis::LoadGRL()
 {
   // set GRL according to channel
   
   if (getChannel() == HiggsllqqAnalysis::MU2) {
     m_GRL->SetXMLFile("/afs/cern.ch/user/a/arturos/LoSterzo_llqq/HiggsllqqAnalysis/ANALYSIS/HiggsqqllAnalysis/grl/data_GRL_Hllqq.xml");
-  } else if (getChannel() == HiggsllqqAnalysis::MU2) {
+  } else if (getChannel() == HiggsllqqAnalysis::MUE) {
     m_GRL->SetXMLFile("/afs/cern.ch/user/a/arturos/LoSterzo_llqq/HiggsllqqAnalysis/ANALYSIS/HiggsqqllAnalysis/grl/data_GRL_Hllqq.xml");
-  } else if (getChannel() == HiggsllqqAnalysis::MU2) {
+  } else if (getChannel() == HiggsllqqAnalysis::E2) {
     m_GRL->SetXMLFile("/afs/cern.ch/user/a/arturos/LoSterzo_llqq/HiggsllqqAnalysis/ANALYSIS/HiggsqqllAnalysis/grl/data_GRL_Hllqq.xml");
   } else {
     Error("doAnalysis", "unsupported channel, aborting.");
     exit(1);
   }
 }
+
 
 Bool_t HiggsllqqAnalysis::PassesGRL()
 {
@@ -264,12 +274,12 @@ Bool_t HiggsllqqAnalysis::PassesGRL()
   } 
 }
 
+
 Int_t HiggsllqqAnalysis::GetLastCutPassed()
 {
   //reeplaced by getLastCutPastsed()
   return 0;
 }
-
 
 
 Bool_t HiggsllqqAnalysis::change_input()
@@ -310,6 +320,8 @@ Bool_t HiggsllqqAnalysis::change_input()
 
 Bool_t HiggsllqqAnalysis::initialize_tools()
 {    
+
+  printAllOptions();
   
   // initiate the calibration tool
   TString jetAlgo="AntiKt4TopoEM";
@@ -329,9 +341,6 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   hforTool = new HforToolD3PD();
   
   
-  printAllOptions();
-  
-  
   // trigger decision tool
   m_TrigDecisionToolD3PD = new D3PD::TrigDecisionToolD3PD();
   
@@ -339,13 +348,13 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   // goodrunslists
   m_GRL = new Root::TGoodRunsListReader();
   // put 2011 first
-  m_GRL->AddXMLFile("HiggsllqqAnalysis/grl/data11_GRL_MU4.xml");////*//// Change with the real GRL for llqq analysis!
-  m_GRL->AddXMLFile("HiggsllqqAnalysis/grl/data11_GRL_MU2E2.xml");
-  m_GRL->AddXMLFile("HiggsllqqAnalysis/grl/data11_GRL_E4.xml");
+  m_GRL->AddXMLFile("Higgs4lepAnalysis/grl/data11_GRL_MU4.xml");////*//// Change with the real GRL for llqq analysis!
+  m_GRL->AddXMLFile("Higgs4lepAnalysis/grl/data11_GRL_MU2E2.xml");
+  m_GRL->AddXMLFile("Higgs4lepAnalysis/grl/data11_GRL_E4.xml");
   // then add 2012
-  m_GRL->AddXMLFile("HiggsllqqAnalysis/grl/data12_GRL_MU4.xml");
-  m_GRL->AddXMLFile("HiggsllqqAnalysis/grl/data12_GRL_MU2E2.xml");
-  m_GRL->AddXMLFile("HiggsllqqAnalysis/grl/data12_GRL_E4.xml");
+  m_GRL->AddXMLFile("Higgs4lepAnalysis/grl/data12_GRL_MU4.xml");
+  m_GRL->AddXMLFile("Higgs4lepAnalysis/grl/data12_GRL_MU2E2.xml");
+  m_GRL->AddXMLFile("Higgs4lepAnalysis/grl/data12_GRL_E4.xml");
   
   m_GRL->Interpret();
   
@@ -379,11 +388,12 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   // ElectronEnergyRescaler
   Info("initialize_tools", "Initializing the EnergyRescaler tool...");
-  m_ElectronEnergyRescaler = new eg2011::EnergyRescaler();
+  m_ElectronEnergyRescaler = new egRescaler::EnergyRescalerUpgrade();
+  
   if (analysis_version() == "rel_17")
-    m_ElectronEnergyRescaler->useDefaultCalibConstants("2011");
+    m_ElectronEnergyRescaler->Init("egammaAnalysisUtils/share/EnergyRescalerData.root", "2011", "es2011a");
   else if (analysis_version() == "rel_17_2")
-    m_ElectronEnergyRescaler->useDefaultCalibConstants("2012");
+    m_ElectronEnergyRescaler->Init("egammaAnalysisUtils/share/EnergyRescalerData.root", "2012", "es2012");
   
   
   // ElectronEffSF
@@ -487,7 +497,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   if (analysis_version() == "rel_17")
     m_MuonSmearer = new MuonSmear::SmearingClass("Data11", mu_alg, "pT", "Rel17", muon_sm_directory);
   else if (analysis_version() == "rel_17_2")
-    m_MuonSmearer = new MuonSmear::SmearingClass("Data12", mu_alg, "pT", "Rel17.2_preliminary", muon_sm_directory);
+    m_MuonSmearer = new MuonSmear::SmearingClass("Data12", mu_alg, "pT", "Rel17.2", muon_sm_directory);
   m_MuonSmearer->UseScale(1);
   m_MuonSmearer->UseImprovedCombine();
   
@@ -495,7 +505,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   // MuonTrigSF
   Info("initialize_tools", "Initializing the LeptonTriggerSF tool...");
   if (analysis_version() == "rel_17") { // 2011
-    m_MuonTrigSF = new LeptonTriggerSF("TrigMuonEfficiency/share/");
+    m_MuonTrigSF = new LeptonTriggerSF(2011, "TrigMuonEfficiency/share/", "muon_trigger_sf_mc11c.root");
   } else if (analysis_version() == "rel_17_2") { // 2012
     m_MuonTrigSF = new LeptonTriggerSF(2012, "TrigMuonEfficiency/share", "muon_trigger_sf_2012.root");
   }
@@ -508,7 +518,6 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   // delay ggF tool initialization
   m_ggFReweighter = 0;
-
   
   
   if(Look_b_SFs) //initiate the bTag SFs tool
@@ -518,14 +527,13 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
       uncertainty = Analysis::Total;
     } 
   
-  
   return kTRUE;
 }
 
 
 Float_t HiggsllqqAnalysis::getD0SmearSigma(Int_t index_of_lepton, Int_t nBL, Float_t pt, Float_t eta)
 {
-
+  
   // from https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/IPSmearing
   m_smearD0_rand.SetSeed(ntuple->eventinfo.EventNumber() + 100 * index_of_lepton);
   
@@ -545,7 +553,7 @@ Float_t HiggsllqqAnalysis::getD0SmearSigma(Int_t index_of_lepton, Int_t nBL, Flo
 
 Bool_t HiggsllqqAnalysis::execute_tools(Long64_t entry)
 {
-
+  
   // read a new entry for the trigger decision tool
   m_TrigDecisionToolD3PD->GetEntry(entry, 0);
   
@@ -555,14 +563,20 @@ Bool_t HiggsllqqAnalysis::execute_tools(Long64_t entry)
     
     if (isMC()) {
       UInt_t chan(ntuple->eventinfo.mc_channel_number());
-  
+      
       if (m_SignalSampleMass.find(chan) != m_SignalSampleMass.end()) {
 	Int_t samplemass = m_SignalSampleMass.find(chan)->second;
 	Warning("execute_tools", "ggFReweighter being initialized with mass %d according to mc_channel_number = %u taken from the first event (!!!)", samplemass, chan);
 	m_ggFReweighter = new ggFReweighting("PowHeg", samplemass, "Mean", "./HiggsllqqAnalysis/packages/files/ggFHiggsPtWeight/", "mc11");
       }
+
+      //Printing the Cutflow for signal mass value!
+      if(ntuple->eventinfo.mc_channel_number() < 160420)
+	Print_low_OR_high=0;
     }
   }
+  
+
   
   return kTRUE;
 }
@@ -598,12 +612,9 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   Mean_jets =0.0;
   good_events =0.0;
   
-  if(ntuple->eventinfo.mc_channel_number() < 160420)
-    Print_low_OR_high=0;
-  
   // open the output file
   m_outputFile = new TFile(m_outputFileName, "RECREATE");
-  
+    
   
   // prepare output histo
   m_generatedEntriesHisto = new TH1D("generatedEntriesHisto", "number of processed entries", 10, 0, 10);
@@ -806,8 +817,11 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   else return last;
   
   
-  if (ntuple->eventinfo.larError()  <= 1 /*!= 2*/) last = HllqqCutFlow::larError;
-  else return last;
+  if (ntuple->eventinfo.larError() != 2 &&
+      (isMC() || ntuple->eventinfo.tileError() != 2) &&
+      (isMC() || (ntuple->eventinfo.coreFlags() & 0x40000) == 0)
+      ) last = HllqqCutFlow::larError;
+  else return last;	  
   
   
   if (passesTrigger()) last = HllqqCutFlow::Trigger;
@@ -825,13 +839,13 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   else last = HllqqCutFlow::METcleaning;
   
   
-  if((JetInHole() && isMC() && getPeriod()==DataPeriod::y2011_EH) || (JetInHole() && !isMC())) return last;
+  if(0/*(JetInHole() && isMC() && getPeriod()==DataPeriod::y2011_EH) || (JetInHole() && !isMC())*/) return last;
   else last = HllqqCutFlow::LArHole;
   
   
   //METHOD THAT GET ALL THE LEPTONS: Second Call the really get all the Good Object that will be past the different analysis requests!!
   getGoodLeptons();
-
+  
   
   //Number of Leptons Cut
   if ((getChannel() == HiggsllqqAnalysis::MU2 && m_GoodMuons.size()    == 2 && m_GoodElectrons.size() == 0)  ||
@@ -903,7 +917,7 @@ Bool_t HiggsllqqAnalysis::passesGRL()
   if (isMC()) {
     return kTRUE;
   } else {
-    if (ntuple->eventinfo.RunNumber() >= 205113) return kTRUE;
+    if (ntuple->eventinfo.RunNumber() >= 215643) return kTRUE;
     
     return (m_GRL->GetGoodRunsList(getChannel() + HllqqGRL::data11).HasRunLumiBlock(ntuple->eventinfo.RunNumber(), ntuple->eventinfo.lbn()) ||
 	    m_GRL->GetGoodRunsList(getChannel() + HllqqGRL::data12).HasRunLumiBlock(ntuple->eventinfo.RunNumber(), ntuple->eventinfo.lbn()));
@@ -1194,26 +1208,26 @@ TString HiggsllqqAnalysis::getElectronMuonTriggerName()
     // DATA
     // 2011
     if (period <= DataPeriod::y2011_M) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     }
-    // 2012: A-B
-    else if (period <= DataPeriod::y2012_B) {
+    // 2012: A-E
+    else if (period <= DataPeriod::y2012_AllYear/*y2012_E*/) {
       chain_name = "EF_e12Tvh_medium1_mu8;EF_e24vhi_loose1_mu8";
     }
   } else {
     // MC
     if (period == DataPeriod::y2011_BD) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     } else if (period == DataPeriod::y2011_EH) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     } else if (period == DataPeriod::y2011_I) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     } else if (period == DataPeriod::y2011_J) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     } else if (period == DataPeriod::y2011_K) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     } else if (period == DataPeriod::y2011_LM) {
-      chain_name = "DO_NOT_USE_E_MU_TRIGGER";
+      chain_name = "EF_e10_medium_mu6";
     } else if (period == DataPeriod::y2012_AllYear) {
       // 2012: AllYear
       chain_name = "EF_e12Tvh_medium1_mu8;EF_e24vhi_loose1_mu8";
@@ -1257,13 +1271,12 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
   else if (lep->flavor() == Analysis::ChargedLepton::ELECTRON) {
     D3PDReader::ElectronD3PDObjectElement *el = lep->GetElectron();
     
-    Int_t SYST_FLAG = 0; //SYST_FLAG is 0 for nominal scale, 1 or 2 for 1-sigma variations.
+    // Int_t SYST_FLAG = 0; //SYST_FLAG is 0 for nominal scale, 1 or 2 for 1-sigma variations.
     
     // first of all one must rescale energy in the crack! (both data and MC but only for 2011 so far)
     Float_t tmp_calibration(1.);
     if (analysis_version() == "rel_17") // rel. 17
-      tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibrationMeV(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), "ELECTRON");
-    
+      tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
     Float_t tmp_E = el->cl_E() * TMath::Abs(tmp_calibration);
     Float_t tmp_Et = tmp_E / TMath::CosH(el->tracketa());
     Float_t tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
@@ -1273,7 +1286,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
       m_ElectronEnergyRescaler->SetRandomSeed(ntuple->eventinfo.EventNumber() + 100 * (Int_t)el->GetIndex());
       
       // false here means the MC is mc11c (no constant term)
-      Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrectionMeV(el->cl_eta(), tmp_E, SYST_FLAG, false, "2011");
+      Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::NOMINAL);
       
       tmp_E     = tmp_E * smearcorr;
       tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
@@ -1281,7 +1294,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
     }
     
     if (!isMC()) {
-      tmp_E     = m_ElectronEnergyRescaler->applyEnergyCorrectionMeV(el->cl_eta(), el->cl_phi(), tmp_E, tmp_Et, SYST_FLAG, "ELECTRON");
+      tmp_E     = m_ElectronEnergyRescaler->applyEnergyCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::Electron, egRescaler::EnergyRescalerUpgrade::Nominal, 1.0, ntuple->eventinfo.RunNumber());
       tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
       tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
     }
@@ -1357,11 +1370,10 @@ void HiggsllqqAnalysis::getMuons(D3PDReader::MuonD3PDObject *mu_branch, Int_t fa
   
   for (Int_t i = 0; i < mu_branch->n(); i++) {
     Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*mu_branch)[i]), family);
-    //applyChanges(lep);
-    ApplyChangesMuon(lep);
+    applyChanges(lep);
+    //ApplyChangesMuon(lep);
     
     if(isGood(lep)) m_Muons.push_back(lep);
-    //else if(IsGoodMuon(lep)) m_Muons.push_back(lep);
     else {
       m_MuonCutflow[getChannel()].addCutCounter(lep->lastcut(), 1);
       delete lep;
@@ -1377,11 +1389,10 @@ void HiggsllqqAnalysis::getElectrons(D3PDReader::ElectronD3PDObject *el_branch, 
   
   for (Int_t i = 0; i < el_branch->n(); i++) {
     Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*el_branch)[i]), family);
-    //applyChanges(lep);
-    ApplyChangesElectron(lep);
+    applyChanges(lep);
+    //ApplyChangesElectron(lep);
     
     if (isGood(lep)) m_Electrons.push_back(lep);
-    //else if (IsGoodElectron(lep)) m_Electrons.push_back(lep);
     else {
       m_ElectronCutflow[getChannel()].addCutCounter(lep->lastcut(), 1);
       delete lep;
@@ -1397,8 +1408,9 @@ void HiggsllqqAnalysis::getJets(D3PDReader::JetD3PDObject *jet_branch)
   
   for (Int_t i = 0; i < jet_branch->n(); i++) {
     Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
-    //applyChanges(jet);
-    ApplyChangesJet(jet);
+    applyChanges(jet);
+    //ApplyChangesJet(jet);
+    
     if (isGoodJet(jet)) m_Jets.push_back(jet);
     else {
       m_JetCutflow[getChannel()].addCutCounter(jet->lastcut(), 1);
@@ -1583,7 +1595,7 @@ void HiggsllqqAnalysis::getGoodElectrons()
       Analysis::ChargedLepton *mu = (*mu_itr);
       
       if (mu->GetMuon()->isStandAloneMuon() == 0) {
-	if (el->Get4Momentum_ID()->DeltaR(*(mu->Get4Momentum_ID())) < 0.02) {
+	if (el->Get4Momentum_ID()->DeltaR(*(mu->Get4Momentum_ID())) < 0.2) {
 	  // found an electron overlapped to a muon
 	  skip_electron[i] = kTRUE;
 	} // overlapping electron/muon
@@ -1838,12 +1850,12 @@ Bool_t HiggsllqqAnalysis::isMCPMuon(Analysis::ChargedLepton *lep)
     if (analysis_version() == "rel_17") {
       Bool_t pixhits = (mu->nPixHits() + mu->nPixelDeadSensors() > 1);
       if (!pixhits) return kFALSE;
-      Bool_t scthits = (mu->nSCTHits() + mu->nSCTDeadSensors() >= 6);
+      Bool_t scthits = (mu->nSCTHits() + mu->nSCTDeadSensors() >= 5);
       if (!scthits) return kFALSE;
     } else if (analysis_version() == "rel_17_2") {
       Bool_t pixhits = (mu->nPixHits() + mu->nPixelDeadSensors() > 0);
       if (!pixhits) return kFALSE;
-      Bool_t scthits = (mu->nSCTHits() + mu->nSCTDeadSensors() >= 5);
+      Bool_t scthits = (mu->nSCTHits() + mu->nSCTDeadSensors() >= 4);
       if (!scthits) return kFALSE;
     }
     Bool_t holes = (mu->nPixHoles() + mu->nSCTHoles() < 3);
@@ -1952,27 +1964,27 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
     
     
     if (analysis_version() == "rel_17") { // rel. 17
-
+      
       if(dolowmass)
 	{
 	  if (el->tightPP() == 1 && !is4lepGood) lep->set_lastcut(HllqqElectronQuality::quality);
 	  
-	  else if (isLoosePlusPlusH4l(el->etas2(),
-				      el->cl_E() / TMath::CosH(el->etas2()),
-				      el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
-				      el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
-				      el->reta(),
-				      el->weta2(),
-				      el->f1(),
-				      el->wstot(),
-				      (el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()),
-				      el->deltaeta1(),
-				      el->nSiHits(),
-				      el->nSCTOutliers() + el->nPixelOutliers(),
-				      el->nPixHits(),
-				      el->nPixelOutliers(),
-				      false,
-				      false)
+	  else if (el->tightPP()== 1 /*isLoosePlusPlusH4l(el->etas2(),
+				       el->cl_E() / TMath::CosH(el->etas2()),
+				       el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
+				       el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
+				       el->reta(),
+				       el->weta2(),
+				       el->f1(),
+				       el->wstot(),
+				       (el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()),
+				       el->deltaeta1(),
+				       el->nSiHits(),
+				       el->nSCTOutliers() + el->nPixelOutliers(),
+				       el->nPixHits(),
+				       el->nPixelOutliers(),
+				       false,
+				       false)*/
 		   && is4lepGood) lep->set_lastcut(HllqqElectronQuality::quality);
 	  
 	  else return kFALSE;
@@ -1992,28 +2004,28 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
 	{
 	  if (el->tightPP() == 1 && !is4lepGood) lep->set_lastcut(HllqqElectronQuality::quality);
 	  
-	  else if (passMultiLepton(el->etas2(),
-				   el->cl_E() / TMath::CosH(el->etas2()),
-				   el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
-				   el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
-				   el->reta(),
-				   el->weta2(),
-				   el->f1(),
-				   el->f3(),
-				   el->wstot(),
-				   (el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()),
-				   el->deltaeta1(),
-				   el->nSiHits(),
-				   el->nSCTDeadSensors() + el->nPixelDeadSensors(),
-				   el->nPixHits(),
-				   el->nPixelDeadSensors(),
-				   el->deltaphiRescaled(),
-				   CommonTools::getBremFitDp(el),
-				   (el->nTRTHits() + el->nTRTOutliers() > 0) ? ((Double_t)el->nTRTHighTHits() + (Double_t)el->nTRTHighTOutliers()) / ((Double_t)el->nTRTHits() + (Double_t)el->nTRTOutliers()) : 0,
-				   el->nTRTHits() + el->nTRTOutliers(),
-				   el->nBLHits(),
-				   el->expectBLayerHit(),
-				   false)
+	  else if (el->tightPP()== 1 /*passMultiLepton(el->etas2(),
+				       el->cl_E() / TMath::CosH(el->etas2()),
+				       el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
+				       el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
+				       el->reta(),
+				       el->weta2(),
+				       el->f1(),
+				       el->f3(),
+				       el->wstot(),
+				       (el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()),
+				       el->deltaeta1(),
+				       el->nSiHits(),
+				       el->nSCTDeadSensors() + el->nPixelDeadSensors(),
+				       el->nPixHits(),
+				       el->nPixelDeadSensors(),
+				       el->deltaphiRescaled(),
+				       CommonTools::getBremFitDp(el),
+				       (el->nTRTHits() + el->nTRTOutliers() > 0) ? ((Double_t)el->nTRTHighTHits() + (Double_t)el->nTRTHighTOutliers()) / ((Double_t)el->nTRTHits() + (Double_t)el->nTRTOutliers()) : 0,
+				       el->nTRTHits() + el->nTRTOutliers(),
+				       el->nBLHits(),
+				       el->expectBLayerHit(),
+				       false)*/
 		   && is4lepGood) lep->set_lastcut(HllqqElectronQuality::quality);
 	  
 	  else return kFALSE;
@@ -2253,11 +2265,11 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
     }  
   else if (!dolowmass)
     {
-      if(jet->rightpt()/1000. > 25. && TMath::Abs(jet->righteta()) < 4.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
+      if(jet->rightpt()/1000. > 25. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
       else return kFALSE;
     }
   
-  if( (TMath::Abs(Jet->jvtxf()) > 0.75 && !JVF_new_cut) || ((Jet->jvtxf() > 0.75) && JVF_new_cut)) jet->set_lastcut(HllqqJetQuality::Pileup);
+  if( (TMath::Abs(Jet->jvtxf()) > JVF_CUT && !JVF_new_cut) || ((Jet->jvtxf() > JVF_CUT) && JVF_new_cut)) jet->set_lastcut(HllqqJetQuality::Pileup);
   else return kFALSE;
   
   return kTRUE; 
@@ -2285,6 +2297,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_generatedEntriesHisto->Fill("PowHegZZ_bugfix_EvWeight", (!hasPowHegZZBug() && isMC()) ? ntuple->eventinfo.mc_event_weight() : 0);
   m_generatedEntriesHisto->Fill("with_ggF_as_well", (!hasPowHegZZBug() && isMC()) ? ntuple->eventinfo.mc_event_weight() * getggFWeight() : 0);
   m_generatedEntriesHisto->Fill("with_pu_and_vertex", (!hasPowHegZZBug() && isMC()) ? getEventWeight() * getggFWeight() * getVertexZWeight() : 0);
+  
   
   
   for (UInt_t i = 0; i < m_Channels.size(); i++) {    
@@ -3004,6 +3017,8 @@ Bool_t HiggsllqqAnalysis::JetInHole()
 
 Bool_t HiggsllqqAnalysis::JetKinematicFitterResult() {
   
+  Bool_t dolowmass = GetDoLowMass();
+  
   CandidatePair *m_bestdijet;
   std::vector<int > m_jetindex;
   
@@ -3056,7 +3071,8 @@ Bool_t HiggsllqqAnalysis::JetKinematicFitterResult() {
   
   TLorentzVector hadZ = j1 + j2;
   
-  if((m_bestdijet->index1!=-1)&&(m_bestdijet->index2!=-1)&&(hadZ.M()>Mjj_min)&&(hadZ.M()<Mjj_max))
+  if((((m_bestdijet->index1!=-1)    &&(m_bestdijet->index2!=-1) &&(hadZ.M()>Mjj_low_min)  &&(hadZ.M()<Mjj_low_max))  && dolowmass) 
+     || (((m_bestdijet->index1!=-1) &&(m_bestdijet->index2!=-1) &&(hadZ.M()>Mjj_high_min) &&(hadZ.M()<Mjj_high_max)) && !dolowmass))
     return kTRUE; 
   else
     return kFALSE;
@@ -3118,7 +3134,8 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
   for (Int_t i = 0; i < jet_branch->n(); i++) {
     Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
     D3PDReader::JetD3PDObjectElement *Jet = jet->GetJet();
-    ApplyChangesJet(jet);
+    applyChanges(jet);
+    //ApplyChangesJet(jet);
     
     if((Jet->isBadLooseMinus()!=0) && jet->rightpt()>ptthr)
       {
@@ -3127,8 +3144,8 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
 	
 	for (Int_t i = 0; i < el_branch->n(); i++) {
 	  Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*el_branch)[i]), getElectronFamily());
-	  //applyChanges(lep);
-	  ApplyChangesElectron(lep);
+	  applyChanges(lep);
+	  //ApplyChangesElectron(lep);
 	  
 	  if (isGood(lep)) {  
 	    D3PDReader::ElectronD3PDObjectElement *el = lep->GetElectron();
@@ -3202,6 +3219,8 @@ Int_t HiggsllqqAnalysis::GetNumOfTags()
 //Method to calculate the DiJet invariant mass for the tagged Jets!
 Bool_t HiggsllqqAnalysis::JetDimassTagged() {
   
+  Bool_t dolowmass = GetDoLowMass();
+  
   TLorentzVector j1;
   TLorentzVector j2;
   bool first =kTRUE;
@@ -3223,7 +3242,7 @@ Bool_t HiggsllqqAnalysis::JetDimassTagged() {
   
   TLorentzVector hadZ = j1 + j2;
   
-  if((hadZ.M() > Mjj_min) && (hadZ.M() < Mjj_max))
+  if(((hadZ.M() > Mjj_low_min) && (hadZ.M() < Mjj_low_max) && dolowmass) || ((hadZ.M() > Mjj_high_min) && (hadZ.M() < Mjj_high_max) && !dolowmass))
     {
       return kTRUE;
     }
