@@ -18,19 +18,24 @@
 #include "TrigRootAnalysis/TrigDecisionToolD3PD.h"
 #include "PileupReweighting/TPileupReweighting.h"
 #include "egammaAnalysisUtils/egammaSFclass.h"
-#include "egammaAnalysisUtils/EnergyRescaler.h"
 #include "MuonEfficiencyCorrections/AnalysisMuonConfigurableScaleFactors.h"
 #include "MuonMomentumCorrections/SmearingClass.h"
 #include "TrigMuonEfficiency/LeptonTriggerSF.h"
 #include "egammaAnalysisUtils/CaloIsoCorrection.h"
-#include "HiggsZZ4lUtils/IsEMPlusPlusH4lDefs.h"
+//#include "HiggsZZ4lUtils/IsEMPlusPlusH4lDefs.h"
 #include "HiggsZZ4lUtils/BkgCrossSection.h"
 #include "HiggsZZ4lUtils/HiggsCrossSection.h"
 #include "HiggsZZ4lUtils/MzzWeightFromMCFM.h"
 #include "TrigMuonEfficiency/MuonTriggerMatching.h"
 #include "TrigMuonEfficiency/ElectronTriggerMatching.h"
-#include "egammaAnalysisUtils/MultiLeptonDefs.h"
+//#include "egammaAnalysisUtils/MultiLeptonDefs.h"
 #include "egammaAnalysisUtils/VertexPositionReweightingTool.h"
+#include "HiggsZZ4lUtils/McOverlapRemoval.h"
+#include "Higgs4lepAnalysis/JHUPtReweighting.h"
+#include "Higgs4lepAnalysis/Higgs4lepAnalysis.h"
+#include "egammaEvent/egammaPIDdefs.h"
+
+#include "egammaAnalysisUtils/EnergyRescalerUpgrade.h"
 
 // Higgs[llqq-4lep]Analysis common tools
 #include "HiggsllqqAnalysis/ggFReweighting.h"
@@ -396,10 +401,10 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
  protected:
   
   // pointers to ATLAS tools
-  Root::TGoodRunsListReader  *m_GRL;
-  Root::TPileupReweighting   *m_PileupReweighter;
-  D3PD::TrigDecisionToolD3PD *m_TrigDecisionToolD3PD;
-  eg2011::EnergyRescaler     *m_ElectronEnergyRescaler;
+  Root::TGoodRunsListReader         *m_GRL;
+  Root::TPileupReweighting          *m_PileupReweighter;
+  D3PD::TrigDecisionToolD3PD        *m_TrigDecisionToolD3PD;
+  egRescaler::EnergyRescalerUpgrade *m_ElectronEnergyRescaler;
   
   Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSF;
   Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSFCalo;
