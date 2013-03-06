@@ -10,18 +10,18 @@ ClassImp(Analysis::Jet);
 
 Analysis::Jet::Jet()
 {
-   Reset();
+  Reset();
 }
 
 Analysis::Jet::Jet(D3PDReader::JetD3PDObjectElement *jet)
 {
-   Reset();
-   Set(jet);
+  Reset();
+  Set(jet);
 }
 
 Analysis::Jet::~Jet()
 {
-   delete m_momentum;
+  delete m_momentum;
 }
 
 void Analysis::Jet::Reset()
@@ -38,12 +38,12 @@ void Analysis::Jet::Reset()
 
 void Analysis::Jet::Set(D3PDReader::JetD3PDObjectElement *jet)
 {
-   set_rightpt(jet->pt());
-   set_righteta(jet->eta());
-   set_rightphi(jet->phi());
-   set_rightE(jet->E());
-   set_rightEt(jet->emscale_pt()); //Correguir y calcular Et
-
-   Get4Momentum()->SetPtEtaPhiM(jet->pt(), jet->eta(), jet->phi(), jet->m());
-   m_jet = jet;
+  set_rightpt(jet->pt());
+  set_righteta(jet->eta());
+  set_rightphi(jet->phi());
+  set_rightE(jet->E());
+  set_rightEt(jet->emscale_pt()); //Correguir y calcular Et
+  
+  Get4Momentum()->SetPtEtaPhiM(jet->pt(), jet->eta(), jet->phi(), jet->m());
+  m_jet = jet;
 }
