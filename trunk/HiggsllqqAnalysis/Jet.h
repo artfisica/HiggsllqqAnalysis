@@ -67,6 +67,7 @@ namespace Analysis {
   private:
     void Reset();
 
+    Int_t   m_family;    
     Int_t   m_lastcut;
     Float_t m_rightpt;
     Float_t m_righteta;

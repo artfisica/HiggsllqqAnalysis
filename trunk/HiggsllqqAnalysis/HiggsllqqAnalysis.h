@@ -5,8 +5,8 @@
 
     Code to perform SM H -> ZZ(*) -> qqll analysis.
 
-    @start  date 15/08/2012 
-    @update date 29/10/2012
+    @start  date 08/15/2012 
+    @update date 02/06/2013
 */
 
 #include <TEfficiency.h>
@@ -98,6 +98,9 @@ namespace DataPeriod {
     y2011_M,
     y2012_A, // data12
     y2012_B, // data12
+    y2012_C, // data12
+    y2012_D, // data12
+    y2012_E, // data12
     // DO NOT USE VALUES BELOW THIS LINE FOR COMPARISON (e.g. AI < JM makes no sense)
     y2011_BD, // MC
     y2011_EH,
@@ -245,7 +248,7 @@ typedef struct {
   float realJ1_eta_det;
   float realJ1_phi;
   float realJ1_flavortruth;
-  float realJ1_pdg;
+  int   realJ1_pdg;
   float realJ1_jvf;
   int   realJ1_ntrk;
   float realJ1_width;
@@ -259,7 +262,7 @@ typedef struct {
   float realJ2_eta_det;
   float realJ2_phi;
   float realJ2_flavortruth;
-  float realJ2_pdg;
+  int   realJ2_pdg;
   float realJ2_jvf;
   int   realJ2_ntrk;
   float realJ2_width;
@@ -345,6 +348,15 @@ typedef struct {
   int trig_flag;
   int HFOR;
   int Entries;
+  float dPhi_ll;
+  float dPhi_jj;
+  float dR_jj;
+  int total_jet_ntrk1;
+  float total_jet_width1;
+  int total_jet_ntrk2;
+  float total_jet_width2;
+  int total_jet_ntrk3;
+  float total_jet_width3;
   //Flavour Composition Variables
   float SecondJet_MV1_b; // b jets 
   float SecondJet_MV1_c; // c jets
@@ -392,6 +404,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   }
   virtual void setElectronFamily(Int_t val) {
     m_electronFamily = val;
+  }
+  virtual void setJetFamily(Int_t val) {
+    m_jetFamily = val;
   }
   virtual void setOutputFile(TString val) {
     m_outputFileName = val;
@@ -484,7 +499,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void applyChanges(Analysis::Jet *jet);
   virtual void getMuons(D3PDReader::MuonD3PDObject *mu_branch, Int_t family);
   virtual void getElectrons(D3PDReader::ElectronD3PDObject *el_branch, Int_t family);
-  virtual void getJets(D3PDReader::JetD3PDObject *jet_branch); // To include Jet Family?? error
+  virtual void getJets(D3PDReader::JetD3PDObject *jet_branch);
   virtual void getGoodMuons();
   virtual void getGoodElectrons();
   virtual void getGoodJets();
@@ -499,8 +514,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t IsGoodElectron(Analysis::ChargedLepton *lep);
   Bool_t IsGoodMuon(Analysis::ChargedLepton *lep);
   Bool_t isGoodJet(Analysis::Jet *jet);
-  
 
+  //object quality
+  Bool_t Pair_Quality();
+  
+  
   // utility functions for the selection
   virtual Bool_t isMC() {
     return ntuple->mc.n.IsAvailable();
@@ -519,6 +537,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   }
   virtual Int_t getElectronFamily() {
     return m_electronFamily;
+  }
+  virtual Int_t getJetFamily() {
+    return m_jetFamily;
   }
   
   virtual Int_t getTriggerInfo(TString chain);
@@ -559,6 +580,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     Info("printAllOptions", "useTopoIso       = %s", m_useTopoIso ? "kTRUE" : "kFALSE");
     Info("printAllOptions", "muonFamily       = %d", m_muonFamily);
     Info("printAllOptions", "electronFamily   = %d", m_electronFamily);
+    Info("printAllOptions", "jetFamily        = %d", m_jetFamily);
     Info("printAllOptions", "outputFileName   = %s", m_outputFileName.Data());
     Info("printAllOptions", "========================");
   }
@@ -638,14 +660,16 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   //Method to calculate the DiJet invariant mass for the tagged Jets!
   Bool_t JetDimassTagged();
-
+  
+  Bool_t JetDimassOneTagged();
+  
   
   //Method to flag/control the QCD selection  
   Bool_t GetDoQCDSelection() { 
     if(!isMC()) return m_doqcdselection; 
     return kFALSE;
   }  
-
+  
   void SetDoQCDSelection(Bool_t val) { m_doqcdselection = val; }
   
 
@@ -723,6 +747,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t m_useTopoIso;
   Int_t m_muonFamily;
   Int_t m_electronFamily;
+  Int_t m_jetFamily;
   Int_t m_thisChannel;
   TH1D *m_generatedEntriesHisto;
   TH1D *h_cutflow;
