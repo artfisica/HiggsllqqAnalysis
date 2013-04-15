@@ -270,6 +270,48 @@ typedef struct {
   float realJ2_width12;
   float realJ2_MV1;
   float realJ2_Fisher;
+  //
+  int Jet1_index;
+  int Jet2_index;
+  int Jeta_index;
+  int Jetb_index;
+  //
+  float realJa_m;
+  float realJa_pt;
+  float realJa_eta;
+  float realJa_eta_det;
+  float realJa_phi;
+  float realJa_flavortruth;
+  int   realJa_pdg;
+  float realJa_jvf;
+  int   realJa_ntrk;
+  float realJa_width;
+  int   realJa_ntrk12;
+  float realJa_width12;
+  float realJa_MV1;
+  float realJb_m;
+  float realJb_pt;
+  float realJb_eta;
+  float realJb_eta_det;
+  float realJb_phi;
+  float realJb_flavortruth;
+  int   realJb_pdg;
+  float realJb_jvf;
+  int   realJb_ntrk;
+  float realJb_width;
+  int   realJb_ntrk12;
+  float realJb_width12;
+  float realJb_MV1;
+  //
+  float realZab_m;
+  float realZab_pt;
+  float realZab_eta;
+  float realZab_phi;
+  float realHab_m;
+  float realHab_pt;
+  float realHab_eta;
+  float realHab_phi; 
+  //
   float ll_2_jets;
   float realZ_m;
   float realZ_pt;
@@ -351,6 +393,8 @@ typedef struct {
   float dPhi_ll;
   float dPhi_jj;
   float dR_jj;
+  float dPhi_ab_jj;
+  float dR_ab_jj;
   int total_jet_ntrk1;
   float total_jet_width1;
   int total_jet_ntrk2;
