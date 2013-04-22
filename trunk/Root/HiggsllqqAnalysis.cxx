@@ -85,7 +85,7 @@ Float_t Mll_high_max = 99000.;
 // Definition of the Hadronic (dijet) invariant mass window:  70 (60) GeV < Mjj < 105 (115) GeV 
 Float_t Mjj_low_min       = 60000.; // 60000.;
 Float_t Mjj_low_max       = 115000.; // 115000.;
-Float_t Mjj_high_min      = 7000.; // 70000.;
+Float_t Mjj_high_min      = 70000.; // 70000.;
 Float_t Mjj_high_max      = 105000.; // 105000.;
 
 
@@ -273,11 +273,11 @@ void HiggsllqqAnalysis::LoadGRL()
   // set GRL according to channel
   
   if (getChannel() == HiggsllqqAnalysis::MU2) {
-    m_GRL->SetXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2012.xml");
+    m_GRL->SetXMLFile("./HiggsllqqAnalysis/grl/grl_2012.xml");
   } else if (getChannel() == HiggsllqqAnalysis::MUE) {
-    m_GRL->SetXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2012.xml");
+    m_GRL->SetXMLFile("./HiggsllqqAnalysis/grl/grl_2012.xml");
   } else if (getChannel() == HiggsllqqAnalysis::E2) {
-    m_GRL->SetXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2012.xml");
+    m_GRL->SetXMLFile("./HiggsllqqAnalysis/grl/grl_2012.xml");
   } else {
     Error("doAnalysis", "unsupported channel, aborting.");
     exit(1);
@@ -392,13 +392,13 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   // goodrunslists
   m_GRL = new Root::TGoodRunsListReader();
   // put 2011 first
-  m_GRL->AddXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2011.xml");////*//// Change with the real GRL for llqq analysis!
-  m_GRL->AddXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2011.xml");
-  m_GRL->AddXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2011.xml");
+  m_GRL->AddXMLFile("./HiggsllqqAnalysis/grl/grl_2011.xml");////*//// Change with the real GRL for llqq analysis!
+  m_GRL->AddXMLFile("./HiggsllqqAnalysis/grl/grl_2011.xml");
+  m_GRL->AddXMLFile("./HiggsllqqAnalysis/grl/grl_2011.xml");
   // then add 2012
-  m_GRL->AddXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2012.xml");
-  m_GRL->AddXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2012.xml");
-  m_GRL->AddXMLFile("/afs/cern.ch/work/a/arturos/Rel_17_2_qqll_Analysis/HiggsllqqAnalysis/grl/grl_2012.xml");
+  m_GRL->AddXMLFile("./HiggsllqqAnalysis/grl/grl_2012.xml");
+  m_GRL->AddXMLFile("./HiggsllqqAnalysis/grl/grl_2012.xml");
+  m_GRL->AddXMLFile("./HiggsllqqAnalysis/grl/grl_2012.xml");
   
   m_GRL->Interpret();
   
