@@ -31,8 +31,8 @@
 //#include "egammaAnalysisUtils/MultiLeptonDefs.h"
 #include "egammaAnalysisUtils/VertexPositionReweightingTool.h"
 #include "HiggsZZ4lUtils/McOverlapRemoval.h"
-#include "Higgs4lepAnalysis/JHUPtReweighting.h"
-#include "Higgs4lepAnalysis/Higgs4lepAnalysis.h"
+//#include "Higgs4lepAnalysis/JHUPtReweighting.h"
+//#include "Higgs4lepAnalysis/Higgs4lepAnalysis.h"
 #include "egammaEvent/egammaPIDdefs.h"
 
 #include "egammaAnalysisUtils/EnergyRescalerUpgrade.h"
