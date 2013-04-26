@@ -17,8 +17,6 @@ atlasoff/Trigger/TrigAnalysis/TrigRootAnalysis/tags/TrigRootAnalysis-00-01-05
 
 svn+ssh://svn.cern.ch/reps/vippolitsvn/Higgs/HiggsAnalysis/trunk
 
-svn+ssh://svn.cern.ch/reps/vippolitsvn/Higgs/Higgs4lepAnalysis/trunk
-
 svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/PATCore/tags/PATCore-00-00-09
 
 atlasoff/Reconstruction/Jet/ApplyJetCalibration/tags/ApplyJetCalibration-00-03-03
