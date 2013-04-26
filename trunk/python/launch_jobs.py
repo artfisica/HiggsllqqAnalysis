@@ -5,95 +5,84 @@ import samples_data11
 import samples_mc11c
 import samples_data12
 import samples_mc12
-import samples_mc12_signal
-
-import samples_mc12_p1230
-
-import tests_valerio
 
 
-lists_to_process = [
+lists_to_process_full = [
+## DATA
+# # 2012
+  samples_data12.physics_Muons,
+  samples_data12.physics_Egamma,
+# # 2011
+  samples_data11.physics_Muons,
+  samples_data11.physics_Egamma,
+#
 # MC
-# samples_mc11c.signals_ggF,
-# samples_mc11c.signals_VBF,
-# samples_mc11c.signals_VH,
-# samples_mc11c.alpgen_Zbb,
-# samples_mc11c.alpgen_Zjet,
-# samples_mc11c.ZZ,
-# samples_mc11c.qcd,
-# samples_mc11c.top,
-# samples_mc12.signals_ggF,
-# samples_mc12.signals_VBF,
-# samples_mc12.signals_VH,
-# samples_mc12.alpgen_new,
-# samples_mc12.pythia_Zjet,
-# samples_mc12.alpgen_Zjet,
-# samples_mc12.ZZ,
-# samples_mc12.qcd,
-samples_mc12_signal.ggH_lowMass,
-samples_mc12_signal.VBF_lowMass,
-samples_mc12_signal.WH_lowMass,
-samples_mc12_signal.ZH_lowMass,
-samples_mc12_p1230.Top,
-samples_mc12_p1230.Diboson_light,
-samples_mc12_p1230.Z_LF,
-samples_mc12_p1230.W_LF,
-samples_mc12_p1230.Single_top,
-samples_mc12_p1230.Z_HF,
-samples_mc12_p1230.W_HF,
-samples_mc12_p1230.Z_llnunu,
-samples_mc12_p1230.Z_inclusive_HF,
-samples_mc12_p1230.WZ_W,
-samples_mc12_p1230.Wgamma,
-samples_mc12_p1230.Z_inclusive_LF,
-samples_mc12_p1230.DY_jets,
-samples_mc12_p1230.Diboson_inclusive,
-samples_mc12_p1230.Z_inclusive,
-samples_mc12_p1230.W_inclusive,
-samples_mc12_p1230.Powheg_Z,
-samples_mc12_p1230.ZZ_4lep,
-# DATA
-#  samples_data11.physics_Muons,
-#  samples_data11.physics_Egamma,
-#  samples_data11.debugrec_hltacc,
-samples_data12.physics_Muons,
-samples_data12.physics_Egamma,
-#  samples_data12.debugrec_hlt,
+# # 2012
+  samples_mc12.signals_ggF,
+  samples_mc12.signals_VBF,
+  samples_mc12.signals_VH,
+  samples_mc12.alpgen_Zbb,
+  samples_mc12.pythia_Zjet,
+  samples_mc12.alpgen_Zjet,
+  samples_mc12.WZ,
+  samples_mc12.ZZ,
+  samples_mc12.qcd,
+  samples_mc12.top,
+# # 2011
+  samples_mc11c.signals_ggF,
+  samples_mc11c.signals_VBF,
+  samples_mc11c.signals_VH,
+  samples_mc11c.alpgen_Zbb,
+  samples_mc11c.alpgen_Zjet,
+ #samples_mc11c.WZ,
+  samples_mc11c.ZZ,
+  samples_mc11c.qcd,
+  samples_mc11c.top,
 ]
+
+lists_to_process_reduced = [
+]
+
+lists_to_process = lists_to_process_full
+
 
 
 ### analysis options
 command_outputname='output_test.root'
 
 command_name='./HiggsllqqAnalysis/bin/test'
-#command_name='./IsolationStudies/bin/test' # isolation studies [DO NOT USE but do not remove please]
 
-command_opts='--analysis rel_17_2 --useTopoIso --input input.txt --output %s'  % (command_outputname) # rel. 17.2 standard, with topoiso - use for data12 and mc12a processing
-#command_opts='--analysis rel_17 --GSF --input input.txt --output %s'  % (command_outputname) # rel. 17 standard - use for data11 and mc11c processing
+command_opts = {}
+command_opts['data12_8TeV'] = '--analysis rel_17_2 --useTopoIso --input input.txt --output %s'  % (command_outputname) # rel. 17.2 standard, with topoiso - use for data12 and mc12a processing
+command_opts['mc12_8TeV'] = command_opts['data12_8TeV']
+command_opts['data11_7TeV'] ='--analysis rel_17 --GSF --input input.txt --output %s'  % (command_outputname) # rel. 17 standard - use for data11 and mc11c processing
+command_opts['mc11_7TeV'] = command_opts['data11_7TeV']
 
-#command_opts='--analysis rel_17_2 --input input.txt --output %s'  % (command_outputname) # rel. 17.2 without topoiso
-#command_opts='--additionalLepton --analysis rel_17 --GSF --input input.txt --output %s'  % (command_outputname) # rel. 17 standard (additional lepton Iso studies)
-#command_opts='--additionalLepton --analysis rel_17_2 --useTopoIso --input input.txt --output %s'  % (command_outputname) # rel. 17.2 standard (additional lepton Iso studies)
-#command_opts='--singleLepton --analysis rel_17_2 --useTopoIso --input input.txt --output %s'  % (command_outputname) # rel. 17.2 standard (truth lepton studies)
 
 
 ### grid options
-## username=os.environ['arturos'] # who is running the job
-username='arturos' # who is running the jo
+username='arturos' # who is running the job
 mycodeversion='Hllqq'
-#mycodeversion='Iso000007' # isolation studies [DO NOT USE but do not remove please]
-suffix='2012.022'
+
+suffix = {}
+suffix['data12_8TeV'] = '2012.01'
+suffix['mc12_8TeV'] = suffix['data12_8TeV']
+suffix['data11_7TeV'] = '2011.01'
+suffix['mc11_7TeV'] = suffix['data11_7TeV']
 filename=command_outputname
 excludedSite=''
-useItCloud=True
+useItCloud=False
 speedUp=True # use tarball
-temp_dir=''#/tmp/vippolit'
+temp_dir='/tmp/arturos'
+
 data_transfer='INFN-ROMA1_LOCALGROUPDISK' # put here INFN-ROMA1_LOCALGROUPDISK to transfer output ntuples to the localgroupdisk; leave it empty not to do it
 doMerge=False # put to true to use output merge - WARNING: never tested so far!
 
 avoidBigJobs=True # the stupid 10 Gb limit
-period_name='run_200804_205113' # used for data streams (data12)
-#period_name='run_177986_191933' # used for data streams (data11)
+
+period_name = {}
+period_name['data12_8TeV'] = 'run_200804_215643' # used for data streams (data12)
+period_name['data11_7TeV'] = 'run_177986_191933' # used for data streams (data11)
 
 printOnly=True # do not execute the command, just print it
 
@@ -101,9 +90,12 @@ printOnly=True # do not execute the command, just print it
 files_to_preserve = [
 'HiggsllqqAnalysis/packages/files/pileup/*root*',
 'HiggsllqqAnalysis/packages/files/ggFHiggsPtWeight/*root*',
-'HiggsllqqAnalysis/packages/files/d0_reweight/*root*',
+'HiggsZZ4lUtils/share/*',
 'TrigMuonEfficiency/share/*root*',
 'egammaAnalysisUtils/share/*root*',
+'MuonEfficiencyCorrections/share/*txt*',
+'MuonMomentumCorrections/share/*',
+'egammaFourMomentumError/share/*root*',
 ]
 
 
@@ -115,13 +107,11 @@ import re
 
 _suffix = suffix
 
-sample_regexp = '(\w+)\.(\w+)\.(\w+)(\..*)\.NTUP_HSG2\.([^p]+)(p\w+)' # 1: production (data/MC) 2: channel 3: name 4: 'merge' 5: AOD tag 6: D3PD tag
+sample_regexp = '(\w+)\.(\w+)\.(\w+)(\..*)\.NTUP_\w*HSG2\.([^p]+)(p\w+)' # 1: production (data/MC) 2: channel 3: name 4: 'merge' 5: AOD tag 6: D3PD tag
 sample_re = re.compile(sample_regexp)
 
 genericsample_regexp = '(\w+)\.(\d+)\.(\w+)\.(.*)\.(\w+)' # 1: production (data/MC/perf*) 2: channel 3: name 4: AOD tag 5: last tag
 genericsample_re = re.compile(genericsample_regexp)
-
-prun_exec_string = '--exec \"echo %%IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; %s %s\"' % (command_name, command_opts)
 
 tarball_already_created = False
 
@@ -135,7 +125,22 @@ class d3pd_dataset:
 
 # utility function, which composes the actual prun command, given the input datasets(') list and sample properties
 def compose_prun_command(d3pd, dataset_string):
-  this_command = 'prun ' + prun_exec_string + ' --outDS user.' + username + '.' + mycodeversion + '.' + d3pd.run + '.' + d3pd.name + '.' + d3pd.tag + '.' + _suffix + ' --outputs ' + filename + ' --useAthenaPackages --inDS ' + dataset_string
+  tagfound = False
+  mytagname = 'NONE'
+  for tagname in command_opts.keys():
+    if tagname in d3pd.project:
+      if not tagfound:
+        prun_exec_string = '--exec \"echo %%IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; %s %s\"' % (command_name, command_opts[tagname])
+	tagfound = True
+	mytagname = tagname
+      else:
+        print 'ERROR: command_opts.keys() contains multiple tag names which match d3pd named "%s"...' % d3pd.project
+	return
+  if not tagfound:
+    print 'ERROR: unable to decode tag for d3pd named "%s"...' % d3pd.project
+    return
+
+  this_command = 'prun ' + prun_exec_string + ' --outDS user.' + username + '.' + mycodeversion + '.' + d3pd.run + '.' + d3pd.name + '.' + d3pd.tag + '.' + _suffix[mytagname] + ' --outputs ' + filename + ' --useAthenaPackages --inDS ' + dataset_string
   
   if (avoidBigJobs):
     this_command += ' --nGBPerJob=10'
@@ -207,7 +212,21 @@ for dataset_list in lists_to_process:
     if (match_re or match_generic_re):
       if (isData):
       # DATA: one job per stream
-	d3pd.run = period_name
+        tagfound = False
+	mytagname = ''
+        for tagname in period_name.keys():
+          if tagname in d3pd.project:
+            if not tagfound:
+              mytagname = tagname
+	      tagfound = True
+            else:
+              print 'ERROR: command_opts.keys() contains multiple tag names which match d3pd named "%s"...' % d3pd.project
+	      continue
+        if not tagfound:
+          print 'ERROR: unable to decode tag for d3pd named "%s"...' % d3pd.project
+	  continue
+
+	d3pd.run = period_name[mytagname]
         dataset_string = ''
 
         for this_dataset in dataset_list:
