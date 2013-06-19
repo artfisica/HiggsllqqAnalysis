@@ -2,11 +2,11 @@
 #define __HiggsAnalysis_h__
 
 /** @class HiggsllqqAnalysis HiggsllqqAnalysis.h
-
+    
     Code to perform SM H -> ZZ(*) -> qqll analysis.
 
     @start  date 08/15/2012 
-    @update date 02/06/2013
+    @update date 05/03/2013
 */
 
 #include <TEfficiency.h>
@@ -22,20 +22,16 @@
 #include "MuonMomentumCorrections/SmearingClass.h"
 #include "TrigMuonEfficiency/LeptonTriggerSF.h"
 #include "egammaAnalysisUtils/CaloIsoCorrection.h"
-//#include "HiggsZZ4lUtils/IsEMPlusPlusH4lDefs.h"
 #include "HiggsZZ4lUtils/BkgCrossSection.h"
 #include "HiggsZZ4lUtils/HiggsCrossSection.h"
 #include "HiggsZZ4lUtils/MzzWeightFromMCFM.h"
 #include "TrigMuonEfficiency/MuonTriggerMatching.h"
 #include "TrigMuonEfficiency/ElectronTriggerMatching.h"
-//#include "egammaAnalysisUtils/MultiLeptonDefs.h"
 #include "egammaAnalysisUtils/VertexPositionReweightingTool.h"
 #include "HiggsZZ4lUtils/McOverlapRemoval.h"
-//#include "Higgs4lepAnalysis/JHUPtReweighting.h"
-//#include "Higgs4lepAnalysis/Higgs4lepAnalysis.h"
 #include "egammaEvent/egammaPIDdefs.h"
-
 #include "egammaAnalysisUtils/EnergyRescalerUpgrade.h"
+
 
 // Higgs[llqq-4lep]Analysis common tools
 #include "HiggsllqqAnalysis/ggFReweighting.h"
@@ -56,8 +52,10 @@
 #include "HiggsllqqAnalysis/JetKinematicFitter.h"
 #include "HiggsllqqAnalysis/HforToolD3PD.h"
 
+
 // TestSelection needs (redundancies to be removed)
 #include <fstream>
+#include <TStyle.h>
 #include <TTree.h>
 #include <TROOT.h>
 #include <TChain.h>
@@ -75,7 +73,6 @@
 #include "TMVA/Config.h"
 #include <TMath.h>
 #include "Math/Interpolator.h"
-//#include "TestSelection/JetKinematicFitter.h"
 #include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
 
 using namespace std;
@@ -211,13 +208,14 @@ namespace HllqqSystematics {
 typedef struct {
   unsigned int runnumber;
   unsigned int eventnumber;
-  int istagged;
-  int channel;
-  int isqcdevent;
-  int low_event;
-  int n_jets;
-  int n_b_jets;
+  int   istagged;
+  int   channel;
+  int   isqcdevent;
+  int   low_event;
+  int   n_jets;
+  int   n_b_jets;
   float weight;
+  //////////////////////
   float lep1_m;
   float lep1_pt;
   float lep1_eta;
@@ -238,119 +236,183 @@ typedef struct {
   float lep2_d0;
   float lep2_sigd0;
   int   lep2_quality;
+  //
   float lepZ_m;
   float lepZ_pt;
   float lepZ_eta;
   float lepZ_phi;
-  float realJ1_m;
-  float realJ1_pt;
-  float realJ1_eta;
-  float realJ1_eta_det;
-  float realJ1_phi;
-  float realJ1_flavortruth;
-  int   realJ1_pdg;
-  float realJ1_jvf;
-  int   realJ1_ntrk;
-  float realJ1_width;
-  int   realJ1_ntrk12;
-  float realJ1_width12;
-  float realJ1_MV1;
-  float realJ1_Fisher;
-  float realJ2_m;
-  float realJ2_pt;
-  float realJ2_eta;
-  float realJ2_eta_det;
-  float realJ2_phi;
-  float realJ2_flavortruth;
-  int   realJ2_pdg;
-  float realJ2_jvf;
-  int   realJ2_ntrk;
-  float realJ2_width;
-  int   realJ2_ntrk12;
-  float realJ2_width12;
-  float realJ2_MV1;
-  float realJ2_Fisher;
+  //////////////////////
+  int   Jet1_KF_index;
+  int   Jet2_KF_index;
+  int   Jet1_LJ_index;
+  int   Jet2_LJ_index;
+  int   Jet1_BP_index;
+  int   Jet2_BP_index;
+  //////////////////////
+  float realJ1_KF_m;
+  float realJ1_KF_pt;
+  float realJ1_KF_eta;
+  float realJ1_KF_eta_det;
+  float realJ1_KF_phi;
+  float realJ1_KF_flavortruth;
+  int   realJ1_KF_pdg;
+  float realJ1_KF_jvf;
+  int   realJ1_KF_ntrk;
+  float realJ1_KF_width;
+  int   realJ1_KF_ntrk12;
+  float realJ1_KF_width12;
+  float realJ1_KF_MV1;
+  float realJ1_KF_Fisher;
+  float realJ2_KF_m;
+  float realJ2_KF_pt;
+  float realJ2_KF_eta;
+  float realJ2_KF_eta_det;
+  float realJ2_KF_phi;
+  float realJ2_KF_flavortruth;
+  int   realJ2_KF_pdg;
+  float realJ2_KF_jvf;
+  int   realJ2_KF_ntrk;
+  float realJ2_KF_width;
+  int   realJ2_KF_ntrk12;
+  float realJ2_KF_width12;
+  float realJ2_KF_MV1;
+  float realJ2_KF_Fisher;
   //
-  int Jet1_index;
-  int Jet2_index;
-  int Jeta_index;
-  int Jetb_index;
+  float ll_2_KF_jets;
+  float realZ_KF_m;
+  float realZ_KF_pt;
+  float realZ_KF_eta;
+  float realZ_KF_phi;
+  float realH_KF_m;
+  float realH_KF_pt;
+  float realH_KF_eta;
+  float realH_KF_phi;
   //
-  float realJa_m;
-  float realJa_pt;
-  float realJa_eta;
-  float realJa_eta_det;
-  float realJa_phi;
-  float realJa_flavortruth;
-  int   realJa_pdg;
-  float realJa_jvf;
-  int   realJa_ntrk;
-  float realJa_width;
-  int   realJa_ntrk12;
-  float realJa_width12;
-  float realJa_MV1;
-  float realJb_m;
-  float realJb_pt;
-  float realJb_eta;
-  float realJb_eta_det;
-  float realJb_phi;
-  float realJb_flavortruth;
-  int   realJb_pdg;
-  float realJb_jvf;
-  int   realJb_ntrk;
-  float realJb_width;
-  int   realJb_ntrk12;
-  float realJb_width12;
-  float realJb_MV1;
+  float corrJ1_KF_m;
+  float corrJ1_KF_pt;
+  float corrJ1_KF_eta;
+  float corrJ1_KF_eta_det;
+  float corrJ1_KF_phi;
+  float corrJ1_KF_flavortruth;
+  float corrJ1_KF_Fisher;
+  float corrJ2_KF_m;
+  float corrJ2_KF_pt;
+  float corrJ2_KF_eta;
+  float corrJ2_KF_eta_det;
+  float corrJ2_KF_phi;
+  float corrJ2_KF_flavortruth;
+  float corrJ2_KF_Fisher;
   //
-  float realZab_m;
-  float realZab_pt;
-  float realZab_eta;
-  float realZab_phi;
-  float realHab_m;
-  float realHab_pt;
-  float realHab_eta;
-  float realHab_phi; 
+  float ll_2_KF_jets_corr;
+  float corrZ_KF_m;
+  float corrZ_KF_pt;
+  float corrZ_KF_eta;
+  float corrZ_KF_phi;
+  float corrH_KF_m;
+  float corrH_KF_pt;
+  float corrH_KF_eta;
+  float corrH_KF_phi;
+  //////////////////////
+  float realJ1_LJ_m;
+  float realJ1_LJ_pt;
+  float realJ1_LJ_eta;
+  float realJ1_LJ_eta_det;
+  float realJ1_LJ_phi;
+  float realJ1_LJ_flavortruth;
+  int   realJ1_LJ_pdg;
+  float realJ1_LJ_jvf;
+  int   realJ1_LJ_ntrk;
+  float realJ1_LJ_width;
+  int   realJ1_LJ_ntrk12;
+  float realJ1_LJ_width12;
+  float realJ1_LJ_MV1;
+  float realJ2_LJ_m;
+  float realJ2_LJ_pt;
+  float realJ2_LJ_eta;
+  float realJ2_LJ_eta_det;
+  float realJ2_LJ_phi;
+  float realJ2_LJ_flavortruth;
+  int   realJ2_LJ_pdg;
+  float realJ2_LJ_jvf;
+  int   realJ2_LJ_ntrk;
+  float realJ2_LJ_width;
+  int   realJ2_LJ_ntrk12;
+  float realJ2_LJ_width12;
+  float realJ2_LJ_MV1;
   //
-  float ll_2_jets;
-  float realZ_m;
-  float realZ_pt;
-  float realZ_eta;
-  float realZ_phi;
-  float realH_m;
-  float realH_pt;
-  float realH_eta;
-  float realH_phi;
-  float corrJ1_m;
-  float corrJ1_pt;
-  float corrJ1_eta;
-  float corrJ1_eta_det;
-  float corrJ1_phi;
-  float corrJ1_flavortruth;
-  float corrJ1_Fisher;
-  float corrJ2_m;
-  float corrJ2_pt;
-  float corrJ2_eta;
-  float corrJ2_eta_det;
-  float corrJ2_phi;
-  float corrJ2_flavortruth;
-  float corrJ2_Fisher;
-  float ll_2_jets_corr;
-  float corrZ_m;
-  float corrZ_pt;
-  float corrZ_eta;
-  float corrZ_phi;
-  float corrH_m;
-  float corrH_pt;
-  float corrH_eta;
-  float corrH_phi;
+  float realZ_LJ_m;
+  float realZ_LJ_pt;
+  float realZ_LJ_eta;
+  float realZ_LJ_phi;
+  float realH_LJ_m;
+  float realH_LJ_pt;
+  float realH_LJ_eta;
+  float realH_LJ_phi; 
+  //////////////////////
+  float realJ1_BP_m;
+  float realJ1_BP_pt;
+  float realJ1_BP_eta;
+  float realJ1_BP_eta_det;
+  float realJ1_BP_phi;
+  float realJ1_BP_flavortruth;
+  int   realJ1_BP_pdg;
+  float realJ1_BP_jvf;
+  int   realJ1_BP_ntrk;
+  float realJ1_BP_width;
+  int   realJ1_BP_ntrk12;
+  float realJ1_BP_width12;
+  float realJ1_BP_MV1;
+  float realJ2_BP_m;
+  float realJ2_BP_pt;
+  float realJ2_BP_eta;
+  float realJ2_BP_eta_det;
+  float realJ2_BP_phi;
+  float realJ2_BP_flavortruth;
+  int   realJ2_BP_pdg;
+  float realJ2_BP_jvf;
+  int   realJ2_BP_ntrk;
+  float realJ2_BP_width;
+  int   realJ2_BP_ntrk12;
+  float realJ2_BP_width12;
+  float realJ2_BP_MV1;
+  //
+  float realZ_BP_m;
+  float realZ_BP_pt;
+  float realZ_BP_eta;
+  float realZ_BP_phi;
+  float realH_BP_m;
+  float realH_BP_pt;
+  float realH_BP_eta;
+  float realH_BP_phi; 
+  ////////////////////////
+  float dR_ll;
+  float dPhi_ll;
+  //
+  float dPhi_KF_jj;
+  float dPhi_LJ_jj;
+  float dPhi_BP_jj;
+  float dR_KF_jj;
+  float dR_LJ_jj;
+  float dR_BP_jj;
+  //
+  float dPhi_KF_ZZ;
+  float dPhi_LJ_ZZ;
+  float dPhi_BP_ZZ;
+  float dR_KF_ZZ;
+  float dR_LJ_ZZ;
+  float dR_BP_ZZ;
+  ///////////////////////
   float chisquare;
+  float mu;
   float met;
+  int   NPV;
+  int   HFOR;
   float sumet;
   float btagSF;
-  int NPV;
+  int   Entries;
   float truthH_pt;
   float ggFweight;
+  //////////////////////
   float xWin_44p_4var;
   float yWin_44p_4var;
   float zWin_44p_4var;
@@ -383,31 +445,22 @@ typedef struct {
   float yWin_64h_6var;
   float zWin_64h_6var;
   float gWin_64h_6var;
-  float mu;
+  //////////////////////
   float trig_SF;
   float trig_SF2;
   float trig_SFC;
-  int trig_flag;
-  int HFOR;
-  int Entries;
-  float dPhi_ll;
-  float dPhi_jj;
-  float dR_jj;
-  float dPhi_ab_jj;
-  float dR_ab_jj;
-  int total_jet_ntrk1;
+  int   trig_flag;
+  //////////////////////
+  int   total_jet_ntrk1;
   float total_jet_width1;
-  int total_jet_ntrk2;
+  int   total_jet_ntrk2;
   float total_jet_width2;
-  int total_jet_ntrk3;
+  int   total_jet_ntrk3;
   float total_jet_width3;
   //Flavour Composition Variables
-  float SecondJet_MV1_b; // b jets 
-  float SecondJet_MV1_c; // c jets
-  float SecondJet_MV1_l; // light jets
-  float AllJet_MV1_b; // b jets 
-  float AllJet_MV1_c; // c jets
-  float AllJet_MV1_l; // light jets
+  float AllJet_MV1_1;    // 1 good jet 
+  float AllJet_MV1_2;    // 2 good jet
+  float AllJet_MV1_3;    // 3 good jet
 } analysis_output_struct;
 
 
@@ -523,6 +576,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   // event selection
   virtual Bool_t hasPowHegZZBug(); // to be removed and/or change!!
+  virtual Bool_t SherpaPt0Veto();
   virtual Int_t getLastCutPassed();
   virtual Bool_t passesGRL();
   virtual Bool_t hasGoodVertex();
@@ -659,7 +713,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
 
 
-  // Favors Jets Methods
+  // Flavor Jet Methods
   Bool_t isHeavyJet(Int_t pdg);
   Bool_t isLightJet(Int_t pdg);
   Bool_t isGluonJet(Int_t pdg);
@@ -700,7 +754,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   //Method to find the best DiJets using JetKinematicFitter
   Bool_t JetKinematicFitterResult();
-
+  
+  //Method to find the best DiJets using BestPair algo
+  void JetBestPairResult();
   
   //Method to calculate the DiJet invariant mass for the tagged Jets!
   Bool_t JetDimassTagged();
@@ -841,36 +897,50 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TTree *analysistree;
   
   Int_t m_lep_chargeproduct;
-  std::vector<Float_t> *m_lep_m;
-  std::vector<Float_t> *m_lep_pt;
-  std::vector<Float_t> *m_lep_eta;
-  std::vector<Float_t> *m_lep_phi;
-  std::vector<Int_t>   *m_lep_charge;
-  std::vector<Float_t> *m_lep_d0;
-  std::vector<Float_t> *m_lep_sigd0;
-  std::vector<Float_t> *m_lep_trackiso;
-  std::vector<Float_t> *m_lep_caloiso;
-  std::vector<Int_t>   *m_lep_quality;
-  std::vector<Float_t> *m_jets_m;
-  std::vector<Float_t> *m_jets_pt;
-  std::vector<Float_t> *m_jets_eta;
-  std::vector<Float_t> *m_jets_eta_det;
-  std::vector<Float_t> *m_jets_phi;
-  std::vector<Float_t> *m_jets_MV1;
-  std::vector<Float_t> *m_jets_flavortruth;
-  std::vector<Float_t> *m_jets_jvtxf;
-  std::vector<Int_t>   *m_jets_nTrk;
-  std::vector<Float_t> *m_jets_width;
-  std::vector<Int_t>   *m_jets_flavorpdg;
-  std::vector<Double_t>   *m_jets_Epdg;
-  UInt_t m_run, m_event;
-  Float_t m_weight, m_mu, m_truthH_pt, m_ggFweight;
-  Int_t m_cut, m_channel, m_qcdevent, m_NPV, m_Entries, m_HFOR, m_low_event;
-  
-  Float_t m_met_met, m_met_sumet, m_met_phi;
-  Float_t m_trig_SF,m_trig_SF2,m_trig_SFC;
-  Int_t m_trig_flag;
-  
+  std::vector<Float_t>   *m_lep_m;
+  std::vector<Float_t>   *m_lep_pt;
+  std::vector<Float_t>   *m_lep_eta;
+  std::vector<Float_t>   *m_lep_phi;
+  std::vector<Int_t>     *m_lep_charge;
+  std::vector<Float_t>   *m_lep_d0;
+  std::vector<Float_t>   *m_lep_sigd0;
+  std::vector<Float_t>   *m_lep_trackiso;
+  std::vector<Float_t>   *m_lep_caloiso;
+  std::vector<Int_t>     *m_lep_quality;
+  std::vector<Float_t>   *m_jets_m;
+  std::vector<Float_t>   *m_jets_pt;
+  std::vector<Float_t>   *m_jets_eta;
+  std::vector<Float_t>   *m_jets_eta_det;
+  std::vector<Float_t>   *m_jets_phi;
+  std::vector<Float_t>   *m_jets_MV1;
+  std::vector<Float_t>   *m_jets_flavortruth;
+  std::vector<Float_t>   *m_jets_jvtxf;
+  std::vector<Int_t>     *m_jets_nTrk;
+  std::vector<Float_t>   *m_jets_width;
+  std::vector<Int_t>     *m_jets_flavorpdg;
+  std::vector<Double_t>  *m_jets_Epdg;
+  //
+  UInt_t  m_run;
+  UInt_t  m_event;
+  Int_t   m_cut;
+  Int_t   m_channel;
+  Int_t   m_qcdevent;
+  Int_t   m_NPV;
+  Int_t   m_Entries;
+  Int_t   m_HFOR;
+  Int_t   m_low_event;
+  Int_t   m_trig_flag;
+  //
+  Float_t m_weight;
+  Float_t m_mu;
+  Float_t m_truthH_pt;
+  Float_t m_ggFweight;
+  Float_t m_met_met;
+  Float_t m_met_sumet;
+  Float_t m_met_phi;
+  Float_t m_trig_SF;
+  Float_t m_trig_SF2;
+  Float_t m_trig_SFC;
   
   //Truth quark information
   std::vector<Float_t> *m_quark_m;
