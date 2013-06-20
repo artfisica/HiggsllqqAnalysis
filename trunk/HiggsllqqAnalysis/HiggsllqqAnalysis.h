@@ -133,14 +133,15 @@ namespace HllqqMuonQuality {
   enum {
     family,
     quality,
-    cosmic,
     eta,
     pt,
     MCP,
+    cosmic,
     z0,
     d0Sig, 
     Isolation,
     overlap,
+    medium,
   };
 }
 
@@ -157,6 +158,7 @@ namespace HllqqElectronQuality {
     d0Sig, 
     Isolation,
     overlap,
+    medium,
   };
 }
 

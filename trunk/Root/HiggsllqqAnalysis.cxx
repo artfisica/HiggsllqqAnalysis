@@ -412,13 +412,13 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   if (analysis_version() == "rel_17") { // mc11c, 2011
     m_PileupReweighter->AddConfigFile("./HiggsllqqAnalysis/packages/files/pileup/MC11c.prw.root");
-    //m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_period_AllYear_Higgs_4l_2e2mu.root");
-    m_PileupReweighter->AddLumiCalcFile("./Higgs4lepAnalysis/packages/files/pileup/ilumicalc_2011_AllYear_All_Good.root");
+    m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_period_AllYear_Higgs_4l_2e2mu.root");
+    //m_PileupReweighter->AddLumiCalcFile("./Higgs4lepAnalysis/packages/files/pileup/ilumicalc_2011_AllYear_All_Good.root");
     m_PileupReweighter->SetDefaultChannel(109292);
   } else if (analysis_version() == "rel_17_2") { // mc12a, 2012
     m_PileupReweighter->AddConfigFile("./HiggsllqqAnalysis/packages/files/pileup/MC12a.prw.root");
-    //m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_2012_AllYear_All_Good.root");
-    m_PileupReweighter->AddLumiCalcFile("./Higgs4lepAnalysis/packages/files/pileup/ilumicalc_2012_period_AllYear_Higgs_4l_2e2mu.root");
+    m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_2012_AllYear_All_Good.root");
+    //m_PileupReweighter->AddLumiCalcFile("./Higgs4lepAnalysis/packages/files/pileup/ilumicalc_2012_period_AllYear_Higgs_4l_2e2mu.root");
     m_PileupReweighter->SetDefaultChannel(160156);
   }
   m_PileupReweighter->Initialize();
@@ -705,6 +705,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow->Fill("NumTagJets",0);
   h_cutflow->Fill("DileptonMass",0);
   h_cutflow->Fill("DiJetMass",0);
+  h_cutflow->Fill("EXIT",0);
   
   h_cutflow_weight = new TH1D("cutflow_MU2","",20,0,20); //("cutflow_weight","",20,0,20);
   h_cutflow_weight->Fill("Entries",0);
@@ -724,6 +725,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow_weight->Fill("NumTagJets",0);
   h_cutflow_weight->Fill("DileptonMass",0);
   h_cutflow_weight->Fill("DiJetMass",0);
+  h_cutflow_weight->Fill("EXIT",0);
   
   
   //Initialization of the qqll ntuple
@@ -817,10 +819,10 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     m_MuonCutflow.push_back(Analysis::CutFlowTool("Muons_" + chan_name[i]));
     m_MuonCutflow[i].addCut("family");
     m_MuonCutflow[i].addCut("quality");
-    m_MuonCutflow[i].addCut("cosmic");
     m_MuonCutflow[i].addCut("eta");
     m_MuonCutflow[i].addCut("pt");
     m_MuonCutflow[i].addCut("MCP");
+    m_MuonCutflow[i].addCut("cosmic");
     m_MuonCutflow[i].addCut("z0");
     m_MuonCutflow[i].addCut("d0Sig"); 
     m_MuonCutflow[i].addCut("Isolation");
@@ -2182,7 +2184,6 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
     
     if (TMath::Abs(mu->z0_exPV()) < 10. || mu->isStandAloneMuon()) lep->set_lastcut(HllqqMuonQuality::z0);
     else return kFALSE;
-    
     
     
     if(!GetDoQCDSelection()) {
@@ -5833,7 +5834,7 @@ Float_t HiggsllqqAnalysis::Rightcut(Int_t efficiency, Float_t pt_jet, Float_t et
 Bool_t HiggsllqqAnalysis::Pair_Quality(){
   
   Bool_t GoodQ = false;
-  
+  Int_t last(-1);
   D3PDReader::MuonD3PDObjectElement     *mu_1;
   D3PDReader::MuonD3PDObjectElement     *mu_2;
   D3PDReader::ElectronD3PDObjectElement *el_1;
@@ -5854,7 +5855,10 @@ Bool_t HiggsllqqAnalysis::Pair_Quality(){
       ((m_GoodMuons.at(0)->family() != Muon::CALO && mu_1->isStandAloneMuon()==0 && (mu_1->isCombinedMuon()==1 || mu_1->isSegmentTaggedMuon()==1) && mu_1->pt() > 25000. && TMath::Abs(mu_1->eta()) < 2.5) 
        ||
        (m_GoodMuons.at(1)->family() != Muon::CALO && mu_2->isStandAloneMuon()==0 && (mu_2->isCombinedMuon()==1 || mu_2->isSegmentTaggedMuon()==1) && mu_2->pt() > 25000. && TMath::Abs(mu_2->eta()) < 2.5)))
-    GoodQ = true;
+    {
+      last = HllqqMuonQuality::medium;
+      GoodQ = true;
+    }  
   
   
   if (getChannel() == HiggsllqqAnalysis::E2 && m_GoodElectrons.size() == 2 &&       
