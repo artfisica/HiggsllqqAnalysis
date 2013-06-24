@@ -117,13 +117,13 @@ namespace HllqqCutFlow {
     METcleaning,
     LArHole,
     NumberOfLeptons,
-    OppositeSign,
     PtLeptons,
     TriggerConsistency,
-    MET,
+    OppositeSign,
     TwoJets,
-    NumTagJets,
     DileptonMass,
+    MET,
+    NumTagJets,
     DiJetMass,
   };
 }
