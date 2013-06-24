@@ -1,7 +1,7 @@
 ORDER TO USE THE FILES:
 
 ## To download the datasets
-./down <CERN_USER, i.e. arturos> <tag version, i.e. 1344> <production version, i.e. 01>
+./down <CERN_USER, i.e. arturos> <production version, i.e. 01> <D3PD tag version, i.e. 1344> 
 
 ## To create the folders and files inside
 ./change_names
