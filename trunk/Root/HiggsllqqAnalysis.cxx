@@ -86,8 +86,8 @@ Float_t Mll_high_max = 99000.;
 // Definition of the Hadronic (dijet) invariant mass window:  70 (60) GeV < Mjj < 105 (115) GeV 
 Float_t Mjj_low_min       = 20000.; // 60000.;
 Float_t Mjj_low_max       = 200000.; // 115000.;
-Float_t Mjj_high_min      = 70000.; // 70000.;
-Float_t Mjj_high_max      = 105000.; // 105000.;
+Float_t Mjj_high_min      = 20000.; // 70000.;
+Float_t Mjj_high_max      = 200000.; // 105000.;
 
 
 //Definition of the MET cut:
