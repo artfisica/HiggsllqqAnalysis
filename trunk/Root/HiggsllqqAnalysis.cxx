@@ -587,6 +587,8 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
       uncertainty = Analysis::Total;
     } 
   
+  SetTmvaReaders(reader,var1,var2);
+  
   return kTRUE;
 }
 
@@ -660,6 +662,11 @@ Bool_t HiggsllqqAnalysis::finalize_tools()
   delete m_smearD0[1];
   delete m_smearD0[2];
   //delete m_jetCalibrationTool;
+  
+  for(Int_t i=0;i<36;i++)
+    {
+      delete reader[i];	
+    }
   
   return kTRUE;
 }
@@ -4461,13 +4468,32 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->total_jet_width3      =   -1;
   //
   if(FillGluon){
+    //MVA Variables
     str->realJ1_KF_Fisher    = -999;
     str->realJ2_KF_Fisher    = -999;
+    str->realJ1_BP_Fisher    = -999;
+    str->realJ2_BP_Fisher    = -999;
+    str->realJ1_LJ_Fisher    = -999;
+    str->realJ2_LJ_Fisher    = -999;
+    str->realJ1_KF_LL    = -999;
+    str->realJ2_KF_LL    = -999;
+    str->realJ1_BP_LL    = -999;
+    str->realJ2_BP_LL    = -999;
+    str->realJ1_LJ_LL    = -999;
+    str->realJ2_LJ_LL    = -999;
+    str->realJ1_KF_LLMIX    = -999;
+    str->realJ2_KF_LLMIX    = -999;
+    str->realJ1_BP_LLMIX    = -999;
+    str->realJ2_BP_LLMIX    = -999;
+    str->realJ1_LJ_LLMIX    = -999;
+    str->realJ2_LJ_LLMIX    = -999;
+
+    //Empty Variables//
     str->ll_2_KF_jets        = -999;
     str->corrJ1_KF_Fisher    = -999;
     str->corrJ2_KF_Fisher    = -999;
     str->ll_2_KF_jets_corr   = -999;
-    
+
     //Flavour Composition Variables    
     str->AllJet_MV1_1        = -999; // 1 good jet
     str->AllJet_MV1_2        = -999; // 2 good jet
@@ -4726,13 +4752,32 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   
   if(FillGluon)
     {
+      //MVA Branches
       analysistree->Branch("realJ1_KF_Fisher",  &(str->realJ1_KF_Fisher));
       analysistree->Branch("realJ2_KF_Fisher",  &(str->realJ2_KF_Fisher));
+      analysistree->Branch("realJ1_BP_Fisher",  &(str->realJ1_BP_Fisher));
+      analysistree->Branch("realJ2_BP_Fisher",  &(str->realJ2_BP_Fisher));
+      analysistree->Branch("realJ1_LJ_Fisher",  &(str->realJ1_LJ_Fisher));
+      analysistree->Branch("realJ2_LJ_Fisher",  &(str->realJ2_LJ_Fisher));
+      analysistree->Branch("realJ1_KF_LL",  &(str->realJ1_KF_LL));
+      analysistree->Branch("realJ2_KF_LL",  &(str->realJ2_KF_LL));
+      analysistree->Branch("realJ1_BP_LL",  &(str->realJ1_BP_LL));
+      analysistree->Branch("realJ2_BP_LL",  &(str->realJ2_BP_LL));
+      analysistree->Branch("realJ1_LJ_LL",  &(str->realJ1_LJ_LL));
+      analysistree->Branch("realJ2_LJ_LL",  &(str->realJ2_LJ_LL));
+      analysistree->Branch("realJ1_KF_LLMIX",  &(str->realJ1_KF_LLMIX));
+      analysistree->Branch("realJ2_KF_LLMIX",  &(str->realJ2_KF_LLMIX));
+      analysistree->Branch("realJ1_BP_LLMIX",  &(str->realJ1_BP_LLMIX));
+      analysistree->Branch("realJ2_BP_LLMIX",  &(str->realJ2_BP_LLMIX));
+      analysistree->Branch("realJ1_LJ_LLMIX",  &(str->realJ1_LJ_LLMIX));
+      analysistree->Branch("realJ2_LJ_LLMIX",  &(str->realJ2_LJ_LLMIX));
+
+      //Empty Branches
       analysistree->Branch("ll_2_KF_jets",      &(str->ll_2_KF_jets));
       analysistree->Branch("corrJ1_KF_Fisher",  &(str->corrJ1_KF_Fisher));
       analysistree->Branch("corrJ2_KF_Fisher",  &(str->corrJ2_KF_Fisher));
       analysistree->Branch("ll_2_KF_jets_corr", &(str->ll_2_KF_jets_corr));
-      
+
       //Flavour Composition Variables
       analysistree->Branch("AllJet_MV1_1",      &(str->AllJet_MV1_1));    // 1 good jet
       analysistree->Branch("AllJet_MV1_2",      &(str->AllJet_MV1_2));    // 2 good jet
@@ -5386,6 +5431,36 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 		str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
 		str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
 	      }
+
+	      //Filling of MVA variables
+	      if(str->realJ1_KF_eta<2.5 && str->realJ2_KF_eta<2.5 && str->realJ1_KF_eta>-2.5 && str->realJ2_KF_eta>-2.5 && str->realJ1_KF_pt>20000 && str->realJ2_KF_pt>20000)
+		{
+		  str->realJ1_KF_Fisher = getFisher_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
+		  str->realJ2_KF_Fisher = getFisher_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+		  str->realJ1_KF_LL = getLikelihood_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
+		  str->realJ2_KF_LL = getLikelihood_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+		  str->realJ1_KF_LLMIX = getLikelihoodMIX_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
+		  str->realJ2_KF_LLMIX = getLikelihoodMIX_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+		}
+	      if(str->realJ1_BP_eta<2.5 && str->realJ2_BP_eta<2.5 && str->realJ1_BP_eta>-2.5 && str->realJ2_BP_eta>-2.5 && str->realJ1_BP_pt>20000 && str->realJ2_BP_pt>20000)
+		{
+		  str->realJ1_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		  str->realJ2_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		  str->realJ1_BP_LL = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		  str->realJ2_BP_LL = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		  str->realJ1_BP_LLMIX = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		  str->realJ2_BP_LLMIX = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		}
+	      if(str->realJ1_LJ_eta<2.5 && str->realJ2_LJ_eta<2.5 && str->realJ1_LJ_eta>-2.5 && str->realJ2_LJ_eta>-2.5 && str->realJ1_LJ_pt>20000 && str->realJ2_LJ_pt>20000)
+		{
+		  str->realJ1_LJ_Fisher = getFisher_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
+		  str->realJ2_LJ_Fisher = getFisher_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		  str->realJ1_LJ_LL = getLikelihood_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
+		  str->realJ2_LJ_LL = getLikelihood_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		  str->realJ1_LJ_LLMIX = getLikelihoodMIX_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
+		  str->realJ2_LJ_LLMIX = getLikelihoodMIX_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		}
+	      
 	    } // End of the FillGluon variables   
 	  
 
@@ -5530,6 +5605,319 @@ Float_t HiggsllqqAnalysis::isInTheJet(Int_t Index, Int_t JetIndex, vector<float>
 
 
 
+//MVA Methods
+void HiggsllqqAnalysis::SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36])
+{
+  TMVA::Tools::Instance();
+  TString dir1    = "./HiggsllqqAnalysis/4bin_2var_training/";
+  TString prefix = "TMVAClassification";
+  TString path[4];
+  path[0]="pt1/weights/";
+  path[1]="pt2/weights/";
+  path[2]="pt3/weights/";
+  path[3]="pt4/weights/";
+  TString methodName1 = TString("Fisher");
+  TString methodName2 = TString("Likelihood");
+  TString methodName3 = TString("LikelihoodMIX");
+  for(Int_t i=0;i<36;i++)
+    {
+      reader[i] = new TMVA::Reader( "!Color:Silent" );
+      if(i<=11)
+	{
+	  reader[i]->AddVariable( "Ntrk", &var1[i] );
+	  reader[i]->AddVariable( "Width", &var2[i] );
+	  TString weightfile = dir1 + path[i%4] + prefix + TString("_")+ methodName1 + TString(".weights.xml");
+	  //cout<<weightfile<<" 1 "<<endl;
+	  reader[i]->BookMVA( methodName1 + TString(" method"), weightfile );
+	  //cout<<weightfile<<endl;
+	}
+      if(i>11 && i<=23)
+	{
+	  reader[i]->AddVariable( "Ntrk", &var1[i] );
+	  reader[i]->AddVariable( "Width", &var2[i] );
+	  TString weightfile = dir1 + path[i%4] + prefix + TString("_")+ methodName2 + TString(".weights.xml");
+	  reader[i]->BookMVA( methodName2 + TString(" method"), weightfile );
+	}
+      if(i>23 && i<=35)
+	{
+	  reader[i]->AddVariable( "Ntrk", &var1[i] );
+	  reader[i]->AddVariable( "Width", &var2[i] );
+	  TString weightfile = dir1 + path[i%4] + prefix + TString("_")+ methodName3 + TString(".weights.xml");
+	  reader[i]->BookMVA( methodName3 + TString(" method"), weightfile );
+	}
+    }
+  std::cout<<"Inizializzazione TMVA Readers Terminata"<<std::endl;
+}
+
+Float_t HiggsllqqAnalysis::getFisher_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("Fisher") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 0;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 1;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 2;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 3;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getFisher_BP(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("Fisher") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 4;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 5;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 6;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 7;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getFisher_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("Fisher") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 8;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 9;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 10;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 11;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getLikelihood_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("Likelihood") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 12;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 13;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 14;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 15;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getLikelihood_BP(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("Likelihood") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 16;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 17;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 18;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 19;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getLikelihood_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("Likelihood") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 20;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 21;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 22;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 23;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getLikelihoodMIX_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("LikelihoodMIX") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 24;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 25;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 26;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 27;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getLikelihoodMIX_BP(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("LikelihoodMIX") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 28;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 29;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 30;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 31;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
+
+Float_t HiggsllqqAnalysis::getLikelihoodMIX_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
+{
+  Int_t indexReader = -1;
+  TString methodName = TString("LikelihoodMIX") + TString(" method");
+  Float_t LL=-9999.9;
+  //cout<<pt_jet<<"  "<<eta_jet<<"  "<<ntrk_jet<<"  "<<width_jet<<endl; //control
+  // --- Book the MVA methods
+  if(pt_jet>20000 && pt_jet<=40000)
+    {
+      indexReader = 32;
+    }
+  if(pt_jet>40000 && pt_jet<=80000)
+    {
+      indexReader = 33;
+    }
+  if(pt_jet>80000 && pt_jet<=160000)
+    {
+      indexReader = 34;
+    }
+  if(pt_jet>160000)
+    {
+      indexReader = 35;
+    }
+  // Book method(s)
+  var1[indexReader] = ntrk_jet;
+  var2[indexReader] = width_jet;
+  LL=reader[indexReader]->EvaluateMVA( methodName );
+  return LL;
+}
 
 
 
