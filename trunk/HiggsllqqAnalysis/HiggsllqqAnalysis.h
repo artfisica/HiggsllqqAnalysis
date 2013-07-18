@@ -265,6 +265,8 @@ typedef struct {
   float realJ1_KF_width12;
   float realJ1_KF_MV1;
   float realJ1_KF_Fisher;
+  float realJ1_KF_LL;
+  float realJ1_KF_LLMIX;
   float realJ2_KF_m;
   float realJ2_KF_pt;
   float realJ2_KF_eta;
@@ -279,6 +281,8 @@ typedef struct {
   float realJ2_KF_width12;
   float realJ2_KF_MV1;
   float realJ2_KF_Fisher;
+  float realJ2_KF_LL;
+  float realJ2_KF_LLMIX;
   //
   float ll_2_KF_jets;
   float realZ_KF_m;
@@ -328,6 +332,9 @@ typedef struct {
   int   realJ1_LJ_ntrk12;
   float realJ1_LJ_width12;
   float realJ1_LJ_MV1;
+  float realJ1_LJ_Fisher;
+  float realJ1_LJ_LL;
+  float realJ1_LJ_LLMIX;
   float realJ2_LJ_m;
   float realJ2_LJ_pt;
   float realJ2_LJ_eta;
@@ -341,6 +348,9 @@ typedef struct {
   int   realJ2_LJ_ntrk12;
   float realJ2_LJ_width12;
   float realJ2_LJ_MV1;
+  float realJ2_LJ_Fisher;
+  float realJ2_LJ_LL;
+  float realJ2_LJ_LLMIX;
   //
   float realZ_LJ_m;
   float realZ_LJ_pt;
@@ -364,6 +374,9 @@ typedef struct {
   int   realJ1_BP_ntrk12;
   float realJ1_BP_width12;
   float realJ1_BP_MV1;
+  float realJ1_BP_Fisher;
+  float realJ1_BP_LL;
+  float realJ1_BP_LLMIX;
   float realJ2_BP_m;
   float realJ2_BP_pt;
   float realJ2_BP_eta;
@@ -377,6 +390,9 @@ typedef struct {
   int   realJ2_BP_ntrk12;
   float realJ2_BP_width12;
   float realJ2_BP_MV1;
+  float realJ2_BP_Fisher;
+  float realJ2_BP_LL;
+  float realJ2_BP_LLMIX;
   //
   float realZ_BP_m;
   float realZ_BP_pt;
@@ -804,7 +820,17 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
   pair <double,double> GetJetSFsvalue(int jetindex);
 
-
+  //MVA methods (June 2013)
+  void SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36]);
+  Float_t getFisher_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getLikelihood_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getLikelihoodMIX_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getFisher_BP(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getLikelihood_BP(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getLikelihoodMIX_BP(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getFisher_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getLikelihood_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
+  Float_t getLikelihoodMIX_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
 
 
   //SOM METHODS (Dec 2012)
@@ -860,6 +886,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TH1D *h_cutflow_weight_MU2;
   TH1D *h_cutflow_MUE;
   TH1D *h_cutflow_weight_MUE;
+
+  TMVA::Reader *reader[36];
+  Float_t var1[36],var2[36];
   
   std::map<TString, TH1F*> m_truthHistos; // To be update or remove
   TEfficiency *m_selectionEfficiencyVsNvx[4]; // To be update or remove
