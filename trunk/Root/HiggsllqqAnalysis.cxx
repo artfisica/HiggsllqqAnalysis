@@ -57,7 +57,7 @@ Bool_t cut_leptons   = kFALSE,
   DoCaloMuons        = kTRUE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
-  DoKinematicFitter  = kFALSE,
+  DoKinematicFitter  = kTRUE,
   FillGluon          = kTRUE,
   Look_b_SFs         = kTRUE;
 
@@ -6020,7 +6020,7 @@ pair<int, float> HiggsllqqAnalysis::GetWinnerInfo(std::vector< pair<SOMVar, SOMV
 
 std::vector< pair<SOMVar,SOMVar> > HiggsllqqAnalysis::GetSOMVectors(TString which_map, int jetidx1, int jetidx2){
   
-  TString maps_path    = "./HiggsllqqAnalysis/SOMmaps/";
+  TString maps_path    = "./HiggsllqqAnalysis/SOM/";
   TString map_filename = GetCorrectMap(which_map, jetidx1, jetidx2);
   TString ps_dim;
   pair<SOMVar, SOMVar> tmp;
@@ -6092,7 +6092,7 @@ std::vector< pair<int,int> > HiggsllqqAnalysis::GetCoordinates(TString which_map
 
 Bool_t HiggsllqqAnalysis::CheckMap(TString which_map, int jetidx1, int jetidx2){
   
-  TString maps_path = "./HiggsllqqAnalysis/SOMmaps/";
+  TString maps_path = "./HiggsllqqAnalysis/SOM/";
   Bool_t opened = false;
   ifstream file;
   TString map_name = GetCorrectMap(which_map, jetidx1,jetidx2);
@@ -6395,9 +6395,12 @@ void HiggsllqqAnalysis::JetBestPairResult()
 	}
       jj=-1;
     }
-  //if(Jone!=0 && Jtwo!=1)
-  //cout<<"Jet 1= "<<Jone<<". Jet 2 = "<<Jtwo<<". Mass = "<<had<<endl;
+  //if(Jone!=0 /*&& Jtwo!=1*/)
+  //  cout<<"Jet 1= "<<Jone<<". Jet 2 = "<<Jtwo<<". Mass = "<<had<<endl;
 }
+
+
+
 
 
 //TRIGGER MATCHING AND SF's
