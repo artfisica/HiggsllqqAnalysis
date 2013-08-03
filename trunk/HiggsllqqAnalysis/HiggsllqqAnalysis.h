@@ -774,7 +774,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t JetKinematicFitterResult();
   
   //Method to find the best DiJets using BestPair algo
-  void JetBestPairResult();
+  Bool_t JetBestPairResult();
   
   //Method to calculate the DiJet invariant mass for the tagged Jets!
   Bool_t JetDimassTagged();
