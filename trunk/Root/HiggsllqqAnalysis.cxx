@@ -63,7 +63,7 @@ Bool_t cut_leptons   = kFALSE,
 
 
 //Global Jets Variables.
-int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0);
+int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0), JetTag1(-1), JetTag2(-1), JetSemiTag1(-1), JetSemiTag2(-1);
 
 float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
 
@@ -86,8 +86,8 @@ Float_t Mll_high_max = 99000.;
 // Definition of the Hadronic (dijet) invariant mass window:  70 (60) GeV < Mjj < 105 (115) GeV 
 Float_t Mjj_low_min       = 20000.; // 60000.;
 Float_t Mjj_low_max       = 200000.; // 115000.;
-Float_t Mjj_high_min      = 20000.; // 70000.;
-Float_t Mjj_high_max      = 200000.; // 105000.;
+Float_t Mjj_high_min      = 70000.; // 70000.;
+Float_t Mjj_high_max      = 105000.; // 105000.;
 
 
 //Definition of the MET cut:
@@ -924,7 +924,6 @@ Bool_t HiggsllqqAnalysis::SherpaPt0Veto()
       Z_12 = lepton_1 + lepton_2;
       
       if(Z_12.Pt()>70000. && one==2) {
-	//cout<<"Sherpa Event rejected. PT2 = "<<Z_12.Pt()<<endl;
 	result = kTRUE;
       }
     } // Sherpa Z+Jets samples
@@ -1051,8 +1050,8 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   //OS selection on the 2 analysis channels
   int chargeprod = 0;
   
-  if(getChannel()      == HiggsllqqAnalysis::MU2 && !GetDoQCDSelection())
-    chargeprod = (m_GoodMuons.at(1))->charge()     * (m_GoodMuons.at(0))->charge(); 
+  if(getChannel() == HiggsllqqAnalysis::MU2 && !GetDoQCDSelection())
+    chargeprod = (m_GoodMuons.at(1))->charge() * (m_GoodMuons.at(0))->charge(); 
   
   else if(getChannel() == HiggsllqqAnalysis::E2  && !GetDoQCDSelection() && GetDoLowMass())
     chargeprod = (m_GoodElectrons.at(1))->charge() * (m_GoodElectrons.at(0))->charge(); 
@@ -1066,7 +1065,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   else return last;
   
   
-  //Dielpton Mass windows
+  //Dilepton Mass windows
   getDileptons(); //Create a single object using the pair of leptons  
   std::vector<Analysis::Dilepton *>::iterator Z_itr_i= m_Dileptons.begin();
   Double_t DilepMass = (*Z_itr_i)->Get4Momentum()->M();
@@ -1082,14 +1081,14 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   //Minimun number of tagged or untagged jets
-  if((GetNumOfTags()==2 && TaggedChannel && !TagOneJetChannel) || 
-     (GetNumOfTags()==1 && !TaggedChannel && TagOneJetChannel) || 
-     (GetNumOfTags()==0 && !TaggedChannel && !TagOneJetChannel)) last = HllqqCutFlow::NumTagJets;
+  if(/*(GetNumOfTags()==2 && TaggedChannel && !TagOneJetChannel) || 
+       (GetNumOfTags()==1 && !TaggedChannel && TagOneJetChannel) || 
+     */(GetNumOfTags()==0/* && !TaggedChannel && !TagOneJetChannel*/)) last = HllqqCutFlow::NumTagJets;
   else return last;
   
   
   //Invariant mass of the dijet
-  if((JetKinematicFitterResult() && !TaggedChannel && !TagOneJetChannel) ||
+  if((JetBestPairResult()/*JetKinematicFitterResult()*/ && !TaggedChannel && !TagOneJetChannel) ||
      (JetDimassTagged()          &&  TaggedChannel && !TagOneJetChannel) ||
      (JetDimassOneTagged()       && !TaggedChannel &&  TagOneJetChannel))
     last = HllqqCutFlow::DiJetMass;
@@ -2049,7 +2048,6 @@ void HiggsllqqAnalysis::getGoodLeptons()
   
   getJets(jet_branch);
   
-  
   ////////
   // Part 1: remove overlap among electrons and between muons and jets
   ////////
@@ -2066,7 +2064,7 @@ void HiggsllqqAnalysis::getGoodLeptons()
   // Part 3: remove overlap among electrons and between muons and electrons
   ////////
   
-  getGoodElectrons();  
+  getGoodElectrons();   
 }
 
 
@@ -2564,7 +2562,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
     }  
   else if (!dolowmass)
     {
-      if ((jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0) || (jet->rightpt()>30000. && TMath::Abs(jet->righteta()) > 2.5 && TMath::Abs(jet->righteta()) < 4.5 && jet->rightE()>0)) 
+      if ((jet->rightpt()>/*45000.*/20000. && TMath::Abs(jet->righteta()) < 2.5 /**/))//&& jet->rightE()>0) || (jet->rightpt()>/*45000.*/30000. && TMath::Abs(jet->righteta()) > 2.5 && TMath::Abs(jet->righteta()) < 4.5 && jet->rightE()>0)) 
 	jet->set_lastcut(HllqqJetQuality::kinematics);
       else return kFALSE;
     }
@@ -3648,19 +3646,23 @@ Bool_t HiggsllqqAnalysis::JetDimassTagged() {
   TLorentzVector j1;
   TLorentzVector j2;
   bool first =kTRUE;
-  
+
+  int Jt=-1;
+
   std::vector<Analysis::Jet *>::iterator jet_itr;
   
   for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr) {
-    
+    Jt++;
     if((GetMV1value(*jet_itr) > MV1_OP70) && first)
       {
 	first =kFALSE;
 	j1.SetPtEtaPhiM(b_rescaling*(*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
+	JetTag1=Jt;
       }
     if((GetMV1value(*jet_itr) > MV1_OP70) && !first)
       {
 	j2.SetPtEtaPhiM(b_rescaling*(*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
+	JetTag2=Jt;
       }
   }
   
@@ -3693,16 +3695,21 @@ Bool_t HiggsllqqAnalysis::JetDimassOneTagged() {
     if((GetMV1value(*jet_itr) > MV1_OP70))
       {
 	bjet_index = ii;
+	JetSemiTag1= ii;
 	j1.SetPtEtaPhiM(b_rescaling*(*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
       }
   }
   
   if(ii!=0)
-    //    j2.SetPtEtaPhiM(b_rescaling*(*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
-    j2.SetPtEtaPhiM(b_rescaling*m_GoodJets.at(0)->rightpt(),m_GoodJets.at(0)->righteta(),m_GoodJets.at(0)->rightphi(),m_GoodJets.at(0)->Get4Momentum()->M());
+    {
+      JetSemiTag2=0;
+      j2.SetPtEtaPhiM(b_rescaling*m_GoodJets.at(0)->rightpt(),m_GoodJets.at(0)->righteta(),m_GoodJets.at(0)->rightphi(),m_GoodJets.at(0)->Get4Momentum()->M());
+    }
   else
-    j2.SetPtEtaPhiM(b_rescaling*m_GoodJets.at(1)->rightpt(),m_GoodJets.at(1)->righteta(),m_GoodJets.at(1)->rightphi(),m_GoodJets.at(1)->Get4Momentum()->M());
-  
+    {
+      JetSemiTag2=1;
+      j2.SetPtEtaPhiM(b_rescaling*m_GoodJets.at(1)->rightpt(),m_GoodJets.at(1)->righteta(),m_GoodJets.at(1)->rightphi(),m_GoodJets.at(1)->Get4Momentum()->M());
+    }  
   
   TLorentzVector hadZ = j1 + j2;
   
@@ -4759,18 +4766,18 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
       analysistree->Branch("realJ2_BP_Fisher",  &(str->realJ2_BP_Fisher));
       analysistree->Branch("realJ1_LJ_Fisher",  &(str->realJ1_LJ_Fisher));
       analysistree->Branch("realJ2_LJ_Fisher",  &(str->realJ2_LJ_Fisher));
-      analysistree->Branch("realJ1_KF_LL",  &(str->realJ1_KF_LL));
-      analysistree->Branch("realJ2_KF_LL",  &(str->realJ2_KF_LL));
-      analysistree->Branch("realJ1_BP_LL",  &(str->realJ1_BP_LL));
-      analysistree->Branch("realJ2_BP_LL",  &(str->realJ2_BP_LL));
-      analysistree->Branch("realJ1_LJ_LL",  &(str->realJ1_LJ_LL));
-      analysistree->Branch("realJ2_LJ_LL",  &(str->realJ2_LJ_LL));
-      analysistree->Branch("realJ1_KF_LLMIX",  &(str->realJ1_KF_LLMIX));
-      analysistree->Branch("realJ2_KF_LLMIX",  &(str->realJ2_KF_LLMIX));
-      analysistree->Branch("realJ1_BP_LLMIX",  &(str->realJ1_BP_LLMIX));
-      analysistree->Branch("realJ2_BP_LLMIX",  &(str->realJ2_BP_LLMIX));
-      analysistree->Branch("realJ1_LJ_LLMIX",  &(str->realJ1_LJ_LLMIX));
-      analysistree->Branch("realJ2_LJ_LLMIX",  &(str->realJ2_LJ_LLMIX));
+      analysistree->Branch("realJ1_KF_LL",      &(str->realJ1_KF_LL));
+      analysistree->Branch("realJ2_KF_LL",      &(str->realJ2_KF_LL));
+      analysistree->Branch("realJ1_BP_LL",      &(str->realJ1_BP_LL));
+      analysistree->Branch("realJ2_BP_LL",      &(str->realJ2_BP_LL));
+      analysistree->Branch("realJ1_LJ_LL",      &(str->realJ1_LJ_LL));
+      analysistree->Branch("realJ2_LJ_LL",      &(str->realJ2_LJ_LL));
+      analysistree->Branch("realJ1_KF_LLMIX",   &(str->realJ1_KF_LLMIX));
+      analysistree->Branch("realJ2_KF_LLMIX",   &(str->realJ2_KF_LLMIX));
+      analysistree->Branch("realJ1_BP_LLMIX",   &(str->realJ1_BP_LLMIX));
+      analysistree->Branch("realJ2_BP_LLMIX",   &(str->realJ2_BP_LLMIX));
+      analysistree->Branch("realJ1_LJ_LLMIX",   &(str->realJ1_LJ_LLMIX));
+      analysistree->Branch("realJ2_LJ_LLMIX",   &(str->realJ2_LJ_LLMIX));
 
       //Empty Branches
       analysistree->Branch("ll_2_KF_jets",      &(str->ll_2_KF_jets));
@@ -5081,7 +5088,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	} //End of E2 Channel if
       
       
-
+      
       
       ///////////////////    JET FILLING!    ////////////////////      
       
@@ -5098,23 +5105,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
       // Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
       
-      if (cut >= second_cut /*m_GoodJets.size()>=2*/) 
-	{  
-	  std::pair<int,int> SelectedJets;
-	  SelectedJets.first  = Pair_jet1;
-	  SelectedJets.second = Pair_jet2;
-	  JetBestPairResult();
-	  
-	  
-	  // Getting the jet pair (KF or LJ or BP)
-	  D3PDReader::JetD3PDObjectElement *Jet_1_KF = m_GoodJets.at(SelectedJets.first)->GetJet();
-	  D3PDReader::JetD3PDObjectElement *Jet_2_KF = m_GoodJets.at(SelectedJets.second)->GetJet();
-	  D3PDReader::JetD3PDObjectElement *Jet_1_LJ = m_GoodJets.at(0)->GetJet();
-	  D3PDReader::JetD3PDObjectElement *Jet_2_LJ = m_GoodJets.at(1)->GetJet();
-	  D3PDReader::JetD3PDObjectElement *Jet_1_BP = m_GoodJets.at(Jone)->GetJet();
-	  D3PDReader::JetD3PDObjectElement *Jet_2_BP = m_GoodJets.at(Jtwo)->GetJet();
-	  
-	  
+      if (/*cut >= second_cut*/m_GoodJets.size()>=2) 
+	{  	
 	  if (Look_b_SFs) // Looping to find the btagging SFs into the GoodJets selected into the event
 	    {
 	      for (UInt_t w = 0; w < m_GoodJets.size(); w++)
@@ -5147,336 +5139,624 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	    }
 	  
 	  
-	  //Filling the new definitions of Tracks and Width
-	  std::pair<Float_t, Float_t> InfoNtracksWidthJ1_KF = InfoTracks(SelectedJets.first);
-	  std::pair<Float_t, Float_t> InfoNtracksWidthJ2_KF = InfoTracks(SelectedJets.second);
-	  std::pair<Float_t, Float_t> InfoNtracksWidthJ1_LJ = InfoTracks(0);
-	  std::pair<Float_t, Float_t> InfoNtracksWidthJ2_LJ = InfoTracks(1);
-	  std::pair<Float_t, Float_t> InfoNtracksWidthJ1_BP = InfoTracks(Jone);
-	  std::pair<Float_t, Float_t> InfoNtracksWidthJ2_BP = InfoTracks(Jtwo);
-	  
-	  str->Jet1_KF_index         = SelectedJets.first;
-	  str->Jet2_KF_index         = SelectedJets.second;
-	  str->Jet1_LJ_index         = 0;//obvious!
-	  str->Jet2_LJ_index         = 1;//obvious!
-	  str->Jet1_BP_index         = Jone;
-	  str->Jet2_BP_index         = Jtwo;
-	  
-	  
-	  str->realJ1_KF_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
-	  str->realJ1_KF_pt          = m_GoodJets.at(SelectedJets.first)->rightpt();
-	  str->realJ1_KF_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
-	  str->realJ1_KF_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
-	  str->realJ1_KF_eta_det     = Jet_1_KF->emscale_eta();
-	  str->realJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
-	  str->realJ1_KF_jvf         = Jet_1_KF->jvtxf();
-	  str->realJ1_KF_ntrk        = Jet_1_KF->nTrk();
-	  str->realJ1_KF_width       = Jet_1_KF->WIDTH();
-	  str->realJ1_KF_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.first));
-	  str->realJ1_KF_ntrk12      = InfoNtracksWidthJ1_KF.first;
-	  str->realJ1_KF_width12     = InfoNtracksWidthJ1_KF.second;
-	  
-	  str->realJ2_KF_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
-	  str->realJ2_KF_pt          = m_GoodJets.at(SelectedJets.second)->rightpt();
-	  str->realJ2_KF_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
-	  str->realJ2_KF_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
-	  str->realJ2_KF_eta_det     = Jet_2_KF->emscale_eta();
-	  str->realJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
-	  str->realJ2_KF_jvf         = Jet_2_KF->jvtxf();
-	  str->realJ2_KF_ntrk        = Jet_2_KF->nTrk();
-	  str->realJ2_KF_width       = Jet_2_KF->WIDTH();
-	  str->realJ2_KF_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.second));
-	  str->realJ2_KF_ntrk12      = InfoNtracksWidthJ2_KF.first;
-	  str->realJ2_KF_width12     = InfoNtracksWidthJ2_KF.second;
-	  
-	  
-	  
-	  TLorentzVector j1;
-	  j1.SetPtEtaPhiM(str->realJ1_KF_pt,str->realJ1_KF_eta,str->realJ1_KF_phi,str->realJ1_KF_m);
-	  TLorentzVector j2;
-	  j2.SetPtEtaPhiM(str->realJ2_KF_pt,str->realJ2_KF_eta,str->realJ2_KF_phi,str->realJ2_KF_m);
-	  TLorentzVector hadZ = j1   +   j2;
-	  TLorentzVector H    = lepZ + hadZ;
-	  
-	  
-	  str->realZ_KF_m     = hadZ.M();
-	  str->realZ_KF_pt    = hadZ.Pt();
-	  str->realZ_KF_eta   = hadZ.Eta();
-	  str->realZ_KF_phi   = hadZ.Phi();
-	  
-	  str->realH_KF_m     = H.M();
-	  str->realH_KF_pt    = H.Pt();
-	  str->realH_KF_eta   = H.Eta();
-	  str->realH_KF_phi   = H.Phi();
-	  
-	  
-	  
-	  //ANGULAR JET VARIABLES
-	  str->dPhi_KF_jj = TMath::Abs(j1.DeltaPhi(j2));
-	  str->dR_KF_jj   = j1.DeltaR(j2);
-	  str->dPhi_KF_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ));
-	  str->dR_KF_ZZ   = lepZ.DeltaR(hadZ);
-	  
-	  
-	  
-	  if(corr_jet_pt1 > 0. && corr_jet_pt2 > 0.)
-	    {	    
-	      str->corrJ1_KF_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
-	      str->corrJ1_KF_pt          = corr_jet_pt1;
-	      str->corrJ1_KF_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
-	      str->corrJ1_KF_eta_det     = Jet_1_KF->emscale_eta();
-	      str->corrJ1_KF_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
-	      str->corrJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
-	      
-	      str->corrJ2_KF_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
-	      str->corrJ2_KF_pt          = corr_jet_pt2;
-	      str->corrJ2_KF_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
-	      str->corrJ2_KF_eta_det     = Jet_2_KF->emscale_eta();
-	      str->corrJ2_KF_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
-	      str->corrJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
-	      
-	      
-	      j1.SetPtEtaPhiM(str->corrJ1_KF_pt,str->corrJ1_KF_eta,str->corrJ1_KF_phi,str->corrJ1_KF_m);
-	      j2.SetPtEtaPhiM(str->corrJ2_KF_pt,str->corrJ2_KF_eta,str->corrJ2_KF_phi,str->corrJ2_KF_m);
-	      hadZ = j1   +   j2;
-	      H    = lepZ + hadZ;
-	      
-	      str->corrZ_KF_m   = hadZ.M();
-	      str->corrZ_KF_pt  = hadZ.Pt();
-	      str->corrZ_KF_eta = hadZ.Eta();
-	      str->corrZ_KF_phi = hadZ.Phi();
-	      
-	      str->corrH_KF_m   = H.M();
-	      str->corrH_KF_pt  = H.Pt();
-	      str->corrH_KF_eta = H.Eta();
-	      str->corrH_KF_phi = H.Phi();
-	      
-	      str->chisquare = ChiSq;
-	    }
-	  
-	  
-	  Analysis::Jet *jet_p = new Analysis::Jet(Jet_1_KF);
-	  str->realJ1_KF_pdg = GetFlavour(jet_p).first;
-	  Analysis::Jet *jet_s = new Analysis::Jet(Jet_2_KF);
-	  str->realJ2_KF_pdg = GetFlavour(jet_s).first;
-	  
-
-
-	  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	  str->realJ1_LJ_m           = m_GoodJets.at(0)->Get4Momentum()->M();
-	  str->realJ1_LJ_pt          = m_GoodJets.at(0)->rightpt();
-	  str->realJ1_LJ_eta         = m_GoodJets.at(0)->righteta();
-	  str->realJ1_LJ_phi         = m_GoodJets.at(0)->rightphi();
-	  str->realJ1_LJ_eta_det     = Jet_1_LJ->emscale_eta();
-	  str->realJ1_LJ_flavortruth = Jet_1_LJ->flavor_truth_label();
-	  str->realJ1_LJ_jvf         = Jet_1_LJ->jvtxf();
-	  str->realJ1_LJ_ntrk        = Jet_1_LJ->nTrk();
-	  str->realJ1_LJ_width       = Jet_1_LJ->WIDTH();
-	  str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(0));
-	  str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_LJ.first;
-	  str->realJ1_LJ_width12     = InfoNtracksWidthJ1_LJ.second;
-	  
-	  str->realJ2_LJ_m           = m_GoodJets.at(1)->Get4Momentum()->M();
-	  str->realJ2_LJ_pt          = m_GoodJets.at(1)->rightpt();
-	  str->realJ2_LJ_eta         = m_GoodJets.at(1)->righteta();
-	  str->realJ2_LJ_phi         = m_GoodJets.at(1)->rightphi();
-	  str->realJ2_LJ_eta_det     = Jet_2_LJ->emscale_eta();
-	  str->realJ2_LJ_flavortruth = Jet_2_LJ->flavor_truth_label();
-	  str->realJ2_LJ_jvf         = Jet_2_LJ->jvtxf();
-	  str->realJ2_LJ_ntrk        = Jet_2_LJ->nTrk();
-	  str->realJ2_LJ_width       = Jet_2_LJ->WIDTH();
-	  str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(1));
-	  str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_LJ.first;
-	  str->realJ2_LJ_width12     = InfoNtracksWidthJ2_LJ.second;
-	  
-	  	  
-	  TLorentzVector j1_LJ;
-	  j1_LJ.SetPtEtaPhiM(str->realJ1_LJ_pt,str->realJ1_LJ_eta,str->realJ1_LJ_phi,str->realJ1_LJ_m);
-	  TLorentzVector j2_LJ;
-	  j2_LJ.SetPtEtaPhiM(str->realJ2_LJ_pt,str->realJ2_LJ_eta,str->realJ2_LJ_phi,str->realJ2_LJ_m);
-	  TLorentzVector hadZ_LJ = j1_LJ   +   j2_LJ;
-	  TLorentzVector H_LJ    = lepZ + hadZ_LJ;
-	  
-	  str->realZ_LJ_m     = hadZ_LJ.M();
-	  str->realZ_LJ_pt    = hadZ_LJ.Pt();
-	  str->realZ_LJ_eta   = hadZ_LJ.Eta();
-	  str->realZ_LJ_phi   = hadZ_LJ.Phi();
-	  
-	  str->realH_LJ_m     = H_LJ.M();
-	  str->realH_LJ_pt    = H_LJ.Pt();
-	  str->realH_LJ_eta   = H_LJ.Eta();
-	  str->realH_LJ_phi   = H_LJ.Phi();	  
-	  
-	  //ANGULAR JET VARIABLES
-	  str->dPhi_LJ_jj = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
-	  str->dR_LJ_jj   = j1_LJ.DeltaR(j2_LJ);
-	  str->dPhi_LJ_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_LJ));
-	  str->dR_LJ_ZZ   = lepZ.DeltaR(hadZ_LJ);	  
-	  
-	  Analysis::Jet *jet_p_LJ = new Analysis::Jet(Jet_1_LJ);
-	  str->realJ1_LJ_pdg = GetFlavour(jet_p_LJ).first;
-	  Analysis::Jet *jet_s_LJ = new Analysis::Jet(Jet_2_LJ);
-	  str->realJ2_LJ_pdg = GetFlavour(jet_s_LJ).first;
-	  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	  str->realJ1_BP_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
-	  str->realJ1_BP_pt          = m_GoodJets.at(Jone)->rightpt();
-	  str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
-	  str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
-	  str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
-	  str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
-	  str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
-	  str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
-	  str->realJ1_BP_width       = Jet_1_BP->WIDTH();
-	  str->realJ1_BP_MV1         = GetMV1value(m_GoodJets.at(Jone));
-	  str->realJ1_BP_ntrk12      = InfoNtracksWidthJ1_BP.first;
-	  str->realJ1_BP_width12     = InfoNtracksWidthJ1_BP.second;
-	  
-	  str->realJ2_BP_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
-	  str->realJ2_BP_pt          = m_GoodJets.at(Jtwo)->rightpt();
-	  str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
-	  str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
-	  str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
-	  str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
-	  str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
-	  str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
-	  str->realJ2_BP_width       = Jet_2_BP->WIDTH();
-	  str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
-	  str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
-	  str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
-	  
-	  	  
-	  TLorentzVector j1_BP;
-	  j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
-	  TLorentzVector j2_BP;
-	  j2_BP.SetPtEtaPhiM(str->realJ2_BP_pt,str->realJ2_BP_eta,str->realJ2_BP_phi,str->realJ2_BP_m);
-	  TLorentzVector hadZ_BP = j1_BP   +   j2_BP;
-	  TLorentzVector H_BP    = lepZ + hadZ_BP;
-	  
-	  str->realZ_BP_m     = hadZ_BP.M();
-	  str->realZ_BP_pt    = hadZ_BP.Pt();
-	  str->realZ_BP_eta   = hadZ_BP.Eta();
-	  str->realZ_BP_phi   = hadZ_BP.Phi();
-	  
-	  str->realH_BP_m     = H_BP.M();
-	  str->realH_BP_pt    = H_BP.Pt();
-	  str->realH_BP_eta   = H_BP.Eta();
-	  str->realH_BP_phi   = H_BP.Phi();	  
-	  
-	  //ANGULAR JET VARIABLES
-	  str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
-	  str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
-	  str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
-	  str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
-	  
-	  Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
-	  str->realJ1_BP_pdg = GetFlavour(jet_p_BP).first;
-	  Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
-	  str->realJ2_BP_pdg = GetFlavour(jet_s_BP).first;
-	  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-	  //////////QUARK/GLUON//////////	  
-	  int idx1 = Pair_jet1;
-	  int idx2 = Pair_jet2;
-	  
-	  if(FillGluon)
-	    {	  	    
-	      if (CheckMap("44p_4var",idx1,idx2)) {
-		str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
-		str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
-		str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
-		str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
-	      }
-	      if (CheckMap("44p_6var",idx1,idx2)) {
-		str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
-		str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
-		str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
-		str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
-	      }
-	      if (CheckMap("44h_4var",idx1,idx2)) {
-		str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
-		str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
-		str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
-		str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
-	      }
-	      if (CheckMap("44h_6var",idx1,idx2)) {
-		str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
-		str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
-		str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
-		str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
-	      }
-	      if (CheckMap("64p_4var",idx1,idx2)) {
-		str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
-		str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
-		str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
-		str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
-	      }
-	      if (CheckMap("64p_6var",idx1,idx2)) {
-		str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
-		str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
-		str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
-		str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
-	      }
-	      if (CheckMap("64h_4var",idx1,idx2)) {
-		str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
-		str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
-		str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
-		str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
-	      }
-	      if (CheckMap("64h_6var",idx1,idx2)) {
-		str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
-		str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
-		str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
-		str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
-	      }
-
-	      //Filling of MVA variables
-	      if(str->realJ1_KF_eta<2.5 && str->realJ2_KF_eta<2.5 && str->realJ1_KF_eta>-2.5 && str->realJ2_KF_eta>-2.5 && str->realJ1_KF_pt>20000 && str->realJ2_KF_pt>20000)
-		{
-		  str->realJ1_KF_Fisher = getFisher_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
-		  str->realJ2_KF_Fisher = getFisher_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
-		  str->realJ1_KF_LL = getLikelihood_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
-		  str->realJ2_KF_LL = getLikelihood_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
-		  str->realJ1_KF_LLMIX = getLikelihoodMIX_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
-		  str->realJ2_KF_LLMIX = getLikelihoodMIX_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+	  if( howmanytags == 0 ) //Adding the untagged channel filling 'a la' 2012. August 2013.
+	    {
+	      std::pair<int,int> SelectedJets;
+	      if(JetKinematicFitterResult())
+		{	      
+		  SelectedJets.first  = Pair_jet1;
+		  SelectedJets.second = Pair_jet2;
 		}
-	      if(str->realJ1_BP_eta<2.5 && str->realJ2_BP_eta<2.5 && str->realJ1_BP_eta>-2.5 && str->realJ2_BP_eta>-2.5 && str->realJ1_BP_pt>20000 && str->realJ2_BP_pt>20000)
+	      else
 		{
-		  str->realJ1_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
-		  str->realJ2_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
-		  str->realJ1_BP_LL = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
-		  str->realJ2_BP_LL = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
-		  str->realJ1_BP_LLMIX = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
-		  str->realJ2_BP_LLMIX = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
-		}
-	      if(str->realJ1_LJ_eta<2.5 && str->realJ2_LJ_eta<2.5 && str->realJ1_LJ_eta>-2.5 && str->realJ2_LJ_eta>-2.5 && str->realJ1_LJ_pt>20000 && str->realJ2_LJ_pt>20000)
-		{
-		  str->realJ1_LJ_Fisher = getFisher_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
-		  str->realJ2_LJ_Fisher = getFisher_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
-		  str->realJ1_LJ_LL = getLikelihood_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
-		  str->realJ2_LJ_LL = getLikelihood_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
-		  str->realJ1_LJ_LLMIX = getLikelihoodMIX_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
-		  str->realJ2_LJ_LLMIX = getLikelihoodMIX_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		  SelectedJets.first  = 0;
+		  SelectedJets.second = 1;
 		}
 	      
-	    } // End of the FillGluon variables   
-	  
+	      if(!JetBestPairResult())
+		{
+		  Jone=0;
+		  Jtwo=1;
+		}
+	      
+	      // Getting the jet pair (KF or LJ or BP)
+	      D3PDReader::JetD3PDObjectElement *Jet_1_KF = m_GoodJets.at(SelectedJets.first)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_2_KF = m_GoodJets.at(SelectedJets.second)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_1_LJ = m_GoodJets.at(0)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_2_LJ = m_GoodJets.at(1)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_1_BP = m_GoodJets.at(Jone)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_2_BP = m_GoodJets.at(Jtwo)->GetJet();
+	      
+	      
+	      //Filling the new definitions of Tracks and Width
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ1_KF = InfoTracks(SelectedJets.first);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ2_KF = InfoTracks(SelectedJets.second);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ1_LJ = InfoTracks(0);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ2_LJ = InfoTracks(1);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ1_BP = InfoTracks(Jone);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ2_BP = InfoTracks(Jtwo);
+	      
+	      str->Jet1_KF_index         = SelectedJets.first;
+	      str->Jet2_KF_index         = SelectedJets.second;
+	      str->Jet1_LJ_index         = 0;//obvious!
+	      str->Jet2_LJ_index         = 1;//obvious!
+	      str->Jet1_BP_index         = Jone;
+	      str->Jet2_BP_index         = Jtwo;
+	      	      
+	      str->realJ1_KF_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
+	      str->realJ1_KF_pt          = m_GoodJets.at(SelectedJets.first)->rightpt();
+	      str->realJ1_KF_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
+	      str->realJ1_KF_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
+	      str->realJ1_KF_eta_det     = Jet_1_KF->emscale_eta();
+	      str->realJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
+	      str->realJ1_KF_jvf         = Jet_1_KF->jvtxf();
+	      str->realJ1_KF_ntrk        = Jet_1_KF->nTrk();
+	      str->realJ1_KF_width       = Jet_1_KF->WIDTH();
+	      str->realJ1_KF_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.first));
+	      str->realJ1_KF_ntrk12      = InfoNtracksWidthJ1_KF.first;
+	      str->realJ1_KF_width12     = InfoNtracksWidthJ1_KF.second;
+	      
+	      str->realJ2_KF_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
+	      str->realJ2_KF_pt          = m_GoodJets.at(SelectedJets.second)->rightpt();
+	      str->realJ2_KF_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
+	      str->realJ2_KF_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
+	      str->realJ2_KF_eta_det     = Jet_2_KF->emscale_eta();
+	      str->realJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
+	      str->realJ2_KF_jvf         = Jet_2_KF->jvtxf();
+	      str->realJ2_KF_ntrk        = Jet_2_KF->nTrk();
+	      str->realJ2_KF_width       = Jet_2_KF->WIDTH();
+	      str->realJ2_KF_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.second));
+	      str->realJ2_KF_ntrk12      = InfoNtracksWidthJ2_KF.first;
+	      str->realJ2_KF_width12     = InfoNtracksWidthJ2_KF.second;
+	      
+	      
+	      
+	      TLorentzVector j1;
+	      j1.SetPtEtaPhiM(str->realJ1_KF_pt,str->realJ1_KF_eta,str->realJ1_KF_phi,str->realJ1_KF_m);
+	      TLorentzVector j2;
+	      j2.SetPtEtaPhiM(str->realJ2_KF_pt,str->realJ2_KF_eta,str->realJ2_KF_phi,str->realJ2_KF_m);
+	      TLorentzVector hadZ = j1   +   j2;
+	      TLorentzVector H    = lepZ + hadZ;
+	      
+	      
+	      str->realZ_KF_m     = hadZ.M();
+	      str->realZ_KF_pt    = hadZ.Pt();
+	      str->realZ_KF_eta   = hadZ.Eta();
+	      str->realZ_KF_phi   = hadZ.Phi();
+	      
+	      str->realH_KF_m     = H.M();
+	      str->realH_KF_pt    = H.Pt();
+	      str->realH_KF_eta   = H.Eta();
+	      str->realH_KF_phi   = H.Phi();
+	      
+	      
+	      
+	      //ANGULAR JET VARIABLES
+	      str->dPhi_KF_jj = TMath::Abs(j1.DeltaPhi(j2));
+	      str->dR_KF_jj   = j1.DeltaR(j2);
+	      str->dPhi_KF_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ));
+	      str->dR_KF_ZZ   = lepZ.DeltaR(hadZ);
+	      
+	      
+	      if(corr_jet_pt1 > 0. && corr_jet_pt2 > 0.)
+		{	    
+		  str->corrJ1_KF_m           = m_GoodJets.at(SelectedJets.first)->Get4Momentum()->M();
+		  str->corrJ1_KF_pt          = corr_jet_pt1;
+		  str->corrJ1_KF_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
+		  str->corrJ1_KF_eta_det     = Jet_1_KF->emscale_eta();
+		  str->corrJ1_KF_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
+		  str->corrJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
+		  
+		  str->corrJ2_KF_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
+		  str->corrJ2_KF_pt          = corr_jet_pt2;
+		  str->corrJ2_KF_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
+		  str->corrJ2_KF_eta_det     = Jet_2_KF->emscale_eta();
+		  str->corrJ2_KF_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
+		  str->corrJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
+		  
+		  
+		  j1.SetPtEtaPhiM(str->corrJ1_KF_pt,str->corrJ1_KF_eta,str->corrJ1_KF_phi,str->corrJ1_KF_m);
+		  j2.SetPtEtaPhiM(str->corrJ2_KF_pt,str->corrJ2_KF_eta,str->corrJ2_KF_phi,str->corrJ2_KF_m);
+		  hadZ = j1   +   j2;
+		  H    = lepZ + hadZ;
+		  
+		  str->corrZ_KF_m   = hadZ.M();
+		  str->corrZ_KF_pt  = hadZ.Pt();
+		  str->corrZ_KF_eta = hadZ.Eta();
+		  str->corrZ_KF_phi = hadZ.Phi();
+		  
+		  str->corrH_KF_m   = H.M();
+		  str->corrH_KF_pt  = H.Pt();
+		  str->corrH_KF_eta = H.Eta();
+		  str->corrH_KF_phi = H.Phi();
+		  
+		  str->chisquare = ChiSq;
+		}
+	      
+	      
+	      Analysis::Jet *jet_p = new Analysis::Jet(Jet_1_KF);
+	      str->realJ1_KF_pdg   = GetFlavour(jet_p).first;
+	      Analysis::Jet *jet_s = new Analysis::Jet(Jet_2_KF);
+	      str->realJ2_KF_pdg   = GetFlavour(jet_s).first;
+	      
+	      
+	      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	      str->realJ1_LJ_m           = m_GoodJets.at(0)->Get4Momentum()->M();
+	      str->realJ1_LJ_pt          = m_GoodJets.at(0)->rightpt();
+	      str->realJ1_LJ_eta         = m_GoodJets.at(0)->righteta();
+	      str->realJ1_LJ_phi         = m_GoodJets.at(0)->rightphi();
+	      str->realJ1_LJ_eta_det     = Jet_1_LJ->emscale_eta();
+	      str->realJ1_LJ_flavortruth = Jet_1_LJ->flavor_truth_label();
+	      str->realJ1_LJ_jvf         = Jet_1_LJ->jvtxf();
+	      str->realJ1_LJ_ntrk        = Jet_1_LJ->nTrk();
+	      str->realJ1_LJ_width       = Jet_1_LJ->WIDTH();
+	      str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(0));
+	      str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_LJ.first;
+	      str->realJ1_LJ_width12     = InfoNtracksWidthJ1_LJ.second;
+	      
+	      str->realJ2_LJ_m           = m_GoodJets.at(1)->Get4Momentum()->M();
+	      str->realJ2_LJ_pt          = m_GoodJets.at(1)->rightpt();
+	      str->realJ2_LJ_eta         = m_GoodJets.at(1)->righteta();
+	      str->realJ2_LJ_phi         = m_GoodJets.at(1)->rightphi();
+	      str->realJ2_LJ_eta_det     = Jet_2_LJ->emscale_eta();
+	      str->realJ2_LJ_flavortruth = Jet_2_LJ->flavor_truth_label();
+	      str->realJ2_LJ_jvf         = Jet_2_LJ->jvtxf();
+	      str->realJ2_LJ_ntrk        = Jet_2_LJ->nTrk();
+	      str->realJ2_LJ_width       = Jet_2_LJ->WIDTH();
+	      str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(1));
+	      str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_LJ.first;
+	      str->realJ2_LJ_width12     = InfoNtracksWidthJ2_LJ.second;
+	      
+	      
+	      TLorentzVector j1_LJ;
+	      j1_LJ.SetPtEtaPhiM(str->realJ1_LJ_pt,str->realJ1_LJ_eta,str->realJ1_LJ_phi,str->realJ1_LJ_m);
+	      TLorentzVector j2_LJ;
+	      j2_LJ.SetPtEtaPhiM(str->realJ2_LJ_pt,str->realJ2_LJ_eta,str->realJ2_LJ_phi,str->realJ2_LJ_m);
+	      TLorentzVector hadZ_LJ = j1_LJ  +  j2_LJ;
+	      TLorentzVector H_LJ    = lepZ   +  hadZ_LJ;
+	      
+	      str->realZ_LJ_m     = hadZ_LJ.M();
+	      str->realZ_LJ_pt    = hadZ_LJ.Pt();
+	      str->realZ_LJ_eta   = hadZ_LJ.Eta();
+	      str->realZ_LJ_phi   = hadZ_LJ.Phi();
+	      
+	      str->realH_LJ_m     = H_LJ.M();
+	      str->realH_LJ_pt    = H_LJ.Pt();
+	      str->realH_LJ_eta   = H_LJ.Eta();
+	      str->realH_LJ_phi   = H_LJ.Phi();	  
+	      
+	      //ANGULAR JET VARIABLES
+	      str->dPhi_LJ_jj = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
+	      str->dR_LJ_jj   = j1_LJ.DeltaR(j2_LJ);
+	      str->dPhi_LJ_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_LJ));
+	      str->dR_LJ_ZZ   = lepZ.DeltaR(hadZ_LJ);	  
+	      
+	      Analysis::Jet *jet_p_LJ = new Analysis::Jet(Jet_1_LJ);
+	      str->realJ1_LJ_pdg = GetFlavour(jet_p_LJ).first;
+	      Analysis::Jet *jet_s_LJ = new Analysis::Jet(Jet_2_LJ);
+	      str->realJ2_LJ_pdg = GetFlavour(jet_s_LJ).first;
 
-	  /*
-	    str->realJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
-	    str->realJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	    str->ll_2_jets = getLikelihood(reader,var1,var2,var3,var4,str->realJ1_pt,str->realJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	    
-	    str->corrJ1_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx1)),jet_eta->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)));
-	    str->corrJ2_Fisher = getFisher(reader,var1,var2,jet_pt->at(m_jetindex.at(idx2)),jet_eta->at(m_jetindex.at(idx2)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	    str->ll_2_jets_corr = getLikelihood(reader,var1,var2,var3,var4,str->corrJ1_pt,str->corrJ2_pt,jet_nTrk->at(m_jetindex.at(idx1)),jet_width->at(m_jetindex.at(idx1)),jet_nTrk->at(m_jetindex.at(idx2)),jet_width->at(m_jetindex.at(idx2)));
-	    
-	  */	
+
+	      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	      str->realJ1_BP_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
+	      str->realJ1_BP_pt          = m_GoodJets.at(Jone)->rightpt();
+	      str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
+	      str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
+	      str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
+	      str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
+	      str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
+	      str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
+	      str->realJ1_BP_width       = Jet_1_BP->WIDTH();
+	      str->realJ1_BP_MV1         = GetMV1value(m_GoodJets.at(Jone));
+	      str->realJ1_BP_ntrk12      = InfoNtracksWidthJ1_BP.first;
+	      str->realJ1_BP_width12     = InfoNtracksWidthJ1_BP.second;
+	      
+	      str->realJ2_BP_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
+	      str->realJ2_BP_pt          = m_GoodJets.at(Jtwo)->rightpt();
+	      str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
+	      str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
+	      str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
+	      str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
+	      str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
+	      str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
+	      str->realJ2_BP_width       = Jet_2_BP->WIDTH();
+	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
+	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
+	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
+	      
+	      
+	      TLorentzVector j1_BP;
+	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
+	      TLorentzVector j2_BP;
+	      j2_BP.SetPtEtaPhiM(str->realJ2_BP_pt,str->realJ2_BP_eta,str->realJ2_BP_phi,str->realJ2_BP_m);
+	      TLorentzVector hadZ_BP = j1_BP  +    j2_BP;
+	      TLorentzVector H_BP    = lepZ   +  hadZ_BP;
+	      
+	      str->realZ_BP_m     = hadZ_BP.M();
+	      str->realZ_BP_pt    = hadZ_BP.Pt();
+	      str->realZ_BP_eta   = hadZ_BP.Eta();
+	      str->realZ_BP_phi   = hadZ_BP.Phi();
+	      
+	      str->realH_BP_m     = H_BP.M();
+	      str->realH_BP_pt    = H_BP.Pt();
+	      str->realH_BP_eta   = H_BP.Eta();
+	      str->realH_BP_phi   = H_BP.Phi();	  
+	      
+	      //ANGULAR JET VARIABLES
+	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
+	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
+	      str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
+	      str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
+	      
+	      Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
+	      str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
+	      Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
+	      str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+	      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	      
+	      
+	      
+	      //////////QUARK/GLUON//////////	  
+	      int idx1 = Pair_jet1;
+	      int idx2 = Pair_jet2;
+	      
+	      if(FillGluon)
+		{	  	    
+		  if (CheckMap("44p_4var",idx1,idx2)) {
+		    str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+		    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+		    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+		    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+		  }
+		  if (CheckMap("44p_6var",idx1,idx2)) {
+		    str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+		    str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+		    str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+		    str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+		  }
+		  if (CheckMap("44h_4var",idx1,idx2)) {
+		    str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+		    str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+		    str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+		    str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+		  }
+		  if (CheckMap("44h_6var",idx1,idx2)) {
+		    str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+		    str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+		    str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+		    str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+		  }
+		  if (CheckMap("64p_4var",idx1,idx2)) {
+		    str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+		    str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+		    str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+		    str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+		  }
+		  if (CheckMap("64p_6var",idx1,idx2)) {
+		    str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+		    str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+		    str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+		    str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+		  }
+		  if (CheckMap("64h_4var",idx1,idx2)) {
+		    str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+		    str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+		    str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+		    str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+		  }
+		  if (CheckMap("64h_6var",idx1,idx2)) {
+		    str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+		    str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+		    str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+		    str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+		  }
+		  
+		  //Filling of MVA variables
+		  if(str->realJ1_KF_eta<2.5 && str->realJ2_KF_eta<2.5 && str->realJ1_KF_eta>-2.5 && str->realJ2_KF_eta>-2.5 && str->realJ1_KF_pt>20000 && str->realJ2_KF_pt>20000)
+		    {
+		      str->realJ1_KF_Fisher = getFisher_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
+		      str->realJ2_KF_Fisher = getFisher_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+		      str->realJ1_KF_LL     = getLikelihood_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
+		      str->realJ2_KF_LL     = getLikelihood_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+		      str->realJ1_KF_LLMIX  = getLikelihoodMIX_KF(reader,var1,var2,str->realJ1_KF_pt,str->realJ1_KF_ntrk12,str->realJ1_KF_width12);
+		      str->realJ2_KF_LLMIX  = getLikelihoodMIX_KF(reader,var1,var2,str->realJ2_KF_pt,str->realJ2_KF_ntrk12,str->realJ2_KF_width12);
+		    }
+		  if(str->realJ1_BP_eta<2.5 && str->realJ2_BP_eta<2.5 && str->realJ1_BP_eta>-2.5 && str->realJ2_BP_eta>-2.5 && str->realJ1_BP_pt>20000 && str->realJ2_BP_pt>20000)
+		    {
+		      str->realJ1_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		    }
+		  if(str->realJ1_LJ_eta<2.5 && str->realJ2_LJ_eta<2.5 && str->realJ1_LJ_eta>-2.5 && str->realJ2_LJ_eta>-2.5 && str->realJ1_LJ_pt>20000 && str->realJ2_LJ_pt>20000)
+		    {
+		      str->realJ1_LJ_Fisher = getFisher_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
+		      str->realJ2_LJ_Fisher = getFisher_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		      str->realJ1_LJ_LL     = getLikelihood_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
+		      str->realJ2_LJ_LL     = getLikelihood_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		      str->realJ1_LJ_LLMIX  = getLikelihoodMIX_LJ(reader,var1,var2,str->realJ1_LJ_pt,str->realJ1_LJ_ntrk12,str->realJ1_LJ_width12);
+		      str->realJ2_LJ_LLMIX  = getLikelihoodMIX_LJ(reader,var1,var2,str->realJ2_LJ_pt,str->realJ2_LJ_ntrk12,str->realJ2_LJ_width12);
+		    }
+		  
+		} // End of the FillGluon variables   
+	    } // End Untagged channel: 0 bjets
+
+	  if( howmanytags == 1 && JetDimassOneTagged())
+	    {
+	      Jone = JetSemiTag1;
+	      Jtwo = JetSemiTag2;
+
+	      D3PDReader::JetD3PDObjectElement *Jet_1_BP = m_GoodJets.at(Jone)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_2_BP = m_GoodJets.at(Jtwo)->GetJet();
+
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ1_BP = InfoTracks(Jone);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ2_BP = InfoTracks(Jtwo);
+
+	      //if(JetSemiTag2!=0) cout<<"One tagged Jet. First = "<<JetSemiTag1<<". and second = "<<JetSemiTag2<<endl;
+	      str->realJ1_BP_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
+	      str->realJ1_BP_pt          = m_GoodJets.at(Jone)->rightpt();
+	      str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
+	      str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
+	      str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
+	      str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
+	      str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
+	      str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
+	      str->realJ1_BP_width       = Jet_1_BP->WIDTH();
+	      str->realJ1_BP_MV1         = GetMV1value(m_GoodJets.at(Jone));
+	      str->realJ1_BP_ntrk12      = InfoNtracksWidthJ1_BP.first;
+	      str->realJ1_BP_width12     = InfoNtracksWidthJ1_BP.second;
+	      
+	      str->realJ2_BP_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
+	      str->realJ2_BP_pt          = m_GoodJets.at(Jtwo)->rightpt();
+	      str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
+	      str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
+	      str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
+	      str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
+	      str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
+	      str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
+	      str->realJ2_BP_width       = Jet_2_BP->WIDTH();
+	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
+	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
+	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
+	      
+	      
+	      TLorentzVector j1_BP;
+	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
+	      TLorentzVector j2_BP;
+	      j2_BP.SetPtEtaPhiM(str->realJ2_BP_pt,str->realJ2_BP_eta,str->realJ2_BP_phi,str->realJ2_BP_m);
+	      TLorentzVector hadZ_BP = j1_BP  +    j2_BP;
+	      TLorentzVector H_BP    = lepZ   +  hadZ_BP;
+	      
+	      str->realZ_BP_m     = hadZ_BP.M();
+	      str->realZ_BP_pt    = hadZ_BP.Pt();
+	      str->realZ_BP_eta   = hadZ_BP.Eta();
+	      str->realZ_BP_phi   = hadZ_BP.Phi();
+	      
+	      str->realH_BP_m     = H_BP.M();
+	      str->realH_BP_pt    = H_BP.Pt();
+	      str->realH_BP_eta   = H_BP.Eta();
+	      str->realH_BP_phi   = H_BP.Phi();	  
+	      
+	      //ANGULAR JET VARIABLES
+	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
+	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
+	      str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
+	      str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
+	      
+	      Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
+	      str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
+	      Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
+	      str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+	      
+	      
+	      //////////QUARK/GLUON//////////	  
+	      int idx1 = JetSemiTag1;
+	      int idx2 = JetSemiTag2;
+	      
+	      if(FillGluon)
+		{	  	    
+		  if (CheckMap("44p_4var",idx1,idx2)) {
+		    str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+		    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+		    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+		    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+		  }
+		  if (CheckMap("44p_6var",idx1,idx2)) {
+		    str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+		    str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+		    str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+		    str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+		  }
+		  if (CheckMap("44h_4var",idx1,idx2)) {
+		    str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+		    str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+		    str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+		    str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+		  }
+		  if (CheckMap("44h_6var",idx1,idx2)) {
+		    str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+		    str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+		    str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+		    str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+		  }
+		  if (CheckMap("64p_4var",idx1,idx2)) {
+		    str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+		    str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+		    str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+		    str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+		  }
+		  if (CheckMap("64p_6var",idx1,idx2)) {
+		    str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+		    str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+		    str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+		    str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+		  }
+		  if (CheckMap("64h_4var",idx1,idx2)) {
+		    str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+		    str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+		    str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+		    str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+		  }
+		  if (CheckMap("64h_6var",idx1,idx2)) {
+		    str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+		    str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+		    str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+		    str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+		  }
+		  
+		  //Filling of MVA variables
+		  if(str->realJ1_BP_eta<2.5 && str->realJ2_BP_eta<2.5 && str->realJ1_BP_eta>-2.5 && str->realJ2_BP_eta>-2.5 && str->realJ1_BP_pt>20000 && str->realJ2_BP_pt>20000)
+		    {
+		      str->realJ1_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		    }
+		} // End of the FillGluon variables   
+	    } //End One tagged Jet
 	  
+	  if( howmanytags == 2 && JetDimassTagged())
+	    {
+	      Jone = JetTag1;
+	      Jtwo = JetTag2;
+
+	      D3PDReader::JetD3PDObjectElement *Jet_1_BP = m_GoodJets.at(Jone)->GetJet();
+	      D3PDReader::JetD3PDObjectElement *Jet_2_BP = m_GoodJets.at(Jtwo)->GetJet();
+	      
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ1_BP = InfoTracks(Jone);
+	      std::pair<Float_t, Float_t> InfoNtracksWidthJ2_BP = InfoTracks(Jtwo);
+
+	      //if(JetTag1!=0) cout<<"Two tagged Jets. First = "<<JetTag1<<". and second = "<<JetTag2<<endl;
+	      str->realJ1_BP_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
+	      str->realJ1_BP_pt          = m_GoodJets.at(Jone)->rightpt();
+	      str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
+	      str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
+	      str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
+	      str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
+	      str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
+	      str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
+	      str->realJ1_BP_width       = Jet_1_BP->WIDTH();
+	      str->realJ1_BP_MV1         = GetMV1value(m_GoodJets.at(Jone));
+	      str->realJ1_BP_ntrk12      = InfoNtracksWidthJ1_BP.first;
+	      str->realJ1_BP_width12     = InfoNtracksWidthJ1_BP.second;
+	      
+	      str->realJ2_BP_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
+	      str->realJ2_BP_pt          = m_GoodJets.at(Jtwo)->rightpt();
+	      str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
+	      str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
+	      str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
+	      str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
+	      str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
+	      str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
+	      str->realJ2_BP_width       = Jet_2_BP->WIDTH();
+	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
+	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
+	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
+	      
+	      
+	      TLorentzVector j1_BP;
+	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
+	      TLorentzVector j2_BP;
+	      j2_BP.SetPtEtaPhiM(str->realJ2_BP_pt,str->realJ2_BP_eta,str->realJ2_BP_phi,str->realJ2_BP_m);
+	      TLorentzVector hadZ_BP = j1_BP  +    j2_BP;
+	      TLorentzVector H_BP    = lepZ   +  hadZ_BP;
+	      
+	      str->realZ_BP_m     = hadZ_BP.M();
+	      str->realZ_BP_pt    = hadZ_BP.Pt();
+	      str->realZ_BP_eta   = hadZ_BP.Eta();
+	      str->realZ_BP_phi   = hadZ_BP.Phi();
+	      
+	      str->realH_BP_m     = H_BP.M();
+	      str->realH_BP_pt    = H_BP.Pt();
+	      str->realH_BP_eta   = H_BP.Eta();
+	      str->realH_BP_phi   = H_BP.Phi();	  
+	      
+	      //ANGULAR JET VARIABLES
+	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
+	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
+	      str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
+	      str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
+	      
+	      Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
+	      str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
+	      Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
+	      str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+
+
+
+	      //////////QUARK/GLUON//////////	  
+	      int idx1 = JetTag1;
+	      int idx2 = JetTag2;
+	      
+	      if(FillGluon)
+		{	  	    
+		  if (CheckMap("44p_4var",idx1,idx2)) {
+		    str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+		    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+		    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+		    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+		  }
+		  if (CheckMap("44p_6var",idx1,idx2)) {
+		    str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+		    str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+		    str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+		    str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+		  }
+		  if (CheckMap("44h_4var",idx1,idx2)) {
+		    str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+		    str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+		    str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+		    str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+		  }
+		  if (CheckMap("44h_6var",idx1,idx2)) {
+		    str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+		    str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+		    str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+		    str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+		  }
+		  if (CheckMap("64p_4var",idx1,idx2)) {
+		    str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+		    str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+		    str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+		    str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+		  }
+		  if (CheckMap("64p_6var",idx1,idx2)) {
+		    str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+		    str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+		    str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+		    str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+		  }
+		  if (CheckMap("64h_4var",idx1,idx2)) {
+		    str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+		    str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+		    str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+		    str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+		  }
+		  if (CheckMap("64h_6var",idx1,idx2)) {
+		    str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+		    str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+		    str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+		    str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+		  }
+		  
+		  //Filling of MVA variables
+		  if(str->realJ1_BP_eta<2.5 && str->realJ2_BP_eta<2.5 && str->realJ1_BP_eta>-2.5 && str->realJ2_BP_eta>-2.5 && str->realJ1_BP_pt>20000 && str->realJ2_BP_pt>20000)
+		    {
+		      str->realJ1_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		    }
+		} // End of the FillGluon variables   
+	    } //End Two tagged Jets
 	} //End of minimum number of Jets
-      
       
       // btagging SF filling
       str->btagSF = tmpbtagsf;
@@ -5646,7 +5926,7 @@ void HiggsllqqAnalysis::SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36]
 	  reader[i]->BookMVA( methodName3 + TString(" method"), weightfile );
 	}
     }
-  std::cout<<"Inizializzazione TMVA Readers Terminata"<<std::endl;
+  std::cout<<"Inizialization of TMVA Readers Done"<<std::endl;
 }
 
 Float_t HiggsllqqAnalysis::getFisher_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet,Float_t ntrk_jet,Float_t width_jet)
@@ -6354,7 +6634,7 @@ Bool_t HiggsllqqAnalysis::Pair_Quality(){
 
 
 //Best Pair method (May 2013)
-void HiggsllqqAnalysis::JetBestPairResult()
+Bool_t HiggsllqqAnalysis::JetBestPairResult()
 {
   TLorentzVector j1;
   TLorentzVector j2;
@@ -6379,8 +6659,7 @@ void HiggsllqqAnalysis::JetBestPairResult()
 	  
 	  TLorentzVector hadZ = j1 + j2;
 	  
-	  if((hadZ.M()>Mjj_low_min  && hadZ.M()<Mjj_low_max  && GetDoLowMass() && ii<jj) || (hadZ.M()>Mjj_high_min && hadZ.M()<Mjj_high_max && !GetDoLowMass() && ii<jj)
-	     )
+	  if((hadZ.M()>Mjj_low_min  && hadZ.M()<Mjj_low_max  && GetDoLowMass() && ii<jj) || (hadZ.M()>Mjj_high_min && hadZ.M()<Mjj_high_max && !GetDoLowMass() && ii<jj))
 	    {
 	      int tmpJone = ii;
 	      int tmpJtwo = jj;
@@ -6395,8 +6674,10 @@ void HiggsllqqAnalysis::JetBestPairResult()
 	}
       jj=-1;
     }
-  //if(Jone!=0 /*&& Jtwo!=1*/)
-  //  cout<<"Jet 1= "<<Jone<<". Jet 2 = "<<Jtwo<<". Mass = "<<had<<endl;
+  if(Jone!=800 && Jtwo!=900)
+    return kTRUE; 
+  else
+    return kFALSE; 
 }
 
 
@@ -6615,7 +6896,7 @@ void HiggsllqqAnalysis::JetBestPairResult()
 	      
 // 	      Float_t max_pt = TMath::Max(leptons[i]->Get4Momentum()->Pt(), leptons[j]->Get4Momentum()->Pt());
 // 	      Float_t min_pt = TMath::Min(leptons[i]->Get4Momentum()->Pt(), leptons[j]->Get4Momentum()->Pt());
-// 	      is_actually_above_threshold = (max_pt > dimu_thr[*dimu].first && min_pt > dimu_thr[*dimu].second);
+// 	      is_actually_above_threshold = (max_pt > dimu_thr[*dimu].first && min_pt > dimu_thr[*dimu].second
 // 	    } else if (analysis_version() == "rel_17_2") {
 // 	      is_actually_matched = ((lep1.first && lep2.second) || (lep1.second && lep2.first));
 	      
