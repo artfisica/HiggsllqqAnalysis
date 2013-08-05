@@ -44,10 +44,6 @@ Bool_t cut_leptons   = kFALSE,
 // MET cleaning methods aplication  
   DoMETdataClean     = kTRUE,
   
-// Tag channels granularity
-  TaggedChannel      = kFALSE,
-  TagOneJetChannel   = kFALSE,
-  
   is4lepGood         = kFALSE, 
   
 // Type of Missing Et
@@ -1081,16 +1077,14 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   //Minimun number of tagged or untagged jets
-  if(/*(GetNumOfTags()==2 && TaggedChannel && !TagOneJetChannel) || 
-       (GetNumOfTags()==1 && !TaggedChannel && TagOneJetChannel) || 
-     */(GetNumOfTags()==0/* && !TaggedChannel && !TagOneJetChannel*/)) last = HllqqCutFlow::NumTagJets;
+  if(GetNumOfTags()==0) last = HllqqCutFlow::NumTagJets;
   else return last;
   
   
   //Invariant mass of the dijet
-  if((JetBestPairResult()/*JetKinematicFitterResult()*/ && !TaggedChannel && !TagOneJetChannel) ||
-     (JetDimassTagged()          &&  TaggedChannel && !TagOneJetChannel) ||
-     (JetDimassOneTagged()       && !TaggedChannel &&  TagOneJetChannel))
+  if((JetBestPairResult()  && GetNumOfTags()==0) ||
+     (JetDimassTagged()    && GetNumOfTags()==2) ||
+     (JetDimassOneTagged() && GetNumOfTags()==1))
     last = HllqqCutFlow::DiJetMass;
   
   else return last;
@@ -3618,6 +3612,8 @@ Float_t HiggsllqqAnalysis::GetMV1value(Analysis::Jet *jet)
   Float_t w_SV1             = Jet->flavor_weight_SV1();
   Float_t w_JetFitterCOMBNN = Jet->flavor_weight_JetFitterCOMBNN();
   Float_t MV1               = mv1Eval(w_IP3D,w_SV1,w_JetFitterCOMBNN,jet->rightpt(),jet->righteta());
+
+  MV1 = Jet->flavor_weight_MV1(); //Test of MV1 calculation: August 2013
   
   return MV1;
 }
@@ -3700,7 +3696,7 @@ Bool_t HiggsllqqAnalysis::JetDimassOneTagged() {
       }
   }
   
-  if(ii!=0)
+  if(/*ii!=0*/1)
     {
       JetSemiTag2=0;
       j2.SetPtEtaPhiM(b_rescaling*m_GoodJets.at(0)->rightpt(),m_GoodJets.at(0)->righteta(),m_GoodJets.at(0)->rightphi(),m_GoodJets.at(0)->Get4Momentum()->M());
