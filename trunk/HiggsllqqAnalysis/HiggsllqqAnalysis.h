@@ -6,7 +6,7 @@
     Code to perform SM H -> ZZ(*) -> qqll analysis.
 
     @start  date 08/15/2012 
-    @update date 05/03/2013
+    @update date 08/15/2013
 */
 
 #include <TEfficiency.h>
@@ -32,7 +32,6 @@
 #include "egammaEvent/egammaPIDdefs.h"
 #include "egammaAnalysisUtils/EnergyRescalerUpgrade.h"
 
-
 // Higgs[llqq-4lep]Analysis common tools
 #include "HiggsllqqAnalysis/ggFReweighting.h"
 #include "HiggsllqqAnalysis/CommonTools.h"
@@ -42,7 +41,6 @@
 #include "HiggsllqqAnalysis/Dilepton.h"
 #include "HiggsllqqAnalysis/CutFlowTool.h"
 #include "HiggsllqqAnalysis/DataPeriodTool.h"
-
 
 // HiggsqqllAnalysis needs
 #include "egammaAnalysisUtils/IsEMPlusPlusDefs.h"
@@ -194,9 +192,9 @@ namespace HllqqSystematics {
     Float_t cl_phi;
     
     ChargedLepton() {
-      ptCB_nosmearnoscale = -9999.9;
-      ptME_nosmearnoscale = -9999.9;
-      ptID_nosmearnoscale = -9999.9;
+      ptCB_nosmearnoscale    = -9999.9;
+      ptME_nosmearnoscale    = -9999.9;
+      ptID_nosmearnoscale    = -9999.9;
       cl_E_calibsmearnoscale = -9999.9;
       cl_eta = -9999.9;
       cl_phi = -9999.9;
@@ -487,7 +485,6 @@ typedef struct SOMVar{
 } SOMVar;
 
 
-
 class HiggsllqqAnalysis : public HiggsAnalysis {
  public:
   
@@ -508,21 +505,27 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void setAnalysisVersion(TString val) {
     m_analysis_version = val;
   }
+  
   virtual void setSmearing(Bool_t val) {
     m_doSmearing = val;
   }
+  
   virtual void setTopoIso(Bool_t val) {
     m_useTopoIso = val;
   }
+  
   virtual void setMuonFamily(Int_t val) {
     m_muonFamily = val;
   }
+  
   virtual void setElectronFamily(Int_t val) {
     m_electronFamily = val;
   }
+  
   virtual void setJetFamily(Int_t val) {
     m_jetFamily = val;
   }
+  
   virtual void setOutputFile(TString val) {
     m_outputFileName = val;
   }
@@ -539,7 +542,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSF;
   Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSFCalo;
   Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSFSA;
-
+  
   MuonSmear::SmearingClass *m_MuonSmearer;
   
   egammaSFclass                 *m_ElectronEffSF;
@@ -564,7 +567,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Analysis::Jet *>           m_GoodJets;
   std::vector<Analysis::Dilepton *>      m_Dileptons;
   
-
+  
   // utility maps
   std::map<UInt_t, Float_t> m_CrossSection;
   std::map<UInt_t, Int_t>   m_SignalSampleMass;
@@ -593,19 +596,17 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   
   // event selection
-  virtual Bool_t hasPowHegZZBug(); // to be removed and/or change!!
-  virtual Bool_t SherpaPt0Veto();
-  virtual Int_t getLastCutPassed();
-  virtual Bool_t passesGRL();
-  virtual Bool_t hasGoodVertex();
-  virtual Int_t getNumberOfGoodVertices();
-  virtual std::vector<TString> getListOfAlternativeTriggers(TString sequence);
-  virtual Bool_t passesTrigger();
-  virtual Bool_t passesSingleMuonTrigger();
-  virtual Bool_t passesDiMuonTrigger();
-  virtual Bool_t passesSingleElectronTrigger();
-  virtual Bool_t passesDiElectronTrigger();
-  virtual Bool_t passesElectronMuonTrigger();
+  virtual Int_t   getLastCutPassed();
+  virtual Int_t   getNumberOfGoodVertices();
+  virtual Bool_t  SherpaPt0Veto();
+  virtual Bool_t  passesGRL();
+  virtual Bool_t  hasGoodVertex();
+  virtual Bool_t  passesTrigger();
+  virtual Bool_t  passesSingleMuonTrigger();
+  virtual Bool_t  passesDiMuonTrigger();
+  virtual Bool_t  passesSingleElectronTrigger();
+  virtual Bool_t  passesDiElectronTrigger();
+  virtual Bool_t  passesElectronMuonTrigger();
   virtual TString getSingleMuonTriggerName();
   virtual TString getDiMuonTriggerName();
   virtual TString getSingleElectronTriggerName();
@@ -622,6 +623,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void getGoodLeptons();
   virtual void getDileptons();
   virtual void getGoodObjects();
+  virtual std::vector<TString> getListOfAlternativeTriggers(TString sequence);
   
   
   // object selection
@@ -630,7 +632,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t IsGoodElectron(Analysis::ChargedLepton *lep);
   Bool_t IsGoodMuon(Analysis::ChargedLepton *lep);
   Bool_t isGoodJet(Analysis::Jet *jet);
-
+  
   //object quality
   Bool_t Pair_Quality();
   
@@ -669,8 +671,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     return m_thisChannel;
   }
   
-  virtual Float_t getD0SmearSigma(Int_t index_of_lepton, Int_t nBL, Float_t pt, Float_t eta);
-  
   
   // event weighting helpers
   virtual Float_t getEventWeight();
@@ -701,88 +701,75 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     Info("printAllOptions", "========================");
   }
   
-
   
   // Methods from the qqll analysis
-  Bool_t ApplyChangesMuon(Analysis::ChargedLepton *lep);
-  Bool_t ApplyChangesElectron(Analysis::ChargedLepton *lep);
-  Bool_t ApplyChangesJet(Analysis::Jet *jet);
+  Bool_t  ApplyChangesMuon(Analysis::ChargedLepton *lep);
+  Bool_t  ApplyChangesElectron(Analysis::ChargedLepton *lep);
+  Bool_t  ApplyChangesJet(Analysis::Jet *jet);
+  Bool_t  JetInHole();
+  Bool_t  NotMETclean();
+  Bool_t  hasGoodMET();
+  Bool_t  GetDoLowMass() { return m_dolowmass; }
+  Bool_t  GetSysStudy()  { return m_sysstudy; }
+  Bool_t  IsConsistentPt();
+  Bool_t  IsConsistentWithTrigger();
   
-  Int_t GetLastCutPassed();
-  Bool_t GetGoodObjects();
-  void LoadGRL();
-  Bool_t PassesGRL();
-  Bool_t JetInHole();
-  Bool_t NotMETclean();
+  void  LoadGRL();
+  void  InitReducedNtuple();
+  void  ResetReducedNtupleMembers();
+  void  FillReducedNtuple(Int_t cut, UInt_t channel);
+  
   Float_t getCorrectMETValue();
-  Bool_t hasGoodMET();
-  
-  void InitReducedNtuple();
-  void ResetReducedNtupleMembers();
-  void FillReducedNtuple(Int_t cut, UInt_t channel);
-  
-  Bool_t GetDoLowMass() { return m_dolowmass; }
-  Bool_t GetSysStudy() { return m_sysstudy; }
-  Bool_t IsConsistentPt();
-  Bool_t IsConsistentWithTrigger();
-  
   Float_t GetMV1value(Analysis::Jet *jet);
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
   
-
-
   // Flavor Jet Methods
   Bool_t isHeavyJet(Int_t pdg);
   Bool_t isLightJet(Int_t pdg);
   Bool_t isGluonJet(Int_t pdg);
-
-
-
+  
   // Higgs MC (weight) Methods
-  Float_t GetggFWeight();
   void InitMasses();
   Float_t GetTruthHiggsPt();
+  Float_t GetggFWeight();
   
-
-
-  //Tracks and Widths 2012 methods
+  
+  // Tracks and Widths 2012 methods
   Float_t isInTheJet(Int_t Index, Int_t JetIndex, vector<float> *whatinjet_eta, vector<float> *whatinjet_phi);
   std::pair<Float_t, Float_t>InfoTracks(Int_t JetIndex);
-  Bool_t isGoodTrack(Int_t TrackIndex);
+  Bool_t  isGoodTrack(Int_t TrackIndex);
   
-
-
-
+  
   // Trigger SF 
   std::pair<double, double> getCandidateTriggerSF(Int_t option);
   
-
-  //Method to count the number of that events into the GoodJets vector.
-  Int_t GetNumOfTags();
-
   
-  //2 Methods to evaluate the impact of the Jet kinematic cuts in the selection
+  // Method to count the number of that events into the GoodJets vector.
+  Int_t GetNumOfTags();
+  
+  
+  // 2 Methods to evaluate the impact of the Jet kinematic cuts in the selection
   Bool_t GoodPtJets();
   Bool_t GoodEtaJets();
-
   
-  //Method to evaluate the isolation mu-jet
+  
+  // Method to evaluate the isolation mu-jet
   Bool_t MuonJetOR();
-
   
-  //Method to find the best DiJets using JetKinematicFitter
+  
+  // Method to find the best DiJets using JetKinematicFitter
   Bool_t JetKinematicFitterResult();
   
-  //Method to find the best DiJets using BestPair algo
+  // Method to find the best DiJets using BestPair algo
   Bool_t JetBestPairResult();
   
-  //Method to calculate the DiJet invariant mass for the tagged Jets!
+  // Method to calculate the DiJet invariant mass for the tagged Jets!
   Bool_t JetDimassTagged();
   
   Bool_t JetDimassOneTagged();
   
   
-  //Method to flag/control the QCD selection  
+  // Method to flag/control the QCD selection  
   Bool_t GetDoQCDSelection() { 
     if(!isMC()) return m_doqcdselection; 
     return kFALSE;
@@ -790,37 +777,37 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   void SetDoQCDSelection(Bool_t val) { m_doqcdselection = val; }
   
-
-  //Method to flag/control the Low or High Mass selection    
+  
+  // Method to flag/control the Low or High Mass selection    
   void SetDoLowMass(Bool_t val) { m_dolowmass = val; }
-
-
+  
+  
   // Method to setup the Systematic Jet Studies (JES-JER)
   void SetSysStudy(Bool_t val) { m_sysstudy = val; }
   
-
-  //Methods to sort the Jets or Leptons by pt
+  
+  // Methods to sort the Jets or Leptons by pt
   void SortIndex(std::vector<Analysis::Jet *> &vec);
   void SortIndex(std::vector<Analysis::ChargedLepton *> &vec);
   
   
-  //Printing the Event tables
+  // Printing the Event tables
   void PrintCutFlowEvents(Int_t cut, Int_t event, Int_t count);
   
-  //Method to calculate the Cleaning of the jet
+  // Method to calculate the Cleaning of the jet
   Bool_t isBadLooser(Analysis::Jet *jet);
   
   // Method to fill vectors to calculate the HFOR value
   void FillHFORvariables();
   
-
-  //Methods to Set, Reset and Fill the TestSelection Struct
+  
+  // Methods to Set, Reset and Fill the TestSelection Struct
   void SetAnalysisOutputBranches(analysis_output_struct *str);
   void ResetAnalysisOutputBranches(analysis_output_struct *str);
   void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
   pair <double,double> GetJetSFsvalue(int jetindex);
-
-  //MVA methods (June 2013)
+  
+  // MVA methods (June 2013)
   void SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36]);
   Float_t getFisher_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
   Float_t getLikelihood_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
@@ -831,9 +818,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t getFisher_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
   Float_t getLikelihood_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
   Float_t getLikelihoodMIX_LJ(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
-
-
-  //SOM METHODS (Dec 2012)
+  
+  
+  // SOM METHODS (Dec 2012)
   int GetSOMx(TString which_map, int jetidx1, int jetidx2) { return (GetSOMWinner(which_map, jetidx1, jetidx2)).first;}
   
   int GetSOMy(TString which_map, int jetidx1, int jetidx2) { return (GetSOMWinner(which_map, jetidx1, jetidx2)).second;}
@@ -859,7 +846,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t CheckMap(TString which_map, int jetidx1, int jetidx2);
   
   Float_t Rightcut(Int_t efficiency, Float_t pt_jet, Float_t eta_jet);
-
   
   
  protected:
@@ -871,12 +857,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
  private:
   TString m_analysis_version;
-  Bool_t m_doSmearing;
-  Bool_t m_useTopoIso;
-  Int_t m_muonFamily;
-  Int_t m_electronFamily;
-  Int_t m_jetFamily;
-  Int_t m_thisChannel;
+  Bool_t  m_doSmearing;
+  Bool_t  m_useTopoIso;
+  Int_t   m_muonFamily;
+  Int_t   m_electronFamily;
+  Int_t   m_jetFamily;
+  Int_t   m_thisChannel;
   TH1D *m_generatedEntriesHisto;
   TH1D *h_cutflow;
   TH1D *h_cutflow_weight;
@@ -886,45 +872,43 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TH1D *h_cutflow_weight_MU2;
   TH1D *h_cutflow_MUE;
   TH1D *h_cutflow_weight_MUE;
-
+  
   TMVA::Reader *reader[36];
   Float_t var1[36],var2[36];
   
   std::map<TString, TH1F*> m_truthHistos; // To be update or remove
   TEfficiency *m_selectionEfficiencyVsNvx[4]; // To be update or remove
-  TTree *m_TreeCutflow;
+  TTree  *m_TreeCutflow;
   TString m_outputFileName;
-  TFile *m_outputFile;
-
+  TFile  *m_outputFile;
+  
   Analysis::CalibrationDataInterfaceROOT *calib;
   Analysis::CalibrationDataVariables ajet;
   Analysis::Uncertainty uncertainty;
   
-
-  //Definition of the TestSelection Struct
+  // Definition of the TestSelection Struct
   analysis_output_struct m_outevent;
-
   
-  //Beginning
+  // Beginning
  protected:
   
-  //JES AND JER TOOL
+  // JES AND JER TOOL
   JetCalibrationTool *myJES;
   JetSmearingTool *myJER;
   
-  /// ggF reweighting tool
+  // ggF reweighting tool
   ggFReweighting *fggFReweighter;
   
   // Jet kinematic fitter
   JetKinematicFitter *m_jetkinematicfitter;
   
-  //HFOR TOOL
+  // HFOR TOOL
   HforToolD3PD *hforTool;
   
   // llqq Analysis tree
   TTree *m_reduced_ntuple;
   
-  //TestSelection Tree
+  // TestSelection Tree
   TTree *analysistree;
   
   Int_t m_lep_chargeproduct;
@@ -973,7 +957,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t m_trig_SF2;
   Float_t m_trig_SFC;
   
-  //Truth quark information
+  // Truth quark information
   std::vector<Float_t> *m_quark_m;
   std::vector<Float_t> *m_quark_pt;
   std::vector<Int_t>   *m_quark_pdg;
@@ -1006,7 +990,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   float Mean_jets;
   float good_events;
-  
   
  public:
   ClassDef(HiggsllqqAnalysis, 0);

@@ -30,7 +30,7 @@ atlasoff/Reconstruction/Jet/JetUncertainties/tags/JetUncertainties-00-08-02
 atlasoff/Reconstruction/egamma/egammaEvent/tags/egammaEvent-03-06-38
 
 atlasoff/PhysicsAnalysis/JetTagging/JetTagCalibration/tags/JetTagCalibration-00-02-07
-atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-01-02
+atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-03-04
 
 svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/egamma/egammaAnalysis/egammaFourMomentumError/tags/egammaFourMomentumError-00-00-09
 svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/egamma/egammaAnalysis/egParticleConditions/tags/egParticleConditions-00-00-02
