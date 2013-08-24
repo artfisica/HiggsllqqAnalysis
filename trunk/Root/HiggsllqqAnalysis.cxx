@@ -757,6 +757,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   // METHOD THAT GET ALL THE LEPTONS: Second Call the really get all the Good Object that will be past the different analysis requests!!
+  //m_called_getGoodLeptons = kFALSE;
   getGoodLeptons();
   
   
@@ -1847,7 +1848,15 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
   lep->set_lastcut(-1);
   
   Bool_t dolowmass = GetDoLowMass();
+  Bool_t doqcd     = GetDoQCDSelection();
   
+/*
+  if(doqcd)
+    cout<<"doing QCD selection"<<endl;
+  else
+    cout<<"doing standard selection"<<endl;
+*/  
+
   //// Muons
   if (lep->flavor() == Analysis::ChargedLepton::MUON) {
     
@@ -1895,19 +1904,24 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
     else return kFALSE;
     
     
-    if(!GetDoQCDSelection()) {
-      
-      if(dolowmass)
-	{
-	  //d0 Significance
-	  if (TMath::Abs(lep->d0() / lep->d0_sig()) < 3.5) lep->set_lastcut(HllqqMuonQuality::d0Sig);
-	  else return kFALSE;
-	}
-      else lep->set_lastcut(HllqqMuonQuality::d0Sig);
-      
-      if ((mu->ptcone20()/mu->pt())<.1) lep->set_lastcut(HllqqMuonQuality::Isolation);
-      else return kFALSE;
-    }
+    if(!doqcd)
+      {      
+	if(dolowmass)
+	  {
+	    //d0 Significance
+	    if (TMath::Abs(lep->d0() / lep->d0_sig()) < 3.5) lep->set_lastcut(HllqqMuonQuality::d0Sig);
+	    else return kFALSE;
+	  }
+	else lep->set_lastcut(HllqqMuonQuality::d0Sig);
+	
+	if ((mu->ptcone20()/mu->pt())<.1) lep->set_lastcut(HllqqMuonQuality::Isolation);
+	else return kFALSE;
+      }
+    else if(doqcd)
+      {
+	lep->set_lastcut(HllqqElectronQuality::d0Sig);
+	lep->set_lastcut(HllqqElectronQuality::Isolation);
+      }
     
     return kTRUE;
   }
@@ -2033,17 +2047,23 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
       }
     
     
-    if(!GetDoQCDSelection()) {
-      
-      if(dolowmass) {
-	if((TMath::Abs(lep->d0()) / lep->d0_sig())<6.5) lep->set_lastcut(HllqqElectronQuality::d0Sig);
-	else return kFALSE;
+    if(!doqcd)
+      {      
+	if(dolowmass)
+	  {
+	    if((TMath::Abs(lep->d0()) / lep->d0_sig())<6.5) lep->set_lastcut(HllqqElectronQuality::d0Sig);
+	    else return kFALSE;
+	  }
+	else lep->set_lastcut(HllqqElectronQuality::d0Sig);    
+	
+	if ((el->ptcone20()/el->pt())<0.1) lep->set_lastcut(HllqqElectronQuality::Isolation);
+	else return kFALSE;    
       }
-      else lep->set_lastcut(HllqqElectronQuality::d0Sig);    
-      
-      if ((el->ptcone20()/el->pt())<.1) lep->set_lastcut(HllqqElectronQuality::Isolation);
-      else return kFALSE;    
-    }
+    else if(doqcd)
+      {
+	lep->set_lastcut(HllqqElectronQuality::d0Sig);
+	lep->set_lastcut(HllqqElectronQuality::Isolation);
+      }
     
     return kTRUE;  
   }
@@ -2328,6 +2348,9 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	// TestSelection Reset 
 	ResetAnalysisOutputBranches(&m_outevent);
 	
+
+        //Set the QCD flag FALSE
+        SetDoQCDSelection(kFALSE);
 	
 	Int_t last_event = getLastCutPassed();	
 	
@@ -2372,7 +2395,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	
 	
 	//Set the QCD flag FALSE
-	SetDoQCDSelection(kFALSE);
+	//SetDoQCDSelection(kFALSE);
 	
 	if(chan!=1)// error: repare the mixing MUE channel
 	  {
@@ -3537,7 +3560,10 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
 void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 {
   Int_t minimum_cut = 0;
-  
+ 
+  //if (GetDoQCDSelection()) cout<<"is qcd"<<endl;
+  //else cout<<"is standard"<<endl;
+ 
   if(GetDoQCDSelection()) minimum_cut = HllqqCutFlow::OppositeSign; //PtLeptons;//MET;//NumberOfLeptons;//DiJetMass;
   else minimum_cut = HllqqCutFlow::OppositeSign; //PtLeptons;
   
@@ -4671,7 +4697,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
       
       ///////////////////    JET FILLING!    ////////////////////      
-      
+
+      static const float Mz = 91188.;
       float tmpbtagsf = 1.;
       int howmanytags = GetNumOfTags();
       str->n_b_jets   = howmanytags;
@@ -4796,17 +4823,24 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      TLorentzVector hadZ = j1   +   j2;
 	      TLorentzVector H    = lepZ + hadZ;
 	      
-	      
 	      str->realZ_KF_m     = hadZ.M();
 	      str->realZ_KF_pt    = hadZ.Pt();
 	      str->realZ_KF_eta   = hadZ.Eta();
 	      str->realZ_KF_phi   = hadZ.Phi();
-	      
+	                   
+              str->realH_KF_pt    = H.Pt();
+              str->realH_KF_eta   = H.Eta();
+              str->realH_KF_phi   = H.Phi();
+              
+              float mjj   = (j1 + j2).M();
+              float scale = Mz/mjj;
+              j1 *= scale;
+              j2 *= scale;
+              hadZ = j1   +   j2;
+              H    = lepZ + hadZ;
+
 	      str->realH_KF_m     = H.M();
-	      str->realH_KF_pt    = H.Pt();
-	      str->realH_KF_eta   = H.Eta();
-	      str->realH_KF_phi   = H.Phi();
-	      
+	      	      
 	      
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_KF_jj = TMath::Abs(j1.DeltaPhi(j2));
@@ -4895,10 +4929,18 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realZ_LJ_eta   = hadZ_LJ.Eta();
 	      str->realZ_LJ_phi   = hadZ_LJ.Phi();
 	      
-	      str->realH_LJ_m     = H_LJ.M();
-	      str->realH_LJ_pt    = H_LJ.Pt();
-	      str->realH_LJ_eta   = H_LJ.Eta();
-	      str->realH_LJ_phi   = H_LJ.Phi();	  
+              str->realH_LJ_pt    = H_LJ.Pt();
+              str->realH_LJ_eta   = H_LJ.Eta();
+              str->realH_LJ_phi   = H_LJ.Phi();
+
+              float mjj_LJ   = (j1_LJ + j2_LJ).M();
+              float scale_LJ = Mz/mjj_LJ;
+              j1_LJ *= scale_LJ;
+              j2_LJ *= scale_LJ;
+              hadZ_LJ = j1_LJ + j2_LJ;
+              H_LJ    = lepZ  + hadZ;
+              str->realH_LJ_m    = H_LJ.M();
+	  
 	      
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_LJ_jj = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
@@ -4953,11 +4995,19 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realZ_BP_eta   = hadZ_BP.Eta();
 	      str->realZ_BP_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_BP_m     = H_BP.M();
 	      str->realH_BP_pt    = H_BP.Pt();
 	      str->realH_BP_eta   = H_BP.Eta();
 	      str->realH_BP_phi   = H_BP.Phi();	  
-	      
+	     
+              float mjj_BP    = (j1_BP + j2_BP).M();
+              float scale_BP  = Mz/mjj_BP;
+              j1_BP *= scale_BP;
+              j2_BP *= scale_BP;
+              hadZ_BP = j1_BP   +   j2_BP;
+              H_BP    = lepZ    + hadZ_BP;
+              str->realH_BP_m     = H_BP.M();
+
+ 
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
 	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
@@ -4977,8 +5027,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      if(FillGluon)
 		{	  	    
-		  if (CheckMap("44p_4var",idx1,idx2)) {
-		    str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+		  if (CheckMap("44p_4var",idx1,idx2)) { str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
 		    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
 		    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
 		    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
@@ -5107,11 +5156,18 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realZ_BP_eta   = hadZ_BP.Eta();
 	      str->realZ_BP_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_BP_m     = H_BP.M();
 	      str->realH_BP_pt    = H_BP.Pt();
 	      str->realH_BP_eta   = H_BP.Eta();
 	      str->realH_BP_phi   = H_BP.Phi();	  
-	      
+	     
+              float mjj_BP    = (j1_BP + j2_BP).M();
+              float scale_BP  = Mz/mjj_BP;
+              j1_BP *= scale_BP;
+              j2_BP *= scale_BP;
+              hadZ_BP = j1_BP   +   j2_BP;
+              H_BP    = lepZ    + hadZ_BP;
+              str->realH_BP_m     = H_BP.M();
+ 
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
 	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
@@ -5242,11 +5298,18 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realZ_BP_eta   = hadZ_BP.Eta();
 	      str->realZ_BP_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_BP_m     = H_BP.M();
 	      str->realH_BP_pt    = H_BP.Pt();
 	      str->realH_BP_eta   = H_BP.Eta();
 	      str->realH_BP_phi   = H_BP.Phi();	  
-	      
+
+              float mjj_BP    = (j1_BP + j2_BP).M();
+              float scale_BP  = Mz/mjj_BP;
+              j1_BP *= scale_BP;
+              j2_BP *= scale_BP;
+              hadZ_BP = j1_BP   +   j2_BP;
+              H_BP    = lepZ    + hadZ_BP;
+              str->realH_BP_m     = H_BP.M();
+ 
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
 	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
@@ -6213,7 +6276,7 @@ Bool_t HiggsllqqAnalysis::JetBestPairResult()
 	      int tmpJone = ii;
 	      int tmpJtwo = jj;
 	      
-	      if(((tmpJtwo-tmpJone)<(Jtwo-Jone)) && ((Jtwo-Jone)>0))
+	      if(((tmpJtwo-tmpJone)<(Jtwo-Jone)) && ((Jtwo-Jone)>0) && (tmpJone<Jone))
 		{
 		  Jone = tmpJone;
 		  Jtwo = tmpJtwo;
