@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    April 22th 2013
+    August 30th 2013
     
     Authors:
     Arturo Sanchez <arturos@cern.ch> or <arturos@ula.ve>
@@ -53,7 +53,7 @@ Bool_t cut_leptons   = kFALSE,
   DoCaloMuons        = kTRUE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
-  DoKinematicFitter  = kTRUE,
+  DoKinematicFitter  = kFALSE,//should be kTRUE
   FillGluon          = kTRUE,
   Look_b_SFs         = kTRUE;
 
@@ -85,8 +85,8 @@ Float_t Mjj_high_min  = 70000.;  // 70000.;
 Float_t Mjj_high_max  = 105000.; // 105000.;
 
 // Definition of the MET cut:
-Float_t MET_low_cut   = 50000.; // 30000.;
-Float_t MET_high_cut  = 60000.; // 50000.;
+Float_t MET_low_cut   = 50000.;  // 30000.;
+Float_t MET_high_cut  = 60000.;  // 50000.;
 
 int HFOR_value        = -999;
 
@@ -757,7 +757,13 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   // METHOD THAT GET ALL THE LEPTONS: Second Call the really get all the Good Object that will be past the different analysis requests!!
-  //m_called_getGoodLeptons = kFALSE;
+  m_Muons.clear();
+  m_Electrons.clear();
+  m_Jets.clear();
+  m_GoodMuons.clear();
+  m_GoodElectrons.clear();
+  m_GoodJets.clear();  
+  m_called_getGoodLeptons = kFALSE;
   getGoodLeptons();
   
   
@@ -794,14 +800,58 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   //Minimum number of Jets cut
-  if(m_GoodJets.size()>=2) last = HllqqCutFlow::TwoJets;
+  if(m_GoodJets.size()>1) last = HllqqCutFlow::TwoJets;
   else return last;
   
   
-  //Dilepton Mass windows
-  getDileptons(); //Create a single object using the pair of leptons  
-  std::vector<Analysis::Dilepton *>::iterator Z_itr_i= m_Dileptons.begin();
-  Double_t DilepMass = (*Z_itr_i)->Get4Momentum()->M();
+  // Dilepton Mass windows
+  // Double_t DilepMass = getDileptons();
+
+  
+  TLorentzVector LeptonOne, LeptonTwo, LeptonZ; 
+  if(getChannel() == HiggsllqqAnalysis::MU2)
+    {
+      int ii=-1;      
+      for (std::vector<Analysis::ChargedLepton*>::iterator mu_itr = m_GoodMuons.begin(); mu_itr != m_GoodMuons.end(); ++mu_itr)
+	{
+	  ii++;
+	  if(ii==0)
+	    {
+	      Analysis::ChargedLepton           *mu_a =       (*mu_itr);
+	      D3PDReader::MuonD3PDObjectElement *mu_b = mu_a->GetMuon();	      
+	      LeptonOne.SetPtEtaPhiM(mu_b->pt(),mu_b->eta(),mu_b->phi(),mu_pdg_mass);
+	    }
+	  else if(ii==1)
+	    {
+	      Analysis::ChargedLepton           *mu_a =       (*mu_itr);
+	      D3PDReader::MuonD3PDObjectElement *mu_b = mu_a->GetMuon();	      
+	      LeptonTwo.SetPtEtaPhiM(mu_b->pt(),mu_b->eta(),mu_b->phi(),mu_pdg_mass);
+	    }
+	}
+    }
+  else if(getChannel() == HiggsllqqAnalysis::E2)
+    {
+      int ii=-1;      
+      for (std::vector<Analysis::ChargedLepton*>::iterator el_itr = m_GoodElectrons.begin(); el_itr != m_GoodElectrons.end(); ++el_itr)
+	{
+	  ii++;
+	  if(ii==0)
+	    {
+	      Analysis::ChargedLepton               *el_a =       (*el_itr);
+	      D3PDReader::ElectronD3PDObjectElement *el_b = el_a->GetElectron();	      
+	      LeptonOne.SetPtEtaPhiM(el_b->pt(),el_b->eta(),el_b->phi(),el_pdg_mass);
+	    }
+	  else if(ii==1)
+	    {
+	      Analysis::ChargedLepton               *el_a =       (*el_itr);
+	      D3PDReader::ElectronD3PDObjectElement *el_b = el_a->GetElectron(); 
+	      LeptonTwo.SetPtEtaPhiM(el_b->pt(),el_b->eta(),el_b->phi(),el_pdg_mass);
+	    }
+	}      
+    }
+  
+  LeptonZ  = LeptonOne + LeptonTwo;
+  Double_t DilepMass = LeptonZ.M();
   
   
   if((GetDoLowMass()  && DilepMass>Mll_low_min  && DilepMass<Mll_low_max )  ||
@@ -820,7 +870,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   //Invariant mass of the dijet
-  if((JetBestPairResult()  && GetNumOfTags()==0) ||
+  if((/*JetBestPairResult()*/ JetKinematicFitterResult()  && GetNumOfTags()==0) ||
      (JetDimassTagged()    && GetNumOfTags()==2) ||
      (JetDimassOneTagged() && GetNumOfTags()==1))
     last = HllqqCutFlow::DiJetMass;
@@ -1448,7 +1498,7 @@ void HiggsllqqAnalysis::getGoodMuons()
       	Analysis::Jet *jet = (*jet_itr);
 	
 	if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass()) ||
-	    (mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass())) { //Overlap mu-jet is /*OFF*/ 0.4 for HighMass analyses. June 2013
+	    (mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass())) {
 	  // found an jet overlapped to a jet
 	  skip_muon[i] = kTRUE;
 	} // overlapping muon/jet
@@ -1607,7 +1657,7 @@ void HiggsllqqAnalysis::getGoodJets()
     std::vector<Analysis::ChargedLepton*>::iterator el_itr;
     for (el_itr = m_Electrons.begin(); el_itr != m_Electrons.end(); ++el_itr) {
       Analysis::ChargedLepton *el = (*el_itr);
-      if (jet->Get4Momentum()->DeltaR(*(el->Get4Momentum_ID())) < 0.4) {
+      if (jet->Get4Momentum()->DeltaR(*(/*el->Get4Momentum_ID()*/el->Get4Momentum())) < 0.4) {
 	// found an jet overlapped to a electron
 	skip_jet[i] = kTRUE;
       } // overlapping jet/electron
