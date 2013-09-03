@@ -870,9 +870,10 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   
   //Invariant mass of the dijet
-  if((/*JetBestPairResult()*/ JetKinematicFitterResult()  && GetNumOfTags()==0) ||
-     (JetDimassTagged()    && GetNumOfTags()==2) ||
-     (JetDimassOneTagged() && GetNumOfTags()==1))
+  if((JetBestPairResult()        && GetNumOfTags()==0 &&  isMC()) ||
+     (JetKinematicFitterResult() && GetNumOfTags()==0 && !isMC()) ||
+     (JetDimassTagged()          && GetNumOfTags()==2)            ||
+     (JetDimassOneTagged()       && GetNumOfTags()==1))
     last = HllqqCutFlow::DiJetMass;
   
   else return last;
@@ -1657,7 +1658,7 @@ void HiggsllqqAnalysis::getGoodJets()
     std::vector<Analysis::ChargedLepton*>::iterator el_itr;
     for (el_itr = m_Electrons.begin(); el_itr != m_Electrons.end(); ++el_itr) {
       Analysis::ChargedLepton *el = (*el_itr);
-      if (jet->Get4Momentum()->DeltaR(*(/*el->Get4Momentum_ID()*/el->Get4Momentum())) < 0.4) {
+      if (jet->Get4Momentum()->DeltaR(*(el->Get4Momentum_ID())) < 0.4) {
 	// found an jet overlapped to a electron
 	skip_jet[i] = kTRUE;
       } // overlapping jet/electron
@@ -1783,7 +1784,7 @@ void HiggsllqqAnalysis::getGoodLeptons()
   */
   
   D3PDReader::JetD3PDObject *jet_branch(0);
-  if (getJetFamily() == 0)      jet_branch = &(ntuple->jet_akt4topoem);
+  if (getJetFamily() == 0)      jet_branch = &(ntuple->jet_akt4topoem); // AntiKt4TopoEM
   else if (getJetFamily() == 1) jet_branch = &(ntuple->jet_AntiKt4LCTopo);
   else Abort("Unknown jet family requested");
   
@@ -2307,8 +2308,9 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
     }  
   else if (!dolowmass)
     {
-      if ((jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5))
-	jet->set_lastcut(HllqqJetQuality::kinematics);
+      if ((jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0)/*
+	  ||
+	  (jet->rightpt()>30000. && TMath::Abs(jet->righteta()) > 2.5 && TMath::Abs(jet->righteta()) < 4.5)*/) jet->set_lastcut(HllqqJetQuality::kinematics);
       else return kFALSE;
     }
   
@@ -2316,12 +2318,12 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   
   if(dolowmass)
     {
-      if((TMath::Abs(Jet->jvtxf()) > jvtxf_cut)) jet->set_lastcut(HllqqJetQuality::Pileup);
+      if (TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
       else return kFALSE;
     }  
   else if (!dolowmass)
     {
-      if(TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
+      if (TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
       else return kFALSE;
     }  
   
@@ -4768,9 +4770,12 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	    {
 	      for (UInt_t w = 0; w < m_GoodJets.size(); w++)
 		{	
-		  pair<double,double> thisjetSF = GetJetSFsvalue(w);
-		  tmpbtagsf *= thisjetSF.first;
-		  
+		  if (isMC()) 
+		    {
+		      pair<double,double> thisjetSF = GetJetSFsvalue(w);
+		      tmpbtagsf *= thisjetSF.first;
+		    }
+
 		  if(w==0)
 		    {
 		      D3PDReader::JetD3PDObjectElement *Jet0 = m_GoodJets.at(0)->GetJet();
@@ -4844,7 +4849,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_KF_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
 	      str->realJ1_KF_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
 	      str->realJ1_KF_eta_det     = Jet_1_KF->emscale_eta();
-	      str->realJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
+	      if(isMC()) str->realJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
 	      str->realJ1_KF_jvf         = Jet_1_KF->jvtxf();
 	      str->realJ1_KF_ntrk        = Jet_1_KF->nTrk();
 	      str->realJ1_KF_width       = Jet_1_KF->WIDTH();
@@ -4857,7 +4862,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_KF_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
 	      str->realJ2_KF_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
 	      str->realJ2_KF_eta_det     = Jet_2_KF->emscale_eta();
-	      str->realJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
+	      if(isMC()) str->realJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
 	      str->realJ2_KF_jvf         = Jet_2_KF->jvtxf();
 	      str->realJ2_KF_ntrk        = Jet_2_KF->nTrk();
 	      str->realJ2_KF_width       = Jet_2_KF->WIDTH();
@@ -4906,14 +4911,14 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 		  str->corrJ1_KF_eta         = m_GoodJets.at(SelectedJets.first)->righteta();
 		  str->corrJ1_KF_eta_det     = Jet_1_KF->emscale_eta();
 		  str->corrJ1_KF_phi         = m_GoodJets.at(SelectedJets.first)->rightphi();
-		  str->corrJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
+		  if(isMC()) str->corrJ1_KF_flavortruth = Jet_1_KF->flavor_truth_label();
 		  
 		  str->corrJ2_KF_m           = m_GoodJets.at(SelectedJets.second)->Get4Momentum()->M();
 		  str->corrJ2_KF_pt          = corr_jet_pt2;
 		  str->corrJ2_KF_eta         = m_GoodJets.at(SelectedJets.second)->righteta();
 		  str->corrJ2_KF_eta_det     = Jet_2_KF->emscale_eta();
 		  str->corrJ2_KF_phi         = m_GoodJets.at(SelectedJets.second)->rightphi();
-		  str->corrJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
+		  if(isMC()) str->corrJ2_KF_flavortruth = Jet_2_KF->flavor_truth_label();
 		  
 		  
 		  j1.SetPtEtaPhiM(str->corrJ1_KF_pt,str->corrJ1_KF_eta,str->corrJ1_KF_phi,str->corrJ1_KF_m);
@@ -4934,18 +4939,21 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 		  str->chisquare = ChiSq;
 		}
 	      
-	      Analysis::Jet *jet_p = new Analysis::Jet(Jet_1_KF);
-	      str->realJ1_KF_pdg   = GetFlavour(jet_p).first;
-	      Analysis::Jet *jet_s = new Analysis::Jet(Jet_2_KF);
-	      str->realJ2_KF_pdg   = GetFlavour(jet_s).first;
-	      
+	      if(isMC()) 
+		{
+		  Analysis::Jet *jet_p = new Analysis::Jet(Jet_1_KF);
+		  str->realJ1_KF_pdg   = GetFlavour(jet_p).first;
+		  Analysis::Jet *jet_s = new Analysis::Jet(Jet_2_KF);
+		  str->realJ2_KF_pdg   = GetFlavour(jet_s).first;
+		}
+      
 	      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	      str->realJ1_LJ_m           = m_GoodJets.at(0)->Get4Momentum()->M();
 	      str->realJ1_LJ_pt          = m_GoodJets.at(0)->rightpt();
 	      str->realJ1_LJ_eta         = m_GoodJets.at(0)->righteta();
 	      str->realJ1_LJ_phi         = m_GoodJets.at(0)->rightphi();
 	      str->realJ1_LJ_eta_det     = Jet_1_LJ->emscale_eta();
-	      str->realJ1_LJ_flavortruth = Jet_1_LJ->flavor_truth_label();
+	      if(isMC()) str->realJ1_LJ_flavortruth = Jet_1_LJ->flavor_truth_label();
 	      str->realJ1_LJ_jvf         = Jet_1_LJ->jvtxf();
 	      str->realJ1_LJ_ntrk        = Jet_1_LJ->nTrk();
 	      str->realJ1_LJ_width       = Jet_1_LJ->WIDTH();
@@ -4958,7 +4966,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_LJ_eta         = m_GoodJets.at(1)->righteta();
 	      str->realJ2_LJ_phi         = m_GoodJets.at(1)->rightphi();
 	      str->realJ2_LJ_eta_det     = Jet_2_LJ->emscale_eta();
-	      str->realJ2_LJ_flavortruth = Jet_2_LJ->flavor_truth_label();
+	      if(isMC()) str->realJ2_LJ_flavortruth = Jet_2_LJ->flavor_truth_label();
 	      str->realJ2_LJ_jvf         = Jet_2_LJ->jvtxf();
 	      str->realJ2_LJ_ntrk        = Jet_2_LJ->nTrk();
 	      str->realJ2_LJ_width       = Jet_2_LJ->WIDTH();
@@ -4998,11 +5006,13 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->dPhi_LJ_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_LJ));
 	      str->dR_LJ_ZZ   = lepZ.DeltaR(hadZ_LJ);	  
 	      
-	      Analysis::Jet *jet_p_LJ = new Analysis::Jet(Jet_1_LJ);
-	      str->realJ1_LJ_pdg = GetFlavour(jet_p_LJ).first;
-	      Analysis::Jet *jet_s_LJ = new Analysis::Jet(Jet_2_LJ);
-	      str->realJ2_LJ_pdg = GetFlavour(jet_s_LJ).first;
-	      
+	      if(isMC()) 
+		{
+		  Analysis::Jet *jet_p_LJ = new Analysis::Jet(Jet_1_LJ);
+		  str->realJ1_LJ_pdg = GetFlavour(jet_p_LJ).first;
+		  Analysis::Jet *jet_s_LJ = new Analysis::Jet(Jet_2_LJ);
+		  str->realJ2_LJ_pdg = GetFlavour(jet_s_LJ).first;
+		}      
 	      
 	      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5011,7 +5021,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
 	      str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
 	      str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
-	      str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
+	      if(isMC()) str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
 	      str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
 	      str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
 	      str->realJ1_BP_width       = Jet_1_BP->WIDTH();
@@ -5024,7 +5034,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
 	      str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
 	      str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
-	      str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
+	      if(isMC()) str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
 	      str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
 	      str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
 	      str->realJ2_BP_width       = Jet_2_BP->WIDTH();
@@ -5064,10 +5074,15 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
 	      str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
 	      
-	      Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
-	      str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
-	      Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
-	      str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+
+	      if(isMC()) 
+		{
+		  Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
+		  str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
+		  Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
+		  str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+		}
+	      
 	      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	      
 	      
@@ -5172,7 +5187,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
 	      str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
 	      str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
-	      str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
+	      if(isMC()) str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
 	      str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
 	      str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
 	      str->realJ1_BP_width       = Jet_1_BP->WIDTH();
@@ -5185,14 +5200,42 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
 	      str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
 	      str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
-	      str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
+	      if(isMC()) str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
 	      str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
 	      str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
 	      str->realJ2_BP_width       = Jet_2_BP->WIDTH();
 	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
 	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
 	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
+
 	      
+	      // Leading jets: Filling with the same values. Plotterino useful.
+	      str->realJ1_LJ_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
+	      str->realJ1_LJ_pt          = m_GoodJets.at(Jone)->rightpt();
+	      str->realJ1_LJ_eta         = m_GoodJets.at(Jone)->righteta();
+	      str->realJ1_LJ_phi         = m_GoodJets.at(Jone)->rightphi();
+	      str->realJ1_LJ_eta_det     = Jet_1_BP->emscale_eta();
+	      if(isMC()) str->realJ1_LJ_flavortruth = Jet_1_BP->flavor_truth_label();
+	      str->realJ1_LJ_jvf         = Jet_1_BP->jvtxf();
+	      str->realJ1_LJ_ntrk        = Jet_1_BP->nTrk();
+	      str->realJ1_LJ_width       = Jet_1_BP->WIDTH();
+	      str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(Jone));
+	      str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_BP.first;
+	      str->realJ1_LJ_width12     = InfoNtracksWidthJ1_BP.second;
+	      
+	      str->realJ2_LJ_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
+	      str->realJ2_LJ_pt          = m_GoodJets.at(Jtwo)->rightpt();
+	      str->realJ2_LJ_eta         = m_GoodJets.at(Jtwo)->righteta();
+	      str->realJ2_LJ_phi         = m_GoodJets.at(Jtwo)->rightphi();
+	      str->realJ2_LJ_eta_det     = Jet_2_BP->emscale_eta();
+	      if(isMC()) str->realJ2_LJ_flavortruth = Jet_2_BP->flavor_truth_label();
+	      str->realJ2_LJ_jvf         = Jet_2_BP->jvtxf();
+	      str->realJ2_LJ_ntrk        = Jet_2_BP->nTrk();
+	      str->realJ2_LJ_width       = Jet_2_BP->WIDTH();
+	      str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
+	      str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_BP.first;
+	      str->realJ2_LJ_width12     = InfoNtracksWidthJ2_BP.second;
+
 	      
 	      TLorentzVector j1_BP;
 	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
@@ -5209,7 +5252,19 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realH_BP_pt    = H_BP.Pt();
 	      str->realH_BP_eta   = H_BP.Eta();
 	      str->realH_BP_phi   = H_BP.Phi();	  
+
+	      // Leading jets: Filling with the same values.
+	      str->realZ_LJ_m     = hadZ_BP.M();
+	      str->realZ_LJ_pt    = hadZ_BP.Pt();
+	      str->realZ_LJ_eta   = hadZ_BP.Eta();
+	      str->realZ_LJ_phi   = hadZ_BP.Phi();
+	      
+	      str->realH_LJ_pt    = H_BP.Pt();
+	      str->realH_LJ_eta   = H_BP.Eta();
+	      str->realH_LJ_phi   = H_BP.Phi();	  
 	     
+
+	      
               float mjj_BP    = (j1_BP + j2_BP).M();
               float scale_BP  = Mz/mjj_BP;
               j1_BP *= scale_BP;
@@ -5217,18 +5272,31 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
               hadZ_BP = j1_BP   +   j2_BP;
               H_BP    = lepZ    + hadZ_BP;
               str->realH_BP_m     = H_BP.M();
+	      // Leading jets: Filling with the same values.
+	      str->realH_LJ_m     = H_BP.M();
  
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
 	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
 	      str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
 	      str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
+
+	      // Leading jets: Filling with the same values.
+	      str->dPhi_LJ_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
+	      str->dR_LJ_jj   = j1_BP.DeltaR(j2_BP);
+	      str->dPhi_LJ_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
+	      str->dR_LJ_ZZ   = lepZ.DeltaR(hadZ_BP);	  
+
 	      
-	      Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
-	      str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
-	      Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
-	      str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
-	      
+	      if(isMC()) 
+		{
+		  Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
+		  str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
+		  str->realJ1_LJ_pdg      = GetFlavour(jet_p_BP).first;
+		  Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
+		  str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+		  str->realJ2_LJ_pdg      = GetFlavour(jet_s_BP).first;
+		}
 	      
 	      //////////QUARK/GLUON//////////	  
 	      int idx1 = JetSemiTag1;
@@ -5294,6 +5362,14 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 		      str->realJ2_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
 		      str->realJ1_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
 		      str->realJ2_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+
+		      // Leading jets: Filling with the same values.
+		      str->realJ1_LJ_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_LJ_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_LJ_LL     = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_LJ_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_LJ_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_LJ_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
 		    }
 		} // End of the FillGluon variables   
 	    } //End One tagged Jet
@@ -5314,7 +5390,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_BP_eta         = m_GoodJets.at(Jone)->righteta();
 	      str->realJ1_BP_phi         = m_GoodJets.at(Jone)->rightphi();
 	      str->realJ1_BP_eta_det     = Jet_1_BP->emscale_eta();
-	      str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
+	      if(isMC()) str->realJ1_BP_flavortruth = Jet_1_BP->flavor_truth_label();
 	      str->realJ1_BP_jvf         = Jet_1_BP->jvtxf();
 	      str->realJ1_BP_ntrk        = Jet_1_BP->nTrk();
 	      str->realJ1_BP_width       = Jet_1_BP->WIDTH();
@@ -5327,13 +5403,41 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_BP_eta         = m_GoodJets.at(Jtwo)->righteta();
 	      str->realJ2_BP_phi         = m_GoodJets.at(Jtwo)->rightphi();
 	      str->realJ2_BP_eta_det     = Jet_2_BP->emscale_eta();
-	      str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
+	      if(isMC()) str->realJ2_BP_flavortruth = Jet_2_BP->flavor_truth_label();
 	      str->realJ2_BP_jvf         = Jet_2_BP->jvtxf();
 	      str->realJ2_BP_ntrk        = Jet_2_BP->nTrk();
 	      str->realJ2_BP_width       = Jet_2_BP->WIDTH();
 	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
 	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
 	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
+
+
+	      // Leading jets: Filling with the same values.
+	      str->realJ1_LJ_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
+	      str->realJ1_LJ_pt          = m_GoodJets.at(Jone)->rightpt();
+	      str->realJ1_LJ_eta         = m_GoodJets.at(Jone)->righteta();
+	      str->realJ1_LJ_phi         = m_GoodJets.at(Jone)->rightphi();
+	      str->realJ1_LJ_eta_det     = Jet_1_BP->emscale_eta();
+	      if(isMC()) str->realJ1_LJ_flavortruth = Jet_1_BP->flavor_truth_label();
+	      str->realJ1_LJ_jvf         = Jet_1_BP->jvtxf();
+	      str->realJ1_LJ_ntrk        = Jet_1_BP->nTrk();
+	      str->realJ1_LJ_width       = Jet_1_BP->WIDTH();
+	      str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(Jone));
+	      str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_BP.first;
+	      str->realJ1_LJ_width12     = InfoNtracksWidthJ1_BP.second;
+	      
+	      str->realJ2_LJ_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
+	      str->realJ2_LJ_pt          = m_GoodJets.at(Jtwo)->rightpt();
+	      str->realJ2_LJ_eta         = m_GoodJets.at(Jtwo)->righteta();
+	      str->realJ2_LJ_phi         = m_GoodJets.at(Jtwo)->rightphi();
+	      str->realJ2_LJ_eta_det     = Jet_2_BP->emscale_eta();
+	      if(isMC()) str->realJ2_LJ_flavortruth = Jet_2_BP->flavor_truth_label();
+	      str->realJ2_LJ_jvf         = Jet_2_BP->jvtxf();
+	      str->realJ2_LJ_ntrk        = Jet_2_BP->nTrk();
+	      str->realJ2_LJ_width       = Jet_2_BP->WIDTH();
+	      str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
+	      str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_BP.first;
+	      str->realJ2_LJ_width12     = InfoNtracksWidthJ2_BP.second;
 	      
 	      
 	      TLorentzVector j1_BP;
@@ -5352,6 +5456,17 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realH_BP_eta   = H_BP.Eta();
 	      str->realH_BP_phi   = H_BP.Phi();	  
 
+	      // Leading jets: Filling with the same values.
+	      str->realZ_LJ_m     = hadZ_BP.M();
+	      str->realZ_LJ_pt    = hadZ_BP.Pt();
+	      str->realZ_LJ_eta   = hadZ_BP.Eta();
+	      str->realZ_LJ_phi   = hadZ_BP.Phi();
+	      
+	      str->realH_LJ_pt    = H_BP.Pt();
+	      str->realH_LJ_eta   = H_BP.Eta();
+	      str->realH_LJ_phi   = H_BP.Phi();	  
+
+
               float mjj_BP    = (j1_BP + j2_BP).M();
               float scale_BP  = Mz/mjj_BP;
               j1_BP *= scale_BP;
@@ -5359,18 +5474,31 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
               hadZ_BP = j1_BP   +   j2_BP;
               H_BP    = lepZ    + hadZ_BP;
               str->realH_BP_m     = H_BP.M();
- 
+	      str->realH_LJ_m     = H_BP.M();
+
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
 	      str->dR_BP_jj   = j1_BP.DeltaR(j2_BP);
 	      str->dPhi_BP_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
 	      str->dR_BP_ZZ   = lepZ.DeltaR(hadZ_BP);	  
 	      
-	      Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
-	      str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
-	      Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
-	      str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
-	      
+	      // Leading jets: Filling with the same values.
+	      str->dPhi_LJ_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
+	      str->dR_LJ_jj   = j1_BP.DeltaR(j2_BP);
+	      str->dPhi_LJ_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ_BP));
+	      str->dR_LJ_ZZ   = lepZ.DeltaR(hadZ_BP);	  
+
+
+
+	      if(isMC()) 
+		{
+		  Analysis::Jet *jet_p_BP = new Analysis::Jet(Jet_1_BP);
+		  str->realJ1_BP_pdg      = GetFlavour(jet_p_BP).first;
+		  str->realJ1_LJ_pdg      = GetFlavour(jet_p_BP).first;
+		  Analysis::Jet *jet_s_BP = new Analysis::Jet(Jet_2_BP);
+		  str->realJ2_BP_pdg      = GetFlavour(jet_s_BP).first;
+		  str->realJ2_LJ_pdg      = GetFlavour(jet_s_BP).first;
+		}      
 	      
 	      //////////QUARK/GLUON//////////	  
 	      int idx1 = JetTag1;
@@ -5436,6 +5564,14 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 		      str->realJ2_BP_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
 		      str->realJ1_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
 		      str->realJ2_BP_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+
+		      // Leading jets: Filling with the same values.
+		      str->realJ1_LJ_Fisher = getFisher_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_LJ_Fisher = getFisher_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_LJ_LL     = getLikelihood_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_LJ_LL     = getLikelihood_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
+		      str->realJ1_LJ_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ1_BP_pt,str->realJ1_BP_ntrk12,str->realJ1_BP_width12);
+		      str->realJ2_LJ_LLMIX  = getLikelihoodMIX_BP(reader,var1,var2,str->realJ2_BP_pt,str->realJ2_BP_ntrk12,str->realJ2_BP_width12);
 		    }
 		} // End of the FillGluon variables   
 	    } //End Two tagged Jets
@@ -6306,27 +6442,27 @@ Bool_t HiggsllqqAnalysis::JetBestPairResult()
   float had(0);
   
   std::vector<Analysis::Jet *>::iterator jet_itr_a;
-  std::vector<Analysis::Jet *>::iterator jet_itr_b;
-  
   for(jet_itr_a = m_GoodJets.begin(); jet_itr_a != m_GoodJets.end(); ++jet_itr_a)
     {
       ii++;
       j1.SetPtEtaPhiM((*jet_itr_a)->rightpt(),(*jet_itr_a)->righteta(),(*jet_itr_a)->rightphi(),(*jet_itr_a)->Get4Momentum()->M());
       
+      std::vector<Analysis::Jet *>::iterator jet_itr_b;
       for(jet_itr_b = m_GoodJets.begin(); jet_itr_b != m_GoodJets.end(); ++jet_itr_b)
 	{	
 	  jj++;
-	  
 	  j2.SetPtEtaPhiM((*jet_itr_b)->rightpt(),(*jet_itr_b)->righteta(),(*jet_itr_b)->rightphi(),(*jet_itr_b)->Get4Momentum()->M());
 	  
 	  TLorentzVector hadZ = j1 + j2;
 	  
-	  if((hadZ.M()>Mjj_low_min  && hadZ.M()<Mjj_low_max  && GetDoLowMass() && ii<jj) || (hadZ.M()>Mjj_high_min && hadZ.M()<Mjj_high_max && !GetDoLowMass() && ii<jj))
+	  if((hadZ.M()>Mjj_low_min  && hadZ.M()<Mjj_low_max  &&  GetDoLowMass()) 
+	     || 
+	     (hadZ.M()>Mjj_high_min && hadZ.M()<Mjj_high_max && !GetDoLowMass()))
 	    {
 	      int tmpJone = ii;
 	      int tmpJtwo = jj;
 	      
-	      if(((tmpJtwo-tmpJone)<(Jtwo-Jone)) && ((Jtwo-Jone)>0) && (tmpJone<Jone))
+	      if((tmpJtwo < Jtwo) && (tmpJone < Jone) && ii!=jj)
 		{
 		  Jone = tmpJone;
 		  Jtwo = tmpJtwo;
