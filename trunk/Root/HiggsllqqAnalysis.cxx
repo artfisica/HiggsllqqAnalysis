@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    August 30th 2013
+    September 9th 2013
     
     Authors:
     Arturo Sanchez <arturos@cern.ch> or <arturos@ula.ve>
@@ -471,7 +471,20 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   m_generatedEntriesHisto->Fill("Sherpa_Veto", 0);  
   
   //Definition of the different cutflow histogram: Event, and per channel.
-  h_cutflow = new TH1D("cutflow_E2","",20,0,20);           //("cutflow","",20,0,20);
+  /*
+    TH1D *h_cutflow;
+    TH1D *h_cutflow_weight;
+    TH1D *h_cutflow_E2;
+    TH1D *h_cutflow_weight_E2;
+    TH1D *h_cutflow_MU2;
+    TH1D *h_cutflow_weight_MU2;
+   
+    TH1D *h_cutflow_MUE;
+    TH1D *h_cutflow_weight_MUE;
+  */
+  
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  h_cutflow = new TH1D("cutflow","",20,0,20);
   h_cutflow->Fill("Entries",0);
   h_cutflow->Fill("HFOR",0);
   h_cutflow->Fill("GRL or SherpaVeto",0);
@@ -491,7 +504,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow->Fill("DiJetMass",0);
   h_cutflow->Fill("EXIT",0);
   
-  h_cutflow_weight = new TH1D("cutflow_MU2","",20,0,20); //("cutflow_weight","",20,0,20);
+  h_cutflow_weight = new TH1D("cutflow_weight","",20,0,20);
   h_cutflow_weight->Fill("Entries",0);
   h_cutflow_weight->Fill("HFOR",0);
   h_cutflow_weight->Fill("GRL or SherpaVeto",0);
@@ -509,9 +522,91 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow_weight->Fill("NumTagJets",0);
   h_cutflow_weight->Fill("DileptonMass",0);
   h_cutflow_weight->Fill("DiJetMass",0);
-  h_cutflow_weight->Fill("EXIT",0);
+  h_cutflow_weight->Fill("EXIT",0); 
+
+  h_cutflow_E2 = new TH1D("cutflow_E2","",20,0,20);
+  h_cutflow_E2->Fill("Entries",0);
+  h_cutflow_E2->Fill("HFOR",0);
+  h_cutflow_E2->Fill("GRL or SherpaVeto",0);
+  h_cutflow_E2->Fill("larError",0);
+  h_cutflow_E2->Fill("Trigger",0);
+  h_cutflow_E2->Fill("Vertex",0);
+  h_cutflow_E2->Fill("METcleaning",0);
+  h_cutflow_E2->Fill("LArHole",0);
+  h_cutflow_E2->Fill("NumberOfLeptons",0);
+  h_cutflow_E2->Fill("OppositeSign",0);
+  h_cutflow_E2->Fill("PtLeptons",0);
+  h_cutflow_E2->Fill("TriggerConsistency",0);
+  h_cutflow_E2->Fill("MET",0);
+  h_cutflow_E2->Fill("TwoJets",0);
+  h_cutflow_E2->Fill("NumTagJets",0);
+  h_cutflow_E2->Fill("DileptonMass",0);
+  h_cutflow_E2->Fill("DiJetMass",0);
+  h_cutflow_E2->Fill("EXIT",0);
   
+  h_cutflow_weight_E2 = new TH1D("cutflow_weight_E2","",20,0,20);
+  h_cutflow_weight_E2->Fill("Entries",0);
+  h_cutflow_weight_E2->Fill("HFOR",0);
+  h_cutflow_weight_E2->Fill("GRL or SherpaVeto",0);
+  h_cutflow_weight_E2->Fill("larError",0);
+  h_cutflow_weight_E2->Fill("Trigger",0);
+  h_cutflow_weight_E2->Fill("Vertex",0);
+  h_cutflow_weight_E2->Fill("METcleaning",0);
+  h_cutflow_weight_E2->Fill("LArHole",0);
+  h_cutflow_weight_E2->Fill("NumberOfLeptons",0);
+  h_cutflow_weight_E2->Fill("OppositeSign",0);
+  h_cutflow_weight_E2->Fill("PtLeptons",0);
+  h_cutflow_weight_E2->Fill("TriggerConsistency",0);
+  h_cutflow_weight_E2->Fill("MET",0);
+  h_cutflow_weight_E2->Fill("TwoJets",0);
+  h_cutflow_weight_E2->Fill("NumTagJets",0);
+  h_cutflow_weight_E2->Fill("DileptonMass",0);
+  h_cutflow_weight_E2->Fill("DiJetMass",0);
+  h_cutflow_weight_E2->Fill("EXIT",0); 
+
+  h_cutflow_MU2 = new TH1D("cutflow_MU2","",20,0,20);
+  h_cutflow_MU2->Fill("Entries",0);
+  h_cutflow_MU2->Fill("HFOR",0);
+  h_cutflow_MU2->Fill("GRL or SherpaVeto",0);
+  h_cutflow_MU2->Fill("larError",0);
+  h_cutflow_MU2->Fill("Trigger",0);
+  h_cutflow_MU2->Fill("Vertex",0);
+  h_cutflow_MU2->Fill("METcleaning",0);
+  h_cutflow_MU2->Fill("LArHole",0);
+  h_cutflow_MU2->Fill("NumberOfLeptons",0);
+  h_cutflow_MU2->Fill("OppositeSign",0);
+  h_cutflow_MU2->Fill("PtLeptons",0);
+  h_cutflow_MU2->Fill("TriggerConsistency",0);
+  h_cutflow_MU2->Fill("MET",0);
+  h_cutflow_MU2->Fill("TwoJets",0);
+  h_cutflow_MU2->Fill("NumTagJets",0);
+  h_cutflow_MU2->Fill("DileptonMass",0);
+  h_cutflow_MU2->Fill("DiJetMass",0);
+  h_cutflow_MU2->Fill("EXIT",0);
   
+  h_cutflow_weight_MU2 = new TH1D("cutflow_weight_MU2","",20,0,20);
+  h_cutflow_weight_MU2->Fill("Entries",0);
+  h_cutflow_weight_MU2->Fill("HFOR",0);
+  h_cutflow_weight_MU2->Fill("GRL or SherpaVeto",0);
+  h_cutflow_weight_MU2->Fill("larError",0);
+  h_cutflow_weight_MU2->Fill("Trigger",0);
+  h_cutflow_weight_MU2->Fill("Vertex",0);
+  h_cutflow_weight_MU2->Fill("METcleaning",0);
+  h_cutflow_weight_MU2->Fill("LArHole",0);
+  h_cutflow_weight_MU2->Fill("NumberOfLeptons",0);
+  h_cutflow_weight_MU2->Fill("OppositeSign",0);
+  h_cutflow_weight_MU2->Fill("PtLeptons",0);
+  h_cutflow_weight_MU2->Fill("TriggerConsistency",0);
+  h_cutflow_weight_MU2->Fill("MET",0);
+  h_cutflow_weight_MU2->Fill("TwoJets",0);
+  h_cutflow_weight_MU2->Fill("NumTagJets",0);
+  h_cutflow_weight_MU2->Fill("DileptonMass",0);
+  h_cutflow_weight_MU2->Fill("DiJetMass",0);
+  h_cutflow_weight_MU2->Fill("EXIT",0); 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+
+
   //Initialization of the qqll ntuple
   InitReducedNtuple();
   
@@ -552,6 +647,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   for (UInt_t i = 0; i < m_Channels.size(); i++) {
     
     m_EventCutflow.push_back(Analysis::CutFlowTool("Plain_" + chan_name[i]));
+    m_EventCutflow[i].addCut("Entries");
     m_EventCutflow[i].addCut("HFOR");
     m_EventCutflow[i].addCut("GRL or SherpaVeto");
     m_EventCutflow[i].addCut("larError");
@@ -570,6 +666,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     m_EventCutflow[i].addCut("DiJetMass");
     
     m_EventCutflow_rw.push_back(Analysis::CutFlowTool("Reweighted_" + chan_name[i]));
+    m_EventCutflow_rw[i].addCut("Entries");
     m_EventCutflow_rw[i].addCut("HFOR");
     m_EventCutflow_rw[i].addCut("GRL or SherpaVeto");
     m_EventCutflow_rw[i].addCut("larError");
@@ -695,10 +792,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   Int_t last(-1);
   
-  
-  //Sherpa Pt0 samples event veto (PT2>70GeV)
-  //if(SherpaPt0Veto()) return last;
-  
+  last = HllqqCutFlow::Entries;  
   
   // Including hfor veto 
   if (isMC())
@@ -748,7 +842,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   getGoodLeptons();
   
   
-  if(NotMETclean() /*&& !isMC()*/ && DoMETdataClean) return last;
+  if(NotMETclean() && DoMETdataClean) return last;
   else last = HllqqCutFlow::METcleaning;
   
   
@@ -771,7 +865,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   if ((getChannel() == HiggsllqqAnalysis::MU2 && m_GoodMuons.size()    == 2 && m_GoodElectrons.size() == 0 && (GetDoLowMass() || Pair_Quality())) ||
       (getChannel() == HiggsllqqAnalysis::E2 && m_GoodElectrons.size() == 2 && m_GoodMuons.size()     == 0 && (GetDoLowMass() || Pair_Quality())) ||
-      (getChannel() == HiggsllqqAnalysis::MUE && m_GoodMuons.size()    == 1 && m_GoodElectrons.size() == 1 && !GetDoQCDSelection()))      last = HllqqCutFlow::NumberOfLeptons;  
+      (getChannel() == HiggsllqqAnalysis::MUE && m_GoodMuons.size()    == 1 && m_GoodElectrons.size() == 1 && !GetDoQCDSelection())) last = HllqqCutFlow::NumberOfLeptons;  
   
   else return last;
   
@@ -806,7 +900,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   // Dilepton Mass windows
   // Double_t DilepMass = getDileptons();
-
+  
   
   TLorentzVector LeptonOne, LeptonTwo, LeptonZ; 
   if(getChannel() == HiggsllqqAnalysis::MU2)
@@ -2417,11 +2511,22 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      m_EventCutflow_rw[chan].addCutCounter(last_event, 1.);
 	    
 	    
-	    // Fill the cutflow histograms	     // Add the other histogram cutflow. Agosto2013
-	    if(chan==2)
-	      h_cutflow->Fill(last_event+2,1);
-	    if(chan==0)
-	      h_cutflow_weight->Fill(last_event+2,1/*getEventWeight()*/); //error: We are using the two histo to separate the cutflow per channel (MU2-E2)
+	    // Fill the cutflow histograms
+	    for (int cut = 0; cut<=last_event; cut++)
+	      {
+		h_cutflow->Fill(cut);
+		h_cutflow_weight->Fill(cut);
+		if(chan==2)
+		  {
+		    h_cutflow_E2->Fill(cut);
+		    h_cutflow_weight_E2->Fill(cut);
+		  }
+		if(chan==0)
+		  {
+		    h_cutflow_MU2->Fill(cut);
+		    h_cutflow_weight_MU2->Fill(cut);
+		  }
+	      }
 	    
 	    
 	    std::vector<Analysis::ChargedLepton*>::iterator lep;
@@ -2446,9 +2551,6 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  } //End Printing of the cutflow shows Low==0 OR High==1 !!!!
 	
 	
-	//Set the QCD flag FALSE
-	//SetDoQCDSelection(kFALSE);
-	
 	if(chan!=1)// error: repare the mixing MUE channel
 	  {
 	    //Filling of the equivalent qqll tree (2011)
@@ -2461,7 +2563,6 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	
 	last_event = -1;
 	
-	
 	m_Muons.clear();
 	m_Electrons.clear();
 	m_Jets.clear();
@@ -2473,38 +2574,36 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	/////////////////////
 	// QCD selection - only for data
 	/////////////////////
-	if(!isMC()) {
-	  
-	  m_called_getGoodLeptons = kFALSE;      
-	  m_called_getGoodObjects = kFALSE;
-	  ResetReducedNtupleMembers();
-	  // TestSelection Reset 
-	  ResetAnalysisOutputBranches(&m_outevent);
-	  SetDoQCDSelection(kTRUE);
-	  last_event = getLastCutPassed();
-	  
-	  if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
-	    {
-	      // Filling of the equivalent qqll tree (2011)
-	      FillReducedNtuple(last_event,chan);       
-	      
-	      // TestSelection Filling candidate struct
-	      FillAnalysisOutputTree(&m_outevent,last_event,chan);
-	    }	
-	  
-	  last_event = -1;
-	  
-	  m_Muons.clear();
-	  m_Electrons.clear();
-	  m_Jets.clear();
-	  m_GoodMuons.clear();
-	  m_GoodElectrons.clear();
-	  m_GoodJets.clear();
-	  
-	} //end QCD selection
-	
+	if(!isMC())
+	  {
+	    m_called_getGoodLeptons = kFALSE;      
+	    m_called_getGoodObjects = kFALSE;
+	    ResetReducedNtupleMembers();
+	    // TestSelection Reset 
+	    ResetAnalysisOutputBranches(&m_outevent);
+	    SetDoQCDSelection(kTRUE);
+	    last_event = getLastCutPassed();
+	    
+	    if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
+	      {
+		// Filling of the equivalent qqll tree (2011)
+		FillReducedNtuple(last_event,chan);       
+		
+		// TestSelection Filling candidate struct
+		FillAnalysisOutputTree(&m_outevent,last_event,chan);
+	      }	
+	    
+	    last_event = -1;
+	    
+	    m_Muons.clear();
+	    m_Electrons.clear();
+	    m_Jets.clear();
+	    m_GoodMuons.clear();
+	    m_GoodElectrons.clear();
+	    m_GoodJets.clear();
+	    
+	  } //end QCD selection
       } //End of loop into the Low/high Selection
-    
   } // end of loop into the different channels
   
   
@@ -2534,11 +2633,6 @@ Bool_t HiggsllqqAnalysis::finalize_analysis()
 {  
   // print the number of processed entries
   Info("finalize_analysis", "Analysis terminated, processed %lld entries out of %lld available entries", m_processedEntries, m_entriesInChain);
-  
-  //Filling the First bin of the cutflows
-  h_cutflow->Fill("Entries",m_processedEntries);
-  h_cutflow_weight->Fill("Entries",m_processedEntries);
-  
   
   // print the cutflows
   for (UInt_t i = 0; i < m_Channels.size(); i++) {
@@ -4669,11 +4763,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->lep1_sigd0     = m_GoodElectrons.at(0)->d0_sig();
 	      
 	      if(el_1->tightPP() == 1)
-		str->lep1_quality = 3;	  
+		str->lep1_quality = 1;	  
 	      else if(el_1->mediumPP() == 1)
 		str->lep1_quality = 2;
 	      else if(el_1->loosePP() == 1)
-		str->lep1_quality = 1;
+		str->lep1_quality = 3;
 	      
 	      
 	      //Filling the Second Electron
@@ -4688,11 +4782,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->lep2_sigd0     = m_GoodElectrons.at(1)->d0_sig();
 	      
 	      if(el_2->tightPP() == 1)
-		str->lep2_quality = 3;	  
+		str->lep2_quality = 1;	  
 	      else if(el_2->mediumPP() == 1)
 		str->lep2_quality = 2;
 	      else if(el_2->loosePP() == 1)
-		str->lep2_quality = 1;
+		str->lep2_quality = 3;
 	    }
 	  else
 	    {	    
@@ -4708,11 +4802,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->lep1_sigd0     = m_GoodElectrons.at(1)->d0_sig();
 	      
 	      if(el_2->tightPP() == 1)
-		str->lep1_quality = 3;	  
+		str->lep1_quality = 1;	  
 	      else if(el_2->mediumPP() == 1)
 		str->lep1_quality = 2;
 	      else if(el_2->loosePP() == 1)
-		str->lep1_quality = 1;
+		str->lep1_quality = 3;
 	      
 	      
 	      //Filling the Second Electron
@@ -4727,11 +4821,11 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->lep2_sigd0     = m_GoodElectrons.at(0)->d0_sig();
 	      
 	      if(el_1->tightPP() == 1)
-		str->lep2_quality = 3;	  
+		str->lep2_quality = 1;	  
 	      else if(el_1->mediumPP() == 1)
 		str->lep2_quality = 2;
 	      else if(el_1->loosePP() == 1)
-		str->lep2_quality = 1;
+		str->lep2_quality = 3;
 	    }
 	  
 	  lep1.SetPtEtaPhiM(str->lep1_pt,str->lep1_eta,str->lep1_phi,str->lep1_m);
