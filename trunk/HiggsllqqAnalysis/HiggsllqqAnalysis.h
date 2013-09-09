@@ -6,7 +6,7 @@
     Code to perform SM H -> ZZ(*) -> qqll analysis.
 
     @start  date 08/15/2012 
-    @update date 08/15/2013
+    @update date 09/09/2013
 */
 
 #include <TEfficiency.h>
@@ -107,6 +107,7 @@ namespace DataPeriod {
 
 namespace HllqqCutFlow {
   enum {
+    Entries,
     HFOR,
     GRL,
     larError,
@@ -876,7 +877,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TMVA::Reader *reader[36];
   Float_t var1[36],var2[36];
   
-  std::map<TString, TH1F*> m_truthHistos; // To be update or remove
+  std::map<TString, TH1F*> m_truthHistos;     // To be update or remove
   TEfficiency *m_selectionEfficiencyVsNvx[4]; // To be update or remove
   TTree  *m_TreeCutflow;
   TString m_outputFileName;
