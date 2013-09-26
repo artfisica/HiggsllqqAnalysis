@@ -116,7 +116,6 @@ namespace HllqqCutFlow {
     METcleaning,
     LArHole,
     NumberOfLeptons,
-    PtLeptons,
     TriggerConsistency,
     OppositeSign,
     TwoJets,
@@ -124,6 +123,42 @@ namespace HllqqCutFlow {
     MET,
     NumTagJets,
     DiJetMass,
+  };
+}
+
+
+namespace HllqqCutFlow0tag {
+  enum {
+    NumTagJets0,
+    DiJetMass0,
+    //    PtLeadingJet0,
+    //    JetPt0,
+    //    Ptleptons0,
+    //    Dphileptons0,
+  };
+}
+
+
+namespace HllqqCutFlow1tag {
+  enum {
+    NumTagJets1,
+    DiJetMass1,
+    //    PtLeadingJet0,
+    //    JetPt0,
+    //    Ptleptons0,
+    //    Dphileptons0,
+  };
+}
+
+
+namespace HllqqCutFlow2tag {
+  enum {
+    NumTagJets2,
+    DiJetMass2,
+    //    PtLeadingJet0,
+    //    JetPt0,
+    //    Ptleptons0,
+    //    Dphileptons0,
   };
 }
 
@@ -215,7 +250,6 @@ typedef struct {
   int   low_event;
   int   n_jets;
   int   n_b_jets;
-  float weight;
   //////////////////////
   float lep1_m;
   float lep1_pt;
@@ -428,7 +462,12 @@ typedef struct {
   float btagSF;
   int   Entries;
   float truthH_pt;
+  float weight;
+  float SFWeight;
   float ggFweight;
+  float EventWeight;
+  float PileupWeight;
+  float VertexZWeight;
   //////////////////////
   float xWin_44p_4var;
   float yWin_44p_4var;
@@ -578,6 +617,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Int_t> m_Channels;
   std::vector<Analysis::CutFlowTool> m_EventCutflow;
   std::vector<Analysis::CutFlowTool> m_EventCutflow_rw;
+  std::vector<Analysis::CutFlowTool> m_EventCutflow0tag;
+  std::vector<Analysis::CutFlowTool> m_EventCutflow0tag_rw;
+  std::vector<Analysis::CutFlowTool> m_EventCutflow1tag;
+  std::vector<Analysis::CutFlowTool> m_EventCutflow1tag_rw;
+  std::vector<Analysis::CutFlowTool> m_EventCutflow2tag;
+  std::vector<Analysis::CutFlowTool> m_EventCutflow2tag_rw;
   std::vector<Analysis::CutFlowTool> m_ElectronCutflow;
   std::vector<Analysis::CutFlowTool> m_MuonCutflow;
   std::vector<Analysis::CutFlowTool> m_JetCutflow;
@@ -622,16 +667,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void getGoodElectrons();
   virtual void getGoodJets();
   virtual void getGoodLeptons();
-  virtual void getDileptons();
-  virtual void getGoodObjects();
   virtual std::vector<TString> getListOfAlternativeTriggers(TString sequence);
   
   
   // object selection
   virtual Bool_t isMCPMuon(Analysis::ChargedLepton *lep);
   virtual Bool_t isGood(Analysis::ChargedLepton *lep);
-  Bool_t IsGoodElectron(Analysis::ChargedLepton *lep);
-  Bool_t IsGoodMuon(Analysis::ChargedLepton *lep);
   Bool_t isGoodJet(Analysis::Jet *jet);
   
   //object quality
@@ -687,7 +728,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t         getCrossSectionWeight();
   Float_t         getTruthHiggsMass();
   virtual Float_t getTruthHiggsPt();    // to be change!! error
-  
+
+  void FillHllqqCutFlowXtag(int last_event,UInt_t chan);
   
   // option resume
   virtual void printAllOptions() {
@@ -712,7 +754,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t  hasGoodMET();
   Bool_t  GetDoLowMass() { return m_dolowmass; }
   Bool_t  GetSysStudy()  { return m_sysstudy; }
-  Bool_t  IsConsistentPt();
   Bool_t  IsConsistentWithTrigger();
   
   void  LoadGRL();
@@ -877,8 +918,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TMVA::Reader *reader[36];
   Float_t var1[36],var2[36];
   
-  std::map<TString, TH1F*> m_truthHistos;     // To be update or remove
-  TEfficiency *m_selectionEfficiencyVsNvx[4]; // To be update or remove
   TTree  *m_TreeCutflow;
   TString m_outputFileName;
   TFile  *m_outputFile;
@@ -948,9 +987,13 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Int_t   m_trig_flag;
   //
   Float_t m_weight;
+  Float_t m_SFWeight;
+  Float_t m_ggFweight;
+  Float_t m_EventWeight;
+  Float_t m_PileupWeight;
+  Float_t m_VertexZWeight;
   Float_t m_mu;
   Float_t m_truthH_pt;
-  Float_t m_ggFweight;
   Float_t m_met_met;
   Float_t m_met_sumet;
   Float_t m_met_phi;
