@@ -80,24 +80,7 @@ cp mc12_8TeV.126895.Sherpa_CT10_llnunu_ZZ.root                                  
 cp mc12_8TeV.128975.Sherpa_CT10_ZeeHeavyJets.root                                     128975.Sherpa_CT10_ZeeHeavyJets_MU2.root
 cp mc12_8TeV.128976.Sherpa_CT10_ZmumuHeavyJets.root                                   128976.Sherpa_CT10_ZmumuHeavyJets_MU2.root
 cp mc12_8TeV.128977.Sherpa_CT10_ZtautauHeavyJets.root                                 128977.Sherpa_CT10_ZtautauHeavyJets_MU2.root
-cp mc12_8TeV.129477.PowhegPythia8_AU2CT10_WZ_Wm11Z11_mll0p250d0_2LeptonFilter5.root   129477.PowhegPythia8_AU2CT10_WZ_Wm11Z11_mll0p250d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129478.PowhegPythia8_AU2CT10_WZ_Wm11Z13_mll0p4614d0_2LeptonFilter5.root  129478.PowhegPythia8_AU2CT10_WZ_Wm11Z13_mll0p4614d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129479.PowhegPythia8_AU2CT10_WZ_Wm11Z15_mll3p804d0_2LeptonFilter5.root   129479.PowhegPythia8_AU2CT10_WZ_Wm11Z15_mll3p804d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129480.PowhegPythia8_AU2CT10_WZ_Wm13Z11_mll0p250d0_2LeptonFilter5.root   129480.PowhegPythia8_AU2CT10_WZ_Wm13Z11_mll0p250d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129481.PowhegPythia8_AU2CT10_WZ_Wm13Z13_mll0p4614d0_2LeptonFilter5.root  129481.PowhegPythia8_AU2CT10_WZ_Wm13Z13_mll0p4614d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129482.PowhegPythia8_AU2CT10_WZ_Wm13Z15_mll3p804d0_2LeptonFilter5.root   129482.PowhegPythia8_AU2CT10_WZ_Wm13Z15_mll3p804d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129483.PowhegPythia8_AU2CT10_WZ_Wm15Z11_mll0p250d0_2LeptonFilter5.root   129483.PowhegPythia8_AU2CT10_WZ_Wm15Z11_mll0p250d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129484.PowhegPythia8_AU2CT10_WZ_Wm15Z13_mll0p4614d0_2LeptonFilter5.root  129484.PowhegPythia8_AU2CT10_WZ_Wm15Z13_mll0p4614d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129485.PowhegPythia8_AU2CT10_WZ_Wm15Z15_mll3p804d0_2LeptonFilter5.root   129485.PowhegPythia8_AU2CT10_WZ_Wm15Z15_mll3p804d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129486.PowhegPythia8_AU2CT10_WZ_W11Z11_mll0p250d0_2LeptonFilter5.root    129486.PowhegPythia8_AU2CT10_WZ_W11Z11_mll0p250d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129487.PowhegPythia8_AU2CT10_WZ_W11Z13_mll0p4614d0_2LeptonFilter5.root   129487.PowhegPythia8_AU2CT10_WZ_W11Z13_mll0p4614d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129488.PowhegPythia8_AU2CT10_WZ_W11Z15_mll3p804d0_2LeptonFilter5.root    129488.PowhegPythia8_AU2CT10_WZ_W11Z15_mll3p804d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129489.PowhegPythia8_AU2CT10_WZ_W13Z11_mll0p250d0_2LeptonFilter5.root    129489.PowhegPythia8_AU2CT10_WZ_W13Z11_mll0p250d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129490.PowhegPythia8_AU2CT10_WZ_W13Z13_mll0p4614d0_2LeptonFilter5.root   129490.PowhegPythia8_AU2CT10_WZ_W13Z13_mll0p4614d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129491.PowhegPythia8_AU2CT10_WZ_W13Z15_mll3p804d0_2LeptonFilter5.root    129491.PowhegPythia8_AU2CT10_WZ_W13Z15_mll3p804d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129492.PowhegPythia8_AU2CT10_WZ_W15Z11_mll0p250d0_2LeptonFilter5.root    129492.PowhegPythia8_AU2CT10_WZ_W15Z11_mll0p250d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129493.PowhegPythia8_AU2CT10_WZ_W15Z13_mll0p4614d0_2LeptonFilter5.root   129493.PowhegPythia8_AU2CT10_WZ_W15Z13_mll0p4614d0_2LeptonFilter5_MU2.root
-cp mc12_8TeV.129494.PowhegPythia8_AU2CT10_WZ_W15Z15_mll3p804d0_2LeptonFilter5.root    129494.PowhegPythia8_AU2CT10_WZ_W15Z15_mll3p804d0_2LeptonFilter5_MU2.root
+
 cp mc12_8TeV.146430.AlpgenJimmy_AUET2CTEQ6L1_WgammaNp0.root                           146430.AlpgenJimmy_AUET2CTEQ6L1_WgammaNp0_MU2.root
 cp mc12_8TeV.146431.AlpgenJimmy_AUET2CTEQ6L1_WgammaNp1.root                           146431.AlpgenJimmy_AUET2CTEQ6L1_WgammaNp1_MU2.root
 cp mc12_8TeV.146432.AlpgenJimmy_AUET2CTEQ6L1_WgammaNp2.root                           146432.AlpgenJimmy_AUET2CTEQ6L1_WgammaNp2_MU2.root
@@ -414,7 +397,6 @@ cp mc12_8TeV.107704.AlpgenJimmy_AUET2CTEQ6L1_WtaunuNp4.root                     
 cp mc12_8TeV.107705.AlpgenJimmy_AUET2CTEQ6L1_WtaunuNp5.root                           107705.AlpgenJimmy_AUET2CTEQ6L1_WtaunuNp5_E2.root
 cp mc12_8TeV.108343.McAtNloJimmy_AUET2CT10_SingleTopSChanWenu.root                    108343.McAtNloJimmy_AUET2CT10_SingleTopSChanWenu_E2.root
 cp mc12_8TeV.108345.McAtNloJimmy_AUET2CT10_SingleTopSChanWtaunu.root                  108345.McAtNloJimmy_AUET2CT10_SingleTopSChanWtaunu_E2.root
-cp mc12_8TeV.108345.McAtNloJimmy_CT10NLOME_AUET2CTEQ6L1MPI_SingleTopSChanWtaunu.root  108345.McAtNloJimmy_CT10NLOME_AUET2CTEQ6L1MPI_SingleTopSChanWtaunu_E2.root
 cp mc12_8TeV.108346.McAtNloJimmy_AUET2CT10_SingleTopWtChanIncl.root                   108346.McAtNloJimmy_AUET2CT10_SingleTopWtChanIncl_E2.root
 cp mc12_8TeV.109300.AlpgenJimmy_AUET2CTEQ6L1_ZeebbNp0.root                            109300.AlpgenJimmy_AUET2CTEQ6L1_ZeebbNp0_E2.root
 cp mc12_8TeV.109301.AlpgenJimmy_AUET2CTEQ6L1_ZeebbNp1.root                            109301.AlpgenJimmy_AUET2CTEQ6L1_ZeebbNp1_E2.root
