@@ -44,6 +44,8 @@ Bool_t MuonSmearing  = kTRUE,
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
   
+  Print_weights      = kFALSE,
+  
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
   DoKinematicFitter  = kFALSE, //should be kTRUE
   FillGluon          = kTRUE;
@@ -2225,23 +2227,25 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		  tmpWeight       *= tmpSFWeight;
 		else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
 		if(tmpggFWeight>=0)
-		  tmpWeight       *= tmpggFWeight;
+		  tmpWeight       *= 1;//tmpggFWeight;
 		else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
 		if(tmpVertexZWeight>=0)
 		  tmpWeight       *= tmpVertexZWeight;
 		else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
 		
-		
-		cout<<"|"<<ntuple->eventinfo.mc_channel_number()
-		    <<"|"<<ntuple->eventinfo.EventNumber()
-		    <<"|"<<chan
-		    <<"|"<<tmpMCWeight
-		    <<"|"<<tmpPileupWeight
-		    <<"|"<<tmpSFWeight
-		    <<"|"<<tmpggFWeight
-		    <<"|"<<tmpVertexZWeight
-		    <<"|"<<tmpWeight
-		    <<"|"<<endl;
+		if(Print_weights)
+		  {
+		    cout<<"|"<<ntuple->eventinfo.mc_channel_number()
+			<<"|"<<ntuple->eventinfo.EventNumber()
+			<<"|"<<chan
+			<<"|"<<tmpMCWeight
+			<<"|"<<tmpPileupWeight
+			<<"|"<<tmpSFWeight
+			<<"|"<<tmpggFWeight
+			<<"|"<<tmpVertexZWeight
+			<<"|"<<tmpWeight
+			<<"|"<<endl;
+		  }
 		
 		m_EventCutflow_rw[chan].addCutCounter(last_event,1.*tmpWeight);
 	      }
@@ -3244,7 +3248,7 @@ Bool_t HiggsllqqAnalysis::JetDimassTagged()
   
   TLorentzVector hadZ = j1 + j2;
   
-  if(((hadZ.M() > Mjj_low_min) && (hadZ.M() < Mjj_low_max) && dolowmass) || (/*(hadZ.M() > Mjj_high_min) && (hadZ.M() < Mjj_high_max) && */!dolowmass))
+  if(((hadZ.M() > Mjj_low_min) && (hadZ.M() < Mjj_low_max) && dolowmass) || ((hadZ.M() > Mjj_high_min) && (hadZ.M() < Mjj_high_max) && !dolowmass))
     return kTRUE;
   else
     return kFALSE;
@@ -3274,7 +3278,7 @@ Bool_t HiggsllqqAnalysis::JetDimassOneTagged()
       }
   }
   
-  if(/*ii!=0*/1)
+  if(JetSemiTag1!=0)
     {
       JetSemiTag2=0;
       j2.SetPtEtaPhiM(b_rescaling*m_GoodJets.at(0)->rightpt(),m_GoodJets.at(0)->righteta(),m_GoodJets.at(0)->rightphi(),m_GoodJets.at(0)->Get4Momentum()->M());
@@ -3287,7 +3291,7 @@ Bool_t HiggsllqqAnalysis::JetDimassOneTagged()
   
   TLorentzVector hadZ = j1 + j2;
   
-  if(((hadZ.M() > Mjj_low_min) && (hadZ.M() < Mjj_low_max) && dolowmass) || (/*(hadZ.M() > Mjj_high_min) && (hadZ.M() < Mjj_high_max) && */!dolowmass))
+  if(((hadZ.M() > Mjj_low_min) && (hadZ.M() < Mjj_low_max) && dolowmass) || ((hadZ.M() > Mjj_high_min) && (hadZ.M() < Mjj_high_max) && !dolowmass))
     {
       return kTRUE;
     }
@@ -5062,6 +5066,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	    {
 	      Jone = JetSemiTag1;
 	      Jtwo = JetSemiTag2;
+	      //cout<<"   "<<m_GoodJets.size()<<"   "<<Jone<<"   "<<Jtwo<<endl;
 	      
 	      D3PDReader::JetD3PDObjectElement *Jet_1_BP = m_GoodJets.at(Jone)->GetJet();
 	      D3PDReader::JetD3PDObjectElement *Jet_2_BP = m_GoodJets.at(Jtwo)->GetJet();
