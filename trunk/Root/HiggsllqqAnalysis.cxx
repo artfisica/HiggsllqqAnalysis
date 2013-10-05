@@ -24,7 +24,7 @@
     Information: 
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
- 
+    
     September 9th 2013
     
     Authors:
@@ -47,7 +47,9 @@ Bool_t MuonSmearing  = kTRUE,
   Print_weights      = kFALSE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
-  DoKinematicFitter  = kFALSE, //should be kTRUE
+  DoKinematicFitter  = kFALSE,
+  BP_Selection       = kFALSE,
+  LJ_Selection       = kTRUE,
   FillGluon          = kTRUE;
 
 //Global Jets Variables.
@@ -330,7 +332,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
     m_MuonTrigSF = new LeptonTriggerSF(2011, "TrigMuonEfficiency/share/", "muon_trigger_sf_mc11c.root", "ElectronEfficiencyCorrection/data/", "rel17p0.v01");
   }
   else if (analysis_version() == "rel_17_2") { // 2012
-    m_MuonTrigSF = new LeptonTriggerSF(2012, "TrigMuonEfficiency/share", "muon_trigger_sf_2012.root", "ElectronEfficiencyCorrection/data/", "rel17p2.v02");
+    m_MuonTrigSF = new LeptonTriggerSF(2012, "TrigMuonEfficiency/share/", "muon_trigger_sf_2012.root", "ElectronEfficiencyCorrection/data/", "rel17p2.v02");
   }
   
   
@@ -845,11 +847,34 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   if (chargeprod==-1 || (getChannel() != HiggsllqqAnalysis::MU2 && !GetDoLowMass()) || GetDoQCDSelection()) last = HllqqCutFlow::OppositeSign;
   else return last;
-  
+    
+  int goodLeading = 0;
+  int itr=0;
+  std::vector<Analysis::Jet *>::iterator jet_it;
+  for (jet_it = m_GoodJets.begin(); jet_it != m_GoodJets.end(); ++jet_it)
+    {
+      itr++;
+      if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5) 
+	goodLeading=1;
+    }
   
   //Minimum number of Jets cut
-  if(m_GoodJets.size()>1) last = HllqqCutFlow::TwoJets;
+  if(m_GoodJets.size()>1 && goodLeading) last = HllqqCutFlow::TwoJets;
   else return last;
+  
+  
+  for (jet_it = m_GoodJets.begin(); jet_it != m_GoodJets.end(); ++jet_it)
+    {
+      itr++;
+      if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5) 
+	goodLeading=1;
+      /*
+      if( GetMV1value(*jet_it)>MV1_OP70 && TMath::Abs((*jet_it)->righteta())>2.5 )
+	cout<<"  -|- #good Jets = "<<m_GoodJets.size()<<"  Pt= "<<(*jet_it)->rightpt()<<"  Eta = "<<(*jet_it)->righteta()<<"  Phi = "<<(*jet_it)->rightphi()<<"  Mass = "<<(*jet_it)->Get4Momentum()->M()<<"  Yes Tagged = "<<GetMV1value(*jet_it)<<endl;
+      else if(  TMath::Abs((*jet_it)->righteta())>2.5 )
+	cout<<"  -|- #good Jets = "<<m_GoodJets.size()<<"  Pt= "<<(*jet_it)->rightpt()<<"  Eta = "<<(*jet_it)->righteta()<<"  Phi = "<<(*jet_it)->rightphi()<<"  Mass = "<<(*jet_it)->Get4Momentum()->M()<<"  Not Tagged = "<<GetMV1value(*jet_it)<<endl;
+      */
+    }
   
   
   // Dilepton Mass windows
@@ -938,7 +963,7 @@ std::vector<TString> HiggsllqqAnalysis::getListOfAlternativeTriggers(TString seq
   std::vector<TString> result;
   
   TObjArray *chains = sequence.Tokenize(";");  
-
+  
   if (chains->GetEntriesFast()) {
     TIter iChain(chains);
     TObjString *os = 0;
@@ -4382,6 +4407,10 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       second_cut  = HllqqCutFlow::TwoJets;
     }
   
+  static const float Mz = 91188.;
+  float tmpbtagsf = 1.;
+  int howmanytags = -1;
+  
   
   if(cut >= minimum_cut)
     {
@@ -4640,56 +4669,55 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	} //End of E2 Channel if
       
       
-      ///////////////////    JET FILLING!    ////////////////////      
 
-      static const float Mz = 91188.;
-      float tmpbtagsf = 1.;
-      int howmanytags = GetNumOfTags();
-      str->n_b_jets   = howmanytags;
-      
-      if(howmanytags==2)
-	str->istagged = 1;
-      if(howmanytags<2)
-	str->istagged = 0;
-      if(howmanytags>2)
-	str->istagged = -1;
-      
-      // Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+      ///////////////////    JET FILLING!    ////////////////////      
       
       if (cut >= second_cut)
 	{  	
+	  howmanytags = GetNumOfTags();
+	  str->n_b_jets   = howmanytags;
+	  
+	  if(howmanytags==2)
+	    str->istagged = 1;
+	  if(howmanytags<2)
+	    str->istagged = 0;
+	  if(howmanytags>2)
+	    str->istagged = -1;
+	  
+	  // Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+	  
 	  // Looping to find the btagging SFs into the GoodJets selected into the event
-      for (UInt_t w = 0; w < m_GoodJets.size(); w++)
+	  for (UInt_t w = 0; w < m_GoodJets.size(); w++)
+	    {
+	      if (isMC()) 
 		{
-		  if (isMC()) 
-		    {
-		      pair<double,double> thisjetSF = GetJetSFsvalue(w);
-		      tmpbtagsf *= thisjetSF.first;
-		    }
-
-		  if(w==0)
-		    {
-		      D3PDReader::JetD3PDObjectElement *Jet0 = m_GoodJets.at(0)->GetJet();
-		      str->total_jet_ntrk1  = Jet0->nTrk();
-		      str->total_jet_width1 = Jet0->WIDTH();
-		      str->AllJet_MV1_1     = GetMV1value(m_GoodJets.at(0));
-		    }
-		  if(w==1)
-		    {
-		      D3PDReader::JetD3PDObjectElement *Jet1 = m_GoodJets.at(1)->GetJet();
-		      str->total_jet_ntrk2  = Jet1->nTrk();
-		      str->total_jet_width2 = Jet1->WIDTH();
-		      str->AllJet_MV1_2     = GetMV1value(m_GoodJets.at(1));
-		    }
-		  if(w==2)
-		    {
-		      D3PDReader::JetD3PDObjectElement *Jet2 = m_GoodJets.at(2)->GetJet();
-		      str->total_jet_ntrk3  = Jet2->nTrk();
-		      str->total_jet_width3 = Jet2->WIDTH();
-		      str->AllJet_MV1_3     = GetMV1value(m_GoodJets.at(2));
-		    }
+		  pair<double,double> thisjetSF = GetJetSFsvalue(w);
+		  tmpbtagsf *= thisjetSF.first;
 		}
-	    
+	      
+	      if(w==0)
+		{
+		  D3PDReader::JetD3PDObjectElement *Jet0 = m_GoodJets.at(0)->GetJet();
+		  str->total_jet_ntrk1  = Jet0->nTrk();
+		  str->total_jet_width1 = Jet0->WIDTH();
+		  str->AllJet_MV1_1     = GetMV1value(m_GoodJets.at(0));
+		}
+	      if(w==1)
+		{
+		  D3PDReader::JetD3PDObjectElement *Jet1 = m_GoodJets.at(1)->GetJet();
+		  str->total_jet_ntrk2  = Jet1->nTrk();
+		  str->total_jet_width2 = Jet1->WIDTH();
+		  str->AllJet_MV1_2     = GetMV1value(m_GoodJets.at(1));
+		}
+	      if(w==2)
+		{
+		  D3PDReader::JetD3PDObjectElement *Jet2 = m_GoodJets.at(2)->GetJet();
+		  str->total_jet_ntrk3  = Jet2->nTrk();
+		  str->total_jet_width3 = Jet2->WIDTH();
+		  str->AllJet_MV1_3     = GetMV1value(m_GoodJets.at(2));
+		}
+	    }
+	  
 	  
 	  if( howmanytags == 0 )
 	    {
@@ -6392,9 +6420,9 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       if(b1==1) last1tag = HllqqCutFlow1tag::NumTagJets1;
       if(b2==1) last2tag = HllqqCutFlow2tag::NumTagJets2;
       
-      if(b0==1 && ((JetBestPairResult() && isMC()) || (JetKinematicFitterResult() && !isMC()))) last0tag = HllqqCutFlow0tag::DiJetMass0;
-      if(b1==1 && JetDimassOneTagged())                                                         last1tag = HllqqCutFlow1tag::DiJetMass1;
-      if(b2==1 && JetDimassTagged())                                                            last2tag = HllqqCutFlow2tag::DiJetMass2;
+      if(b0==1 && ((JetBestPairResult() && BP_Selection) || (JetKinematicFitterResult() && LJ_Selection))) last0tag = HllqqCutFlow0tag::DiJetMass0;
+      if(b1==1 && JetDimassOneTagged())                                                                    last1tag = HllqqCutFlow1tag::DiJetMass1;
+      if(b2==1 && JetDimassTagged())                                                                       last2tag = HllqqCutFlow2tag::DiJetMass2;
       
       m_EventCutflow0tag[chan].addCutCounter(last0tag, 1);
       m_EventCutflow1tag[chan].addCutCounter(last1tag, 1);
