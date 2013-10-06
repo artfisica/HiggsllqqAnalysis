@@ -5,7 +5,7 @@
 ## User Options to Setup:
 FILE="samples.txt"         ## The name of the text file where the list of files are saved.
 USER="arturos"             ## User who will send the GRID jobs.
-PRODUCTION="12.1"          ## Tag of the production version.
+PRODUCTION="14"            ## Tag of the production version.
 TAR="yes"                  ## To create the tar file.               Possible answer: "yes" or "not"
 LAUNCH="not"               ## To really execute the production now. Possible answer: "yes" or "not"
 
