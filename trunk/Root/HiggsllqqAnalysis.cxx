@@ -44,7 +44,7 @@ Bool_t MuonSmearing  = kTRUE,
   DoLowMass          = kTRUE, 
   DoCaloMuons        = kTRUE,
   
-  Print_weights      = kFALSE,
+  Print_weights      = kTRUE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
   DoKinematicFitter  = kFALSE,
@@ -2233,13 +2233,14 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	   
 	    if(isMC())
 	      {
-		float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.);
+		float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.);
 		
 		tmpMCWeight      = getEventWeight(); //ntuple->eventinfo.mc_event_weight();
 		tmpPileupWeight  = getPileupWeight();
 		tmpSFWeight      = getSFWeight();
 		tmpggFWeight     = getggFWeight();
 		tmpVertexZWeight = getVertexZWeight();
+		tmpTriggerSF     = getCandidateTriggerSF();
 		
 		
 		if(tmpMCWeight>=0)
@@ -2257,6 +2258,9 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		if(tmpVertexZWeight>=0)
 		  tmpWeight       *= tmpVertexZWeight;
 		else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
+		if(tmpTriggerSF>=0)
+		  tmpWeight       *= tmpTriggerSF;
+		else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
 		
 		if(Print_weights)
 		  {
@@ -2268,6 +2272,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 			<<"|"<<tmpSFWeight
 			<<"|"<<tmpggFWeight
 			<<"|"<<tmpVertexZWeight
+			<<"|"<<tmpTriggerSF
 			<<"|"<<tmpWeight
 			<<"|"<<endl;
 		  }
@@ -3414,6 +3419,7 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("EventWeight",&m_EventWeight);
   m_reduced_ntuple->Branch("PileupWeight",&m_PileupWeight);
   m_reduced_ntuple->Branch("VertexZWeight",&m_VertexZWeight);
+  m_reduced_ntuple->Branch("TriggerSFWeight",&m_TriggerSFWeight);
   m_reduced_ntuple->Branch("mu",&m_mu);
   m_reduced_ntuple->Branch("NPV",&m_NPV);
   m_reduced_ntuple->Branch("truthH_pt",&m_truthH_pt);
@@ -3469,26 +3475,27 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_quark_E->clear();
   
   m_lep_chargeproduct = 0;
-  m_run           = -1;
-  m_event         = -1;
-  m_weight        = 1.;
-  m_SFWeight      = 1.;
-  m_ggFweight     = 1.;
-  m_EventWeight   = 1.;
-  m_PileupWeight  = 1.;
-  m_VertexZWeight = 1.;
-  m_mu            = 1;
-  m_NPV           = 0;
-  m_truthH_pt     = -1;
-  m_cut           = -1;
-  m_channel       = -1;
-  m_qcdevent      = -1;
-  m_low_event     = -1;
-  m_met_met       = -9999.;
-  m_met_phi       = -9999.;
-  m_met_sumet     = -9999.;
-  m_Entries       = -9999;
-  m_HFOR          = -99;
+  m_run               = -1;
+  m_event             = -1;
+  m_weight            = 1.;
+  m_SFWeight          = 1.;
+  m_ggFweight         = 1.;
+  m_EventWeight       = 1.;
+  m_PileupWeight      = 1.;
+  m_VertexZWeight     = 1.;
+  m_TriggerSFWeight   = 1.;
+  m_mu                = 1;
+  m_NPV               = 0;
+  m_truthH_pt         = -1;
+  m_cut               = -1;
+  m_channel           = -1;
+  m_qcdevent          = -1;
+  m_low_event         = -1;
+  m_met_met           = -9999.;
+  m_met_phi           = -9999.;
+  m_met_sumet         = -9999.;
+  m_Entries           = -9999;
+  m_HFOR              = -99;
 }
 
 
@@ -3508,18 +3515,19 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
     {
       if (!isMC()) m_run         = ntuple->eventinfo.RunNumber();     
       if (isMC())  m_run         = ntuple->eventinfo.mc_channel_number();
-      m_event         = ntuple->eventinfo.EventNumber();
-      m_cut           = cut;
-      m_weight        = 1.;
-      m_SFWeight      = 1.;
-      m_ggFweight     = 1.;
-      m_EventWeight   = 1.;
-      m_PileupWeight  = 1.;
-      m_VertexZWeight = 1.;
-      m_mu            = 1.;
-      m_truthH_pt     = -1.;
-      m_NPV           = 0;
-      m_channel       = channel;
+      m_event                    = ntuple->eventinfo.EventNumber();
+      m_cut             = cut;
+      m_weight          = 1.;
+      m_SFWeight        = 1.;
+      m_ggFweight       = 1.;
+      m_EventWeight     = 1.;
+      m_PileupWeight    = 1.;
+      m_VertexZWeight   = 1.;
+      m_TriggerSFWeight = 1.;
+      m_mu              = 1.;
+      m_truthH_pt       = -1.;
+      m_NPV             = 0;
+      m_channel         = channel;
       
       
       if(channel == HiggsllqqAnalysis::MU2)
@@ -3649,14 +3657,15 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
       
       if (isMC())
 	{
-	  m_SFWeight      *= getSFWeight();
-	  m_ggFweight     *= getggFWeight();
-	  m_EventWeight   *= getEventWeight();
-	  m_PileupWeight  *= getPileupWeight();
-	  m_VertexZWeight *= getVertexZWeight();
-	  m_weight        *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight();
-	  m_mu             = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
-	  m_truthH_pt      = getTruthHiggsPt();
+	  m_SFWeight        *= getSFWeight();
+	  m_ggFweight       *= getggFWeight();
+	  m_EventWeight     *= getEventWeight();
+	  m_PileupWeight    *= getPileupWeight();
+	  m_VertexZWeight   *= getVertexZWeight();
+	  m_TriggerSFWeight *= getCandidateTriggerSF();
+	  m_weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF();
+	  m_mu               = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
+	  m_truthH_pt        = getTruthHiggsPt();
 	}
       
       
@@ -3838,6 +3847,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->EventWeight           = 1.00; //Careful, these are weights, initialization = 1.00
   str->PileupWeight          = 1.00; //Careful, these are weights, initialization = 1.00
   str->VertexZWeight         = 1.00; //Careful, these are weights, initialization = 1.00
+  str->TriggerSFWeight       = 1.00; //Careful, these are weights, initialization = 1.00
   str->truthH_pt             =   -1;
   str->btagSF                = 1.00; //Careful, these are weights, initialization = 1.00
   str->trig_SF               = 1.00; //Careful, these are weights, initialization = 1.00
@@ -4122,7 +4132,8 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("ggFweight",             &(str->ggFweight));
   analysistree->Branch("EventWeight",           &(str->EventWeight));
   analysistree->Branch("PileupWeight",          &(str->PileupWeight));
-  analysistree->Branch("VertexZWeight",          &(str->VertexZWeight));
+  analysistree->Branch("VertexZWeight",         &(str->VertexZWeight));
+  analysistree->Branch("TriggerSFWeight",       &(str->TriggerSFWeight));
   analysistree->Branch("truthH_pt",             &(str->truthH_pt));
   analysistree->Branch("mu",                    &(str->mu));
   analysistree->Branch("trig_SF",               &(str->trig_SF));
@@ -4426,33 +4437,35 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       if (!isMC()) str->runnumber   = ntuple->eventinfo.RunNumber();
       if (isMC())  str->runnumber   = ntuple->eventinfo.mc_channel_number();
       
-      str->eventnumber   = ntuple->eventinfo.EventNumber();
-      str->HFOR          = HFOR_value;
-      str->Entries       = fChain->GetEntries();      
-      str->channel       = channel;
-      str->low_event     = GetDoLowMass()      ? 1 : 0;
-      str->isqcdevent    = GetDoQCDSelection() ? 1 : 0;
-      str->met           = getCorrectMETValue();
-      str->sumet         = ntuple->MET_RefFinal.sumet();
-      str->NPV           = getNumberOfGoodVertices();
-      str->truthH_pt     = -1.;
-      str->SFWeight      = 1.;
-      str->ggFweight     = 1.;
-      str->EventWeight   = 1.;
-      str->PileupWeight  = 1.;
-      str->VertexZWeight = 1.;
-      str->weight        = 1.;
-      str->mu            = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
+      str->eventnumber     = ntuple->eventinfo.EventNumber();
+      str->HFOR            = HFOR_value;
+      str->Entries         = fChain->GetEntries();      
+      str->channel         = channel;
+      str->low_event       = GetDoLowMass()      ? 1 : 0;
+      str->isqcdevent      = GetDoQCDSelection() ? 1 : 0;
+      str->met             = getCorrectMETValue();
+      str->sumet           = ntuple->MET_RefFinal.sumet();
+      str->NPV             = getNumberOfGoodVertices();
+      str->truthH_pt       = -1.;
+      str->SFWeight        = 1.;
+      str->ggFweight       = 1.;
+      str->EventWeight     = 1.;
+      str->PileupWeight    = 1.;
+      str->VertexZWeight   = 1.;
+      str->TriggerSFWeight = 1.;
+      str->weight          = 1.;
+      str->mu              = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
 
       if(isMC()) 
 	{
-	  str->truthH_pt      = getTruthHiggsPt();
-	  str->SFWeight      *= getSFWeight();
-	  str->ggFweight     *= getggFWeight();
-	  str->EventWeight   *= getEventWeight();
-	  str->PileupWeight  *= getPileupWeight();
-	  str->VertexZWeight *= getVertexZWeight();
-	  str->weight        *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight();
+	  str->truthH_pt        = getTruthHiggsPt();
+	  str->SFWeight        *= getSFWeight();
+	  str->ggFweight       *= getggFWeight();
+	  str->EventWeight     *= getEventWeight();
+	  str->PileupWeight    *= getPileupWeight();
+	  str->VertexZWeight   *= getVertexZWeight();
+	  str->TriggerSFWeight *= getCandidateTriggerSF();
+	  str->weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF();
 	}      
       
       //  Reset and fill trigger flag word. Agosto2013. ERROR!
@@ -6430,9 +6443,9 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       
       if(isMC()) 
 	{
-	  m_EventCutflow0tag_rw[chan].addCutCounter(last0tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight());
-	  m_EventCutflow1tag_rw[chan].addCutCounter(last1tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight());
-	  m_EventCutflow2tag_rw[chan].addCutCounter(last2tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight());
+	  m_EventCutflow0tag_rw[chan].addCutCounter(last0tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF());
+	  m_EventCutflow1tag_rw[chan].addCutCounter(last1tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF());
+	  m_EventCutflow2tag_rw[chan].addCutCounter(last2tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF());
 	}
       else
 	{
@@ -6453,3 +6466,86 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
   
   }
 */
+
+Float_t HiggsllqqAnalysis::getCandidateTriggerSF(TString syst)
+{
+  Float_t result(1);
+  
+  if (isMC())
+    {
+      if (passesSingleMuonTrigger() || passesSingleElectronTrigger())
+	{
+	  std::map<TString, Int_t> syst_value;
+	  syst_value[""] = noVariation;
+	  syst_value["el_up"] = plusOneSigmaElectron;
+	  syst_value["el_down"] = minusOneSigmaElectron;
+	  syst_value["mu_up"] = plusOneSigmaMuon;
+	  syst_value["mu_down"] = minusOneSigmaMuon;
+	  
+	  Int_t syst_code = syst_value[syst]; // code of the selected systematic variation
+	  
+	  // find a fake run number representing the data period to which this MC event is somewhat associated
+	  m_PileupReweighter->SetRandomSeed(314159 + ntuple->eventinfo.mc_channel_number() * 2718 + ntuple->eventinfo.EventNumber());
+	  Int_t representative_run_number = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber());
+	  
+	  electron_quality el_quality;
+	  
+	  if (analysis_version() == "rel_17")
+	    el_quality = loosepp;
+	  else if (analysis_version() == "rel_17_2")
+	    el_quality = ML;
+	  
+	  std::vector<TLorentzVector> muons_4m;
+	  std::vector<TLorentzVector> electrons_4m;
+	  
+	  std::vector<Analysis::ChargedLepton *> leptons;
+	  
+	  std::vector<electron_quality> el_qualities;
+	  std::vector<muon_quality> mu_qualities;
+	  
+	  
+	  if(getChannel() == HiggsllqqAnalysis::MU2)
+	    {
+	      for (std::vector<Analysis::ChargedLepton*>::iterator mu_itr = m_GoodMuons.begin(); mu_itr != m_GoodMuons.end(); ++mu_itr)
+		{
+		  leptons.push_back(*mu_itr);
+		}
+	    }
+	  else if(getChannel() == HiggsllqqAnalysis::E2)
+	    {
+	      int ii=-1;      
+	      for (std::vector<Analysis::ChargedLepton*>::iterator el_itr = m_GoodElectrons.begin(); el_itr != m_GoodElectrons.end(); ++el_itr)
+		{
+		  leptons.push_back(*el_itr);
+		}
+	    }      
+	  
+	  
+	  for (UInt_t i = 0; i < leptons.size(); i++)
+	    {
+	      if (leptons[i]->flavor() == Analysis::ChargedLepton::MUON)
+		{
+		  muons_4m.push_back(*(leptons[i]->Get4Momentum()));
+		  
+		  if (leptons[i]->family() == Muon::CALO)
+		    mu_qualities.push_back(CaloMuon);
+		  else
+		    mu_qualities.push_back(loose);
+		}
+	      else
+		{
+		  TLorentzVector fourmom_analysis = *leptons[i]->Get4Momentum();
+		  TLorentzVector fourmom_trigSF; // we must use cl_eta, cl_phi but analysis-level Et
+		  fourmom_trigSF.SetPtEtaPhiM(fourmom_analysis.Pt(), leptons[i]->GetElectron()->cl_eta(), leptons[i]->GetElectron()->cl_phi(), fourmom_analysis.M());
+		  electrons_4m.push_back(fourmom_trigSF);
+		  
+		  el_qualities.push_back(el_quality);
+		}
+	    }
+	  
+	  result = m_MuonTrigSF->GetTriggerSF(representative_run_number, false, muons_4m, mu_qualities, electrons_4m, el_qualities, syst_code).first;
+	} // passes single lepton trigger for 2011
+    }
+  
+  return result;
+}
