@@ -468,6 +468,7 @@ typedef struct {
   float EventWeight;
   float PileupWeight;
   float VertexZWeight;
+  float TriggerSFWeight;
   //////////////////////
   float xWin_44p_4var;
   float yWin_44p_4var;
@@ -722,6 +723,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual Float_t getSFWeight();
   virtual Float_t getggFWeight();
   
+  // Trigger SF 
+  Float_t getCandidateTriggerSF(TString syst = "");
   
   // tools for cross section computation
   void            initCrossSections();  // to be change!! error
@@ -780,10 +783,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t isInTheJet(Int_t Index, Int_t JetIndex, vector<float> *whatinjet_eta, vector<float> *whatinjet_phi);
   std::pair<Float_t, Float_t>InfoTracks(Int_t JetIndex);
   Bool_t  isGoodTrack(Int_t TrackIndex);
-  
-  
-  // Trigger SF 
-  std::pair<double, double> getCandidateTriggerSF(Int_t option);
   
   
   // Method to count the number of that events into the GoodJets vector.
@@ -992,6 +991,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t m_EventWeight;
   Float_t m_PileupWeight;
   Float_t m_VertexZWeight;
+  Float_t m_TriggerSFWeight;
   Float_t m_mu;
   Float_t m_truthH_pt;
   Float_t m_met_met;
