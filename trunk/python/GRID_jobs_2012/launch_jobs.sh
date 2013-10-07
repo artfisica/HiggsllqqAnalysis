@@ -33,6 +33,7 @@ mv               production_HZZllqq_$PRODUCTION                 Jobs_HZZllqq_$PR
 chmod 755                                                       outs_HZZllqq_$PRODUCTION;  ##
 chmod 755                                                     xrootd_HZZllqq_$PRODUCTION;  ##
 echo "        ## Done!"                                                                    ##
+ls -lhrt --col                                                                             ##
 #############################################################################################
 
 ## Example of "samples.txt" file ##
