@@ -24,8 +24,10 @@ if [ $LAUNCH = "yes" ];                                                         
 then                                                                                   ##
    nohup                                             ./production_HZZllqq_$PRODUCTION; ##
 fi                                                                                     ##
-rm                                                           Jobs_HZZllqq_$PRODUCTION; ##
+rm                     outs_HZZllqq_$PRODUCTION              Jobs_HZZllqq_$PRODUCTION; ##
 mv               production_HZZllqq_$PRODUCTION              Jobs_HZZllqq_$PRODUCTION; ##
+                                                                                       ##
+./create_outputs.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE >  outs_HZZllqq_$PRODUCTION; ##
 echo "        ## Done!"                                                                ##
 #########################################################################################
 
