@@ -1,7 +1,10 @@
 ORDER TO USE THE FILES:
 
 ## To download the datasets
-./down <CERN_USER, i.e. arturos> <production version, i.e. 01> <D3PD tag version, i.e. 1344> 
+./down (blanck space) <CERN_USER, i.e. arturos>.<mc12_8TeV> (blanck space) <production version, i.e. 11> (blanck space) <D3PD tag version, i.e. 1344> (blanck space) <CERN_USER, i.e. arturos>.<data>
+
+OR 
+nohup ./down (blanck space) <CERN_USER, i.e. arturos>.<mc12_8TeV> (blanck space) <production version, i.e. 11> (blanck space) <D3PD tag version, i.e. 1344> (blanck space) <CERN_USER, i.e. arturos>.<data>
 
 ## To create the folders and files inside
 ./change_names
