@@ -29,6 +29,7 @@ k=1
 while read files;do
     while read line;do
         sample=${line////}
+        sample=${sample//.merge.NTUP_HSG2/}
         if [ $5 = "" ]
         then
            echo "prun --exec \"echo %IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; ./HiggsllqqAnalysis/bin/test --analysis rel_17_2 --useTopoIso --input input.txt --output output.root\" --outDS user.$2.$sample.$3 --outputs output.root --useAthenaPackages --inDS $line --nGBPerJob=10 --useRootCore --extFile=*/*/*.root*,*/*/*/*.root*,*/*/*/*/*.root*,*/*/*/*/*/*.root*, --inTarBall tarball.tar --destSE=INFN-ROMA1_LOCALGROUPDISK --useShortLivedReplicas"   
