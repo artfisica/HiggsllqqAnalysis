@@ -35,7 +35,7 @@ while read files;do
 done  < $FILE
 
 echo "  "
-echo "        ## Total number of Samples to be produce: $k ##"
+echo "        ## Total number of Samples to be produced: $k ##"
 echo "               ################################"
 echo "  "
 #############################################################################
