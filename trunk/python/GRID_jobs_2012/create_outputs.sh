@@ -17,7 +17,11 @@ while read files;do                                                        ##
         sample=${sample//.merge.NTUP_HSG2/}                                ##
         echo "user.$2.$sample.$3/"                                         ##
         ((k++))                                                            ##
-    done < $files                                                          ##
+    done < $files                                                          ##   
+    echo "                       "                                         ##
+    echo "End of Samples = $files"                                         ##
+    echo " ##########################  "                                   ##
+    echo "                       "                                         ##
 done  < $FILE                                                              ##
                                                                            ##
 echo "  "                                                                  ##
