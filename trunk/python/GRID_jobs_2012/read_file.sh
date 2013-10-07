@@ -29,7 +29,12 @@ k=1
 while read files;do
     while read line;do
         sample=${line////}
-        echo "prun --exec \"echo %IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; ./HiggsllqqAnalysis/bin/test --analysis rel_17_2 --useTopoIso --input input.txt --output output.root\" --outDS user.$2.$sample.$3 --outputs output.root --useAthenaPackages --inDS $line --nGBPerJob=10 --useRootCore --extFile=*/*/*.root*,*/*/*/*.root*,*/*/*/*/*.root*,*/*/*/*/*/*.root*, --inTarBall tarball.tar --destSE=INFN-ROMA1_LOCALGROUPDISK --useShortLivedReplicas"   
+        if [ $5 = "" ]
+        then
+           echo "prun --exec \"echo %IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; ./HiggsllqqAnalysis/bin/test --analysis rel_17_2 --useTopoIso --input input.txt --output output.root\" --outDS user.$2.$sample.$3 --outputs output.root --useAthenaPackages --inDS $line --nGBPerJob=10 --useRootCore --extFile=*/*/*.root*,*/*/*/*.root*,*/*/*/*/*.root*,*/*/*/*/*/*.root*, --inTarBall tarball.tar --destSE=INFN-ROMA1_LOCALGROUPDISK --useShortLivedReplicas"   
+        else
+           echo "prun --exec \"echo %IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; ./HiggsllqqAnalysis/bin/test --analysis rel_17_2 --useTopoIso --input input.txt --output output.root\" --outDS user.$2.$sample.$3 --outputs output.root --useAthenaPackages --inDS $line --nGBPerJob=10 --useRootCore --extFile=*/*/*.root*,*/*/*/*.root*,*/*/*/*/*.root*,*/*/*/*/*/*.root*, --inTarBall tarball.tar --destSE=INFN-ROMA1_LOCALGROUPDISK --useShortLivedReplicas --excludedSite=$5"   
+        fi
         ((k++))
     done < $files
 done  < $FILE
