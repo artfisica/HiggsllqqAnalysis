@@ -5,10 +5,10 @@
 ## User Options to Setup:
 FILE="samples.txt"         ## The name of the text file where the list of files are saved.
 USER="arturos"             ## User who will send the GRID jobs.
-PRODUCTION="13.1"          ## Tag of the production version.
+PRODUCTION="13.2"          ## Tag of the production version.
 TAR="yes"                  ## To create the tar file.               Possible answer: "yes" or "not"
 LAUNCH="not"               ## To really execute the production now. Possible answer: "yes" or "not"
-EXCLUDE="ANALY_SARA"       ## Possible site to exclude due to known problems. (In case of any, just write "")
+EXCLUDE="ANALY_SARA,ANALY_INFN-NAPOLI"       ## Possible site to exclude due to known problems. (In case of any, just write "")
 
 ## End of User Options, please do not chance the lines bellow if you are not sure of the procedures.
 
