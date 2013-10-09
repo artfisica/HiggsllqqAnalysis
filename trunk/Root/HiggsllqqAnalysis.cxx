@@ -2253,7 +2253,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		  tmpWeight       *= tmpSFWeight;
 		else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
 		if(tmpggFWeight>=0)
-		  tmpWeight       *= 1;//tmpggFWeight;
+		  tmpWeight       *= tmpggFWeight;
 		else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
 		if(tmpVertexZWeight>=0)
 		  tmpWeight       *= tmpVertexZWeight;
@@ -6443,9 +6443,10 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       
       if(isMC()) 
 	{
-	  m_EventCutflow0tag_rw[chan].addCutCounter(last0tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF());
-	  m_EventCutflow1tag_rw[chan].addCutCounter(last1tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF());
-	  m_EventCutflow2tag_rw[chan].addCutCounter(last2tag, 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF());
+	  float weight_now = 1.*getSFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF()*getggFWeight();
+	  m_EventCutflow0tag_rw[chan].addCutCounter(last0tag, weight_now);
+	  m_EventCutflow1tag_rw[chan].addCutCounter(last1tag, weight_now);
+	  m_EventCutflow2tag_rw[chan].addCutCounter(last2tag, weight_now);
 	}
       else
 	{
@@ -6512,8 +6513,7 @@ Float_t HiggsllqqAnalysis::getCandidateTriggerSF(TString syst)
 		}
 	    }
 	  else if(getChannel() == HiggsllqqAnalysis::E2)
-	    {
-	      int ii=-1;      
+	    {      
 	      for (std::vector<Analysis::ChargedLepton*>::iterator el_itr = m_GoodElectrons.begin(); el_itr != m_GoodElectrons.end(); ++el_itr)
 		{
 		  leptons.push_back(*el_itr);
