@@ -215,12 +215,12 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_PileupReweighter->SetUnrepresentedDataAction(2);
   
   if (analysis_version() == "rel_17") { // mc11c, 2011
-    m_PileupReweighter->AddConfigFile("./Higgs4lepAnalysis/packages/files/pileup/MC11c.prw.root");
-    m_PileupReweighter->AddLumiCalcFile("./Higgs4lepAnalysis/packages/files/pileup/ilumicalc_2011_AllYear_All_Good.root");
+    m_PileupReweighter->AddConfigFile("./HiggsllqqAnalysis/packages/files/pileup/MC11c.prw.root");
+    m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_2011_AllYear_All_Good.root");
     m_PileupReweighter->SetDefaultChannel(109292);
   } else if (analysis_version() == "rel_17_2") { // mc12a, 2012
-    m_PileupReweighter->AddConfigFile("./Higgs4lepAnalysis/packages/files/pileup/MC12a.prw.root");
-    m_PileupReweighter->AddLumiCalcFile("./Higgs4lepAnalysis/packages/files/pileup/ilumicalc_2012_AllYear_All_Good.root");
+    m_PileupReweighter->AddConfigFile("./HiggsllqqAnalysis/packages/files/pileup/MC12a.prw.root");
+    m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_2012_AllYear_All_Good.root");
     m_PileupReweighter->SetDefaultChannel(160156);
   }
   
