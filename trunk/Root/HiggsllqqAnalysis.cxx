@@ -1944,7 +1944,7 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
 	if(dolowmass)
 	  {
 	    //d0 Significance
-	    if (TMath::Abs(lep->d0() / lep->d0_sig()) < 3.5) lep->set_lastcut(HllqqMuonQuality::d0Sig);
+	    if ( (TMath::Abs(lep->d0() / lep->d0_sig()) < 3.5) && (lep->d0()>-9) ) lep->set_lastcut(HllqqMuonQuality::d0Sig);
 	    else return kFALSE;
 	  }
 	else lep->set_lastcut(HllqqMuonQuality::d0Sig);
@@ -2084,7 +2084,7 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
       {      
 	if(dolowmass)
 	  {
-	    if((TMath::Abs(lep->d0()) / lep->d0_sig())<6.5) lep->set_lastcut(HllqqElectronQuality::d0Sig);
+	    if( ((TMath::Abs(lep->d0()) / lep->d0_sig())<6.5) && (lep->d0()>-9) ) lep->set_lastcut(HllqqElectronQuality::d0Sig);
 	    else return kFALSE;
 	  }
 	else lep->set_lastcut(HllqqElectronQuality::d0Sig);    
@@ -4425,7 +4425,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
   
   if(cut >= minimum_cut)
     {
-      str->n_jets   = m_GoodJets.size();
+      str->n_jets    = m_GoodJets.size();
+      howmanytags    = GetNumOfTags();
+      str->n_b_jets  = howmanytags;
       
       std::pair<float,float> jetsf;
       jetsf.first  = -1.;
@@ -4687,9 +4689,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
       if (cut >= second_cut)
 	{  	
-	  howmanytags = GetNumOfTags();
-	  str->n_b_jets   = howmanytags;
-	  
 	  if(howmanytags==2)
 	    str->istagged = 1;
 	  if(howmanytags<2)
