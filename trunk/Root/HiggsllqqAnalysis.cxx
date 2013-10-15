@@ -25,32 +25,40 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    September 9th 2013
+    October 15th 2013
     
-    Authors:
+    Author:
     Arturo Sanchez <arturos@cern.ch> or <arturos@ula.ve>
-    Valerio Ippolito <valerio.ippolito@cern.ch>
 */
 
 
 // Smearing Options:
-Bool_t MuonSmearing  = kTRUE,
-  JetSmearing        = kTRUE,
-  ElectronSmearing   = kTRUE,
+Bool_t MuonSmearing          = kTRUE,
+  JetSmearing                = kTRUE,
+  ElectronSmearing           = kTRUE,
   
 // Type of Missing Et
-  METtype_RefFinal   = kTRUE,
+  METtype_RefFinal           = kTRUE,
   
-  DoLowMass          = kTRUE, 
-  DoCaloMuons        = kTRUE,
+  DoLowMass                  = kTRUE, 
+  DoCaloMuons                = kTRUE,
   
-  Print_weights      = kTRUE,
+  Print_weights              = kTRUE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
-  DoKinematicFitter  = kFALSE,
-  BP_Selection       = kFALSE,
-  LJ_Selection       = kTRUE,
-  FillGluon          = kTRUE;
+  DoKinematicFitter          = kFALSE,
+  BP_Selection               = kFALSE,
+  LJ_Selection               = kTRUE,   //The Winner method for 2012 data-paper.
+  FillGluon                  = kTRUE,
+  
+// Systematic Flags
+  DoElectronSystematics     = kFALSE,
+  DoMuonSystematics         = kFALSE,
+  DoJetSystematics          = kFALSE,
+  DoTaggingJetSystematics   = kFALSE,
+  DoTriggerSystematics      = kFALSE;
+
+
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0), JetTag1(-1), JetTag2(-1), JetSemiTag1(-1), JetSemiTag2(-1);
@@ -59,11 +67,11 @@ float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
 
 int Print_low_OR_high = 1; // 0 for LowSelection ; 1 for HighSelection
 
-int     count_events(0),eventNow(-1),overElectron(0),overMuon(0),overJet(0); 
-int     badevent(0), prebadevent(0), ptchange(0), ptelecChange(0);
-int     periodBD(0),periodEH(0),periodI(0),periodJK(0),periodLM(0);
-Float_t Muon0(0),Muon1(0),Muon2(0),Muon3(0),Muon4(0),Muon5(0),Muon6(0),Muon7(0),Muon8(0);
-Float_t Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electron5(0),Electron6(0), b_rescaling = 1.00 /*Fixed  in 1.05 (2011)*/; 
+int      count_events(0),eventNow(-1),overElectron(0),overMuon(0),overJet(0); 
+int      badevent(0), prebadevent(0), ptchange(0), ptelecChange(0);
+int      periodBD(0),periodEH(0),periodI(0),periodJK(0),periodLM(0);
+Float_t  Muon0(0),Muon1(0),Muon2(0),Muon3(0),Muon4(0),Muon5(0),Muon6(0),Muon7(0),Muon8(0);
+Float_t  Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electron5(0),Electron6(0), b_rescaling = 1.00 /*Fixed  in 1.05 (2011)*/; 
 
 
 // Definition of the Leptonic (dilepton) invariant mass window:
@@ -73,8 +81,8 @@ Float_t Mll_high_min  = 83000.;
 Float_t Mll_high_max  = 99000.;
 
 // Definition of the Hadronic (dijet) invariant mass window:  70 (60) GeV < Mjj < 105 (115) GeV 
-Float_t Mjj_low_min   = 20000.;  // 60000.;
-Float_t Mjj_low_max   = 200000.; // 115000.;
+Float_t Mjj_low_min   = 60000.;  // 60000.;
+Float_t Mjj_low_max   = 115000.; // 115000.;
 Float_t Mjj_high_min  = 70000.;  // 70000.;
 Float_t Mjj_high_max  = 105000.; // 105000.;
 
@@ -92,6 +100,11 @@ Float_t Cone_size     = 0.4;
 
 // Actual (2012) JVF CUT
 Float_t JVF_CUT       = 0.5;   // 0.75;
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 HiggsllqqAnalysis::~HiggsllqqAnalysis()
@@ -441,7 +454,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     TH1D *h_cutflow_weight_E2;
     TH1D *h_cutflow_MU2;
     TH1D *h_cutflow_weight_MU2;
-   
+    
     TH1D *h_cutflow_MUE;
     TH1D *h_cutflow_weight_MUE;
   */
@@ -484,7 +497,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow_weight->Fill("NumTagJets",0);
   h_cutflow_weight->Fill("DiJetMass",0);
   h_cutflow_weight->Fill("EXIT",0); 
-
+  
   h_cutflow_E2 = new TH1D("cutflow_E2","",20,0,20);
   h_cutflow_E2->Fill("Entries",0);
   h_cutflow_E2->Fill("HFOR",0);
@@ -522,7 +535,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow_weight_E2->Fill("NumTagJets",0);
   h_cutflow_weight_E2->Fill("DiJetMass",0);
   h_cutflow_weight_E2->Fill("EXIT",0); 
-
+  
   h_cutflow_MU2 = new TH1D("cutflow_MU2","",20,0,20);
   h_cutflow_MU2->Fill("Entries",0);
   h_cutflow_MU2->Fill("HFOR",0);
@@ -561,9 +574,9 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   h_cutflow_weight_MU2->Fill("DiJetMass",0);
   h_cutflow_weight_MU2->Fill("EXIT",0); 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
- 
-
-
+  
+  
+  
   //Initialization of the qqll ntuple
   InitReducedNtuple();
   
@@ -624,7 +637,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     m_EventCutflow[i].addCut("TwoJets");
     m_EventCutflow[i].addCut("DileptonMass");
     m_EventCutflow[i].addCut("MET");
-
+    
     m_EventCutflow0tag.push_back(Analysis::CutFlowTool("Plain_0tag_" + chan_name[i]));
     m_EventCutflow0tag[i].addCut("NumTagJets0");
     m_EventCutflow0tag[i].addCut("DiJetMass0");
@@ -632,11 +645,11 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     m_EventCutflow1tag.push_back(Analysis::CutFlowTool("Plain_1tag_" + chan_name[i]));
     m_EventCutflow1tag[i].addCut("NumTagJets1");
     m_EventCutflow1tag[i].addCut("DiJetMass1");
-
+    
     m_EventCutflow2tag.push_back(Analysis::CutFlowTool("Plain_2tag_" + chan_name[i]));
     m_EventCutflow2tag[i].addCut("NumTagJets2");
     m_EventCutflow2tag[i].addCut("DiJetMass2");
-
+    
     m_EventCutflow_rw.push_back(Analysis::CutFlowTool("Reweighted_" + chan_name[i]));
     m_EventCutflow_rw[i].addCut("Entries");
     m_EventCutflow_rw[i].addCut("HFOR");
@@ -652,7 +665,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     m_EventCutflow_rw[i].addCut("TwoJets");
     m_EventCutflow_rw[i].addCut("DileptonMass");
     m_EventCutflow_rw[i].addCut("MET");
-
+    
     m_EventCutflow0tag_rw.push_back(Analysis::CutFlowTool("Reweighted_0tag_" + chan_name[i]));
     m_EventCutflow0tag_rw[i].addCut("NumTagJets0");
     m_EventCutflow0tag_rw[i].addCut("DiJetMass0");
@@ -847,7 +860,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   if (chargeprod==-1 || (getChannel() != HiggsllqqAnalysis::MU2 && !GetDoLowMass()) || GetDoQCDSelection()) last = HllqqCutFlow::OppositeSign;
   else return last;
-    
+  
   int goodLeading = 0;
   int itr=0;
   std::vector<Analysis::Jet *>::iterator jet_it;
@@ -869,9 +882,9 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
       if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5) 
 	goodLeading=1;
       /*
-      if( GetMV1value(*jet_it)>MV1_OP70 && TMath::Abs((*jet_it)->righteta())>2.5 )
+	if( GetMV1value(*jet_it)>MV1_OP70 && TMath::Abs((*jet_it)->righteta())>2.5 )
 	cout<<"  -|- #good Jets = "<<m_GoodJets.size()<<"  Pt= "<<(*jet_it)->rightpt()<<"  Eta = "<<(*jet_it)->righteta()<<"  Phi = "<<(*jet_it)->rightphi()<<"  Mass = "<<(*jet_it)->Get4Momentum()->M()<<"  Yes Tagged = "<<GetMV1value(*jet_it)<<endl;
-      else if(  TMath::Abs((*jet_it)->righteta())>2.5 )
+	else if(  TMath::Abs((*jet_it)->righteta())>2.5 )
 	cout<<"  -|- #good Jets = "<<m_GoodJets.size()<<"  Pt= "<<(*jet_it)->rightpt()<<"  Eta = "<<(*jet_it)->righteta()<<"  Phi = "<<(*jet_it)->rightphi()<<"  Mass = "<<(*jet_it)->Get4Momentum()->M()<<"  Not Tagged = "<<GetMV1value(*jet_it)<<endl;
       */
     }
@@ -1258,78 +1271,94 @@ TString HiggsllqqAnalysis::getElectronMuonTriggerName()
 
 void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
 {
-  if (lep->flavor() == Analysis::ChargedLepton::MUON) {
-    D3PDReader::MuonD3PDObjectElement *mu = lep->GetMuon();
-    
-    if (/*isMC() && */doSmearing() && MuonSmearing) {
-      double eta  = lep->Get4Momentum()->Eta();
-      double ptcb = lep->Get4Momentum()->Pt();
-      double ptme = lep->Get4Momentum_SA()->Pt();
-      double ptid = lep->Get4Momentum_ID()->Pt();
+  if (lep->flavor() == Analysis::ChargedLepton::MUON)
+    {
+      D3PDReader::MuonD3PDObjectElement *mu = lep->GetMuon();
       
-      m_MuonSmearer->SetSeed(ntuple->eventinfo.EventNumber(), (Int_t)mu->GetIndex());
-      
-      if (mu->isCombinedMuon()) {
-	m_MuonSmearer->Event(ptme, ptid, ptcb, eta);
-	lep->Get4Momentum()->SetPtEtaPhiM(m_MuonSmearer->pTCB(), lep->Get4Momentum()->Eta(), lep->Get4Momentum()->Phi(), lep->Get4Momentum()->M());
-	lep->Get4Momentum_SA()->SetPtEtaPhiM(m_MuonSmearer->pTMS(), lep->Get4Momentum_SA()->Eta(), lep->Get4Momentum_SA()->Phi(), lep->Get4Momentum_SA()->M());
-	lep->Get4Momentum_ID()->SetPtEtaPhiM(m_MuonSmearer->pTID(), lep->Get4Momentum_ID()->Eta(), lep->Get4Momentum_ID()->Phi(), lep->Get4Momentum_ID()->M());
-      } else if (mu->isStandAloneMuon()) {
-	m_MuonSmearer->Event(ptcb, eta, "MS");
-	lep->Get4Momentum()->SetPtEtaPhiM(m_MuonSmearer->pTMS(), lep->Get4Momentum()->Eta(), lep->Get4Momentum()->Phi(), lep->Get4Momentum()->M());
-	lep->Get4Momentum_SA()->SetPtEtaPhiM(m_MuonSmearer->pTMS(), lep->Get4Momentum_SA()->Eta(), lep->Get4Momentum_SA()->Phi(), lep->Get4Momentum_SA()->M());
-      } else { // segment tagged, calo
-	m_MuonSmearer->Event(ptcb, eta, "ID");
-	lep->Get4Momentum()->SetPtEtaPhiM(m_MuonSmearer->pTID(), lep->Get4Momentum()->Eta(), lep->Get4Momentum()->Phi(), lep->Get4Momentum()->M());
-	lep->Get4Momentum_ID()->SetPtEtaPhiM(m_MuonSmearer->pTID(), lep->Get4Momentum_ID()->Eta(), lep->Get4Momentum_ID()->Phi(), lep->Get4Momentum_ID()->M());
-      }
-    }
-  } 
+      if (/*isMC() && */doSmearing() && MuonSmearing) 
+	{
+	  double eta  = lep->Get4Momentum()->Eta();
+	  double ptcb = lep->Get4Momentum()->Pt();
+	  double ptme = lep->Get4Momentum_SA()->Pt();
+	  double ptid = lep->Get4Momentum_ID()->Pt();
+	  
+	  m_MuonSmearer->SetSeed(ntuple->eventinfo.EventNumber(), (Int_t)mu->GetIndex());
+	  
+	  if (mu->isCombinedMuon())
+	    {
+	      m_MuonSmearer->Event(ptme, ptid, ptcb, eta);
+	      lep->Get4Momentum()->SetPtEtaPhiM(m_MuonSmearer->pTCB(), lep->Get4Momentum()->Eta(), lep->Get4Momentum()->Phi(), lep->Get4Momentum()->M());
+	      lep->Get4Momentum_SA()->SetPtEtaPhiM(m_MuonSmearer->pTMS(), lep->Get4Momentum_SA()->Eta(), lep->Get4Momentum_SA()->Phi(), lep->Get4Momentum_SA()->M());
+	      lep->Get4Momentum_ID()->SetPtEtaPhiM(m_MuonSmearer->pTID(), lep->Get4Momentum_ID()->Eta(), lep->Get4Momentum_ID()->Phi(), lep->Get4Momentum_ID()->M());
+	    } 
+	  else if (mu->isStandAloneMuon())
+	    {
+	      m_MuonSmearer->Event(ptcb, eta, "MS");
+	      lep->Get4Momentum()->SetPtEtaPhiM(m_MuonSmearer->pTMS(), lep->Get4Momentum()->Eta(), lep->Get4Momentum()->Phi(), lep->Get4Momentum()->M());
+	      lep->Get4Momentum_SA()->SetPtEtaPhiM(m_MuonSmearer->pTMS(), lep->Get4Momentum_SA()->Eta(), lep->Get4Momentum_SA()->Phi(), lep->Get4Momentum_SA()->M());
+	    }
+	  else
+	    { // segment tagged, calo
+	      m_MuonSmearer->Event(ptcb, eta, "ID");
+	      lep->Get4Momentum()->SetPtEtaPhiM(m_MuonSmearer->pTID(), lep->Get4Momentum()->Eta(), lep->Get4Momentum()->Phi(), lep->Get4Momentum()->M());
+	      lep->Get4Momentum_ID()->SetPtEtaPhiM(m_MuonSmearer->pTID(), lep->Get4Momentum_ID()->Eta(), lep->Get4Momentum_ID()->Phi(), lep->Get4Momentum_ID()->M());
+	    }
+	}
+    } 
   
-  else if (lep->flavor() == Analysis::ChargedLepton::ELECTRON) {
-    D3PDReader::ElectronD3PDObjectElement *el = lep->GetElectron();
-    
-    // Int_t SYST_FLAG = 0; //SYST_FLAG is 0 for nominal scale, 1 or 2 for 1-sigma variations.
-    
-    // first of all one must rescale energy in the crack! (both data and MC but only for 2011 so far)
-    Float_t tmp_calibration(1.);
-    if (analysis_version() == "rel_17") // rel. 17
-      tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
-    Float_t tmp_E = el->cl_E() * TMath::Abs(tmp_calibration);
-    Float_t tmp_Et = tmp_E / TMath::CosH(el->tracketa());
-    Float_t tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
-    
-    // then, apply the other corrections
-    if (/*isMC() && */doSmearing() && ElectronSmearing) {
-      m_ElectronEnergyRescaler->SetRandomSeed(ntuple->eventinfo.EventNumber() + 100 * (Int_t)el->GetIndex());
+  else if (lep->flavor() == Analysis::ChargedLepton::ELECTRON)
+    {
+      D3PDReader::ElectronD3PDObjectElement *el = lep->GetElectron();
       
-      // false here means the MC is mc11c (no constant term)
-      Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::NOMINAL);
+      // Int_t SYST_FLAG = 0; //SYST_FLAG is 0 for nominal scale, 1 or 2 for 1-sigma variations.
       
-      tmp_E     = tmp_E * smearcorr;
-      tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
-      tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
-    }
-    
-    if (!isMC()) {
-      tmp_E     = m_ElectronEnergyRescaler->applyEnergyCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::Electron, egRescaler::EnergyRescalerUpgrade::Nominal, 1.0, ntuple->eventinfo.RunNumber());
-      tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
-      tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
-    }
-    
-    Float_t tmp_pt    = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->tracketa())));
-    Float_t tmp_pt_cl = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->cl_eta())));
-    
-    // correct lepton 4-momenta
-    lep->Get4Momentum()->SetPtEtaPhiM(tmp_pt, el->tracketa(), el->trackphi(), lep->Get4Momentum()->M());
-    lep->Get4Momentum_ID()->SetPtEtaPhiM(el->trackpt(), el->tracketa(), el->trackphi(), lep->Get4Momentum()->M()); // untouched by energy corrections!
-    lep->Get4Momentum_SA()->SetPtEtaPhiM(tmp_pt_cl, el->cl_eta(), el->cl_phi(), lep->Get4Momentum()->M());
-  } 
+      
+      // first of all one must rescale energy in the crack! (both data and MC but only for 2011 so far)
+      Float_t tmp_calibration(1.);
+      if (analysis_version() == "rel_17") // rel. 17
+	tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
+      
+      
+      Float_t tmp_E = el->cl_E() * TMath::Abs(tmp_calibration);
+      Float_t tmp_Et = tmp_E / TMath::CosH(el->tracketa());
+      Float_t tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
+      
+      
+      // then, apply the other corrections
+      if (/*isMC() && */doSmearing() && ElectronSmearing)
+	{
+	  m_ElectronEnergyRescaler->SetRandomSeed(ntuple->eventinfo.EventNumber() + 100 * (Int_t)el->GetIndex());
+	  
+	  // false here means the MC is mc11c (no constant term)
+	  Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::NOMINAL);
+	  
+	  tmp_E     = tmp_E * smearcorr;
+	  tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
+	  tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
+	}
+      
+      
+      if (!isMC())
+	{
+	  tmp_E     = m_ElectronEnergyRescaler->applyEnergyCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::Electron, egRescaler::EnergyRescalerUpgrade::Nominal, 1.0, ntuple->eventinfo.RunNumber());
+	  tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
+	  tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
+	}
+      
+      Float_t tmp_pt    = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->tracketa())));
+      Float_t tmp_pt_cl = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->cl_eta())));
+      
+      // correct lepton 4-momenta
+      lep->Get4Momentum()->SetPtEtaPhiM(tmp_pt, el->tracketa(), el->trackphi(), lep->Get4Momentum()->M());
+      lep->Get4Momentum_ID()->SetPtEtaPhiM(el->trackpt(), el->tracketa(), el->trackphi(), lep->Get4Momentum()->M()); // untouched by energy corrections!
+      lep->Get4Momentum_SA()->SetPtEtaPhiM(tmp_pt_cl, el->cl_eta(), el->cl_phi(), lep->Get4Momentum()->M());
+    } 
   
   //If is not an Electron neither a Muon!!
-  else {
-    Abort("Unknown lepton flavor");
-  }
+  else
+    {
+      Abort("Unknown lepton flavor");
+    }
 }
 
 
@@ -1338,91 +1367,98 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
   Float_t tmp_E(-9999.9), tmp_pt(-9999.9), tmp_eta(-9999.9), tmp_phi(-9999.9), tmp_Et(-9999.9);
   Bool_t sysstudy = GetSysStudy(); 
   
+  if(DoJetSystematics)
+    SetSysStudy(kTRUE);
+  else if(!DoJetSystematics)
+    SetSysStudy(kFALSE);
+  
   // For the pile-up correction, we need mu and NPV(2+ tracks)    
   double mu = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
   int NPV=0;
   
   D3PDReader::JetD3PDObjectElement *this_jet = jet->GetJet();
   
-  if (/*isMC() &&*/ doSmearing() && JetSmearing) {
-    
-    //inside the event loop
-    
-    if (analysis_version() == "rel_17_2") {      
+  if (/*isMC() &&*/ doSmearing() && JetSmearing)
+    {    
+      //inside the event loop
       
-      double Eraw    = this_jet->emscale_E();
-      double eta     = this_jet->emscale_eta(); //EtaOrigin();
-      double phi     = this_jet->emscale_phi();
-      double m       = this_jet->emscale_m();   //MOrigin();
-      double Ax      = this_jet->ActiveAreaPx();
-      double Ay      = this_jet->ActiveAreaPy();
-      double Az      = this_jet->ActiveAreaPz();
-      double Ae      = this_jet->ActiveAreaE();
-      double rho     = ntuple->Eventshape.rhoKt4EM();
+      if (analysis_version() == "rel_17_2")
+	{      
+	  double Eraw    = this_jet->emscale_E();
+	  double eta     = this_jet->emscale_eta(); //EtaOrigin();
+	  double phi     = this_jet->emscale_phi();
+	  double m       = this_jet->emscale_m();   //MOrigin();
+	  double Ax      = this_jet->ActiveAreaPx();
+	  double Ay      = this_jet->ActiveAreaPy();
+	  double Az      = this_jet->ActiveAreaPz();
+	  double Ae      = this_jet->ActiveAreaE();
+	  double rho     = ntuple->Eventshape.rhoKt4EM();
+	  
+	  for (Int_t i = 0; i < ntuple->vxp.n(); i++) {
+	    if (ntuple->vxp[i].trk_n() >= 2) NPV++;
+	  }
+	  
+	  // Calibrate the jet!
+	  // Pile-up, origin, EtaJES correction applied, i.e. to OFFSET_ORIGIN_ETAJES scale
+	  TLorentzVector jet4v = myJES->ApplyJetAreaOffsetEtaJES(Eraw,eta,phi,m,Ax,Ay,Az,Ae,rho,mu,NPV);
+	  
+	  
+	  // The below is systematic evaluation, and ONLY for MC
+	  // Smear the jet to match the MC resolution+1 sigma!
+	  if(isMC() && sysstudy)
+	    {
+	      myJER->SetSeed(ntuple->eventinfo.EventNumber());
+	      myJER->SmearJet_Syst(jet4v);
+	    }
+	  
+	  tmp_E=jet4v.E();
+	  tmp_pt=jet4v.Pt();
+	  tmp_eta=jet4v.Eta();
+	  tmp_phi=jet4v.Phi();
+	  tmp_Et=jet4v.Et();
+	  
+	  //Inside the "if"
+	  jet->set_rightE(tmp_E);
+	  jet->set_rightpt(tmp_pt);
+	  jet->set_righteta(tmp_eta);
+	  jet->set_rightphi(tmp_phi);
+	  jet->set_rightEt(tmp_Et);
+	} 
       
-      for (Int_t i = 0; i < ntuple->vxp.n(); i++) {
-	if (ntuple->vxp[i].trk_n() >= 2) NPV++;
-      }
-      
-      // Calibrate the jet!
-      // Pile-up, origin, EtaJES correction applied, i.e. to OFFSET_ORIGIN_ETAJES scale
-      TLorentzVector jet4v = myJES->ApplyJetAreaOffsetEtaJES(Eraw,eta,phi,m,Ax,Ay,Az,Ae,rho,mu,NPV);
-      
-      
-      // The below is systematic evaluation, and ONLY for MC
-      // Smear the jet to match the MC resolution+1 sigma!
-      if(isMC() && sysstudy){
-	myJER->SetSeed(ntuple->eventinfo.EventNumber());
-	myJER->SmearJet_Syst(jet4v);
-      }
-      
-      tmp_E=jet4v.E();
-      tmp_pt=jet4v.Pt();
-      tmp_eta=jet4v.Eta();
-      tmp_phi=jet4v.Phi();
-      tmp_Et=jet4v.Et();
-      
-      //Inside the "if"
-      jet->set_rightE(tmp_E);
-      jet->set_rightpt(tmp_pt);
-      jet->set_righteta(tmp_eta);
-      jet->set_rightphi(tmp_phi);
-      jet->set_rightEt(tmp_Et);
-    } 
-    
-    else if (analysis_version() == "rel_17") {
-      
-      double Eraw    = this_jet->emscale_E();
-      double eta     = this_jet->EtaOrigin();
-      double eta_det = this_jet->emscale_eta();
-      double phi     = this_jet->emscale_phi();
-      double m       = this_jet->MOrigin();
-      
-      // Calibrate the jet!
-      // Pile-up, origin, EtaJES correction applied, i.e. to OFFSET_ORIGIN_ETAJES scale
-      TLorentzVector jet4v = myJES->ApplyOffsetEtaJES(Eraw,eta_det,eta,phi,m,mu,NPV);  
-      
-      // The below is systematic evaluation, and ONLY for MC
-      // Smear the jet to match the MC resolution+1 sigma!
-      if(isMC() && sysstudy){
-	myJER->SetSeed(ntuple->eventinfo.EventNumber());
-	myJER->SmearJet_Syst(jet4v);
-      }
-      
-      tmp_E=jet4v.E();
-      tmp_pt=jet4v.Pt();
-      tmp_eta=jet4v.Eta();
-      tmp_phi=jet4v.Phi();
-      tmp_Et=jet4v.Et();
-      
-      //Inside the "if"
-      jet->set_rightE(tmp_E);
-      jet->set_rightpt(tmp_pt);
-      jet->set_righteta(tmp_eta);
-      jet->set_rightphi(tmp_phi);
-      jet->set_rightEt(tmp_Et);
-    }
-  }  
+      else if (analysis_version() == "rel_17")
+	{ 
+	  double Eraw    = this_jet->emscale_E();
+	  double eta     = this_jet->EtaOrigin();
+	  double eta_det = this_jet->emscale_eta();
+	  double phi     = this_jet->emscale_phi();
+	  double m       = this_jet->MOrigin();
+	  
+	  // Calibrate the jet!
+	  // Pile-up, origin, EtaJES correction applied, i.e. to OFFSET_ORIGIN_ETAJES scale
+	  TLorentzVector jet4v = myJES->ApplyOffsetEtaJES(Eraw,eta_det,eta,phi,m,mu,NPV);  
+	  
+	  // The below is systematic evaluation, and ONLY for MC
+	  // Smear the jet to match the MC resolution+1 sigma!
+	  if(isMC() && sysstudy)
+	    {
+	      myJER->SetSeed(ntuple->eventinfo.EventNumber());
+	      myJER->SmearJet_Syst(jet4v);
+	    }
+	  
+	  tmp_E=jet4v.E();
+	  tmp_pt=jet4v.Pt();
+	  tmp_eta=jet4v.Eta();
+	  tmp_phi=jet4v.Phi();
+	  tmp_Et=jet4v.Et();
+	  
+	  //Inside the "if"
+	  jet->set_rightE(tmp_E);
+	  jet->set_rightpt(tmp_pt);
+	  jet->set_righteta(tmp_eta);
+	  jet->set_rightphi(tmp_phi);
+	  jet->set_rightEt(tmp_Et);
+	}
+    }  
 }
 
 
