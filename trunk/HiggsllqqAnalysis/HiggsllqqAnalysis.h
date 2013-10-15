@@ -659,15 +659,15 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual TString getSingleElectronTriggerName();
   virtual TString getDiElectronTriggerName();
   virtual TString getElectronMuonTriggerName();
-  virtual void applyChanges(Analysis::ChargedLepton *lep);
-  virtual void applyChanges(Analysis::Jet *jet);
-  virtual void getMuons(D3PDReader::MuonD3PDObject *mu_branch, Int_t family);
-  virtual void getElectrons(D3PDReader::ElectronD3PDObject *el_branch, Int_t family);
-  virtual void getJets(D3PDReader::JetD3PDObject *jet_branch);
-  virtual void getGoodMuons();
-  virtual void getGoodElectrons();
-  virtual void getGoodJets();
-  virtual void getGoodLeptons();
+  virtual void    applyChanges(Analysis::ChargedLepton *lep);
+  virtual void    applyChanges(Analysis::Jet *jet);
+  virtual void    getMuons(D3PDReader::MuonD3PDObject *mu_branch, Int_t family);
+  virtual void    getElectrons(D3PDReader::ElectronD3PDObject *el_branch, Int_t family);
+  virtual void    getJets(D3PDReader::JetD3PDObject *jet_branch);
+  virtual void    getGoodMuons();
+  virtual void    getGoodElectrons();
+  virtual void    getGoodJets();
+  virtual void    getGoodLeptons();
   virtual std::vector<TString> getListOfAlternativeTriggers(TString sequence);
   
   
@@ -678,7 +678,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   //object quality
   Bool_t Pair_Quality();
-  
   
   // utility functions for the selection
   virtual Bool_t isMC() {
@@ -731,11 +730,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t         getCrossSectionWeight();
   Float_t         getTruthHiggsMass();
   virtual Float_t getTruthHiggsPt();    // to be change!! error
-
+  
   void FillHllqqCutFlowXtag(int last_event,UInt_t chan);
   
   // option resume
-  virtual void printAllOptions() {
+  virtual void printAllOptions()
+  {
     Info("printAllOptions", "======== options =======");
     Info("printAllOptions", "analysis_version = %s", m_analysis_version.Data());
     Info("printAllOptions", "doSmearing       = %s", m_doSmearing ? "kTRUE" : "kFALSE");
@@ -756,7 +756,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t  NotMETclean();
   Bool_t  hasGoodMET();
   Bool_t  GetDoLowMass() { return m_dolowmass; }
-  Bool_t  GetSysStudy()  { return m_sysstudy; }
+  Bool_t  GetSysStudy()  { return m_sysstudy;  }
   Bool_t  IsConsistentWithTrigger();
   
   void  LoadGRL();
@@ -849,7 +849,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   pair <double,double> GetJetSFsvalue(int jetindex);
   
   // MVA methods (June 2013)
-  void SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36]);
+  void    SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36]);
   Float_t getFisher_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
   Float_t getLikelihood_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
   Float_t getLikelihoodMIX_KF(TMVA::Reader *reader[4],Float_t var1[4], Float_t var2[4], Float_t pt_jet, Float_t ntrk_jet,Float_t width_jet);
@@ -933,7 +933,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   // JES AND JER TOOL
   JetCalibrationTool *myJES;
-  JetSmearingTool *myJER;
+  JetSmearingTool    *myJER;
   
   // ggF reweighting tool
   ggFReweighting *fggFReweighter;
