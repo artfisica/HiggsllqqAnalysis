@@ -42,8 +42,8 @@ Bool_t MuonSmearing          = kTRUE,
   
   DoLowMass                  = kTRUE, 
   DoCaloMuons                = kTRUE,
-  
-  Print_weights              = kTRUE,
+  DoggFWeight                = kFALSE,
+  Print_weights              = kFALSE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
   DoKinematicFitter          = kFALSE,
@@ -54,10 +54,12 @@ Bool_t MuonSmearing          = kTRUE,
 // Systematic Flags
   DoElectronSystematics     = kFALSE,
   DoMuonSystematics         = kFALSE,
-  DoJetSystematics          = kFALSE,
+  DoJetSystematics          = kTRUE, //!!
   DoTaggingJetSystematics   = kFALSE,
-  DoTriggerSystematics      = kFALSE;
-
+  DoTriggerSystematics      = kFALSE,
+  
+//Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
+  ExtendedJetRegion         = kTRUE;
 
 
 //Global Jets Variables.
@@ -71,7 +73,7 @@ int      count_events(0),eventNow(-1),overElectron(0),overMuon(0),overJet(0);
 int      badevent(0), prebadevent(0), ptchange(0), ptelecChange(0);
 int      periodBD(0),periodEH(0),periodI(0),periodJK(0),periodLM(0);
 Float_t  Muon0(0),Muon1(0),Muon2(0),Muon3(0),Muon4(0),Muon5(0),Muon6(0),Muon7(0),Muon8(0);
-Float_t  Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electron5(0),Electron6(0), b_rescaling = 1.00 /*Fixed  in 1.05 (2011)*/; 
+Float_t  Electron0(0),Electron1(0),Electron2(0),Electron3(0),Electron4(0),Electron5(0),Electron6(0), b_rescaling = 1.05 /*Fixed  in 1.05 (2011)*/; 
 
 
 // Definition of the Leptonic (dilepton) invariant mass window:
@@ -164,6 +166,13 @@ Bool_t HiggsllqqAnalysis::change_input()
 Bool_t HiggsllqqAnalysis::initialize_tools()
 {    
   printAllOptions();
+  
+  
+  if(DoJetSystematics && GetSysStudy())
+    cout <<"  Syst JER ON!  "<<endl;
+  else
+    cout <<"  Syst JER OFF! "<<endl;
+  
   
   // initiate the calibration tool
   TString jetAlgo="";
@@ -640,14 +649,17 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     
     m_EventCutflow0tag.push_back(Analysis::CutFlowTool("Plain_0tag_" + chan_name[i]));
     m_EventCutflow0tag[i].addCut("NumTagJets0");
+    m_EventCutflow0tag[i].addCut("PtLeadingJet0");
     m_EventCutflow0tag[i].addCut("DiJetMass0");
     
     m_EventCutflow1tag.push_back(Analysis::CutFlowTool("Plain_1tag_" + chan_name[i]));
     m_EventCutflow1tag[i].addCut("NumTagJets1");
+    m_EventCutflow1tag[i].addCut("PtLeadingJet1");
     m_EventCutflow1tag[i].addCut("DiJetMass1");
     
     m_EventCutflow2tag.push_back(Analysis::CutFlowTool("Plain_2tag_" + chan_name[i]));
     m_EventCutflow2tag[i].addCut("NumTagJets2");
+    m_EventCutflow2tag[i].addCut("PtLeadingJet2");
     m_EventCutflow2tag[i].addCut("DiJetMass2");
     
     m_EventCutflow_rw.push_back(Analysis::CutFlowTool("Reweighted_" + chan_name[i]));
@@ -668,14 +680,17 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
     
     m_EventCutflow0tag_rw.push_back(Analysis::CutFlowTool("Reweighted_0tag_" + chan_name[i]));
     m_EventCutflow0tag_rw[i].addCut("NumTagJets0");
+    m_EventCutflow0tag_rw[i].addCut("PtLeadingJet0");
     m_EventCutflow0tag_rw[i].addCut("DiJetMass0");
     
     m_EventCutflow1tag_rw.push_back(Analysis::CutFlowTool("Reweighted_1tag_" + chan_name[i]));
     m_EventCutflow1tag_rw[i].addCut("NumTagJets1");
+    m_EventCutflow1tag_rw[i].addCut("PtLeadingJet1");
     m_EventCutflow1tag_rw[i].addCut("DiJetMass1");
     
     m_EventCutflow2tag_rw.push_back(Analysis::CutFlowTool("Reweighted_2tag_" + chan_name[i]));
     m_EventCutflow2tag_rw[i].addCut("NumTagJets2");
+    m_EventCutflow2tag_rw[i].addCut("PtLeadingJet2");
     m_EventCutflow2tag_rw[i].addCut("DiJetMass2");
     
     m_ElectronCutflow.push_back(Analysis::CutFlowTool("Electrons_" + chan_name[i]));
@@ -861,33 +876,14 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   if (chargeprod==-1 || (getChannel() != HiggsllqqAnalysis::MU2 && !GetDoLowMass()) || GetDoQCDSelection()) last = HllqqCutFlow::OppositeSign;
   else return last;
   
-  int goodLeading = 0;
-  int itr=0;
-  std::vector<Analysis::Jet *>::iterator jet_it;
-  for (jet_it = m_GoodJets.begin(); jet_it != m_GoodJets.end(); ++jet_it)
-    {
-      itr++;
-      if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5) 
-	goodLeading=1;
-    }
+
+
   
   //Minimum number of Jets cut
-  if(m_GoodJets.size()>1 && goodLeading) last = HllqqCutFlow::TwoJets;
+  if(m_GoodJets.size()>=2) last = HllqqCutFlow::TwoJets;
   else return last;
+    
   
-  
-  for (jet_it = m_GoodJets.begin(); jet_it != m_GoodJets.end(); ++jet_it)
-    {
-      itr++;
-      if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5) 
-	goodLeading=1;
-      /*
-	if( GetMV1value(*jet_it)>MV1_OP70 && TMath::Abs((*jet_it)->righteta())>2.5 )
-	cout<<"  -|- #good Jets = "<<m_GoodJets.size()<<"  Pt= "<<(*jet_it)->rightpt()<<"  Eta = "<<(*jet_it)->righteta()<<"  Phi = "<<(*jet_it)->rightphi()<<"  Mass = "<<(*jet_it)->Get4Momentum()->M()<<"  Yes Tagged = "<<GetMV1value(*jet_it)<<endl;
-	else if(  TMath::Abs((*jet_it)->righteta())>2.5 )
-	cout<<"  -|- #good Jets = "<<m_GoodJets.size()<<"  Pt= "<<(*jet_it)->rightpt()<<"  Eta = "<<(*jet_it)->righteta()<<"  Phi = "<<(*jet_it)->rightphi()<<"  Mass = "<<(*jet_it)->Get4Momentum()->M()<<"  Not Tagged = "<<GetMV1value(*jet_it)<<endl;
-      */
-    }
   
   
   // Dilepton Mass windows
@@ -1366,12 +1362,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 {
   Float_t tmp_E(-9999.9), tmp_pt(-9999.9), tmp_eta(-9999.9), tmp_phi(-9999.9), tmp_Et(-9999.9);
   Bool_t sysstudy = GetSysStudy(); 
-  
-  if(DoJetSystematics)
-    SetSysStudy(kTRUE);
-  else if(!DoJetSystematics)
-    SetSysStudy(kFALSE);
-  
+    
   // For the pile-up correction, we need mu and NPV(2+ tracks)    
   double mu = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
   int NPV=0;
@@ -1747,7 +1738,7 @@ void HiggsllqqAnalysis::getGoodJets()
     std::vector<Analysis::ChargedLepton*>::iterator el_itr;
     for (el_itr = m_Electrons.begin(); el_itr != m_Electrons.end(); ++el_itr) {
       Analysis::ChargedLepton *el = (*el_itr);
-      if (jet->Get4Momentum()->DeltaR(*(el->Get4Momentum_ID())) < 0.4) {
+      if (jet->Get4Momentum()->DeltaR(*(el->Get4Momentum_ID())) < Cone_size) {
 	// found an jet overlapped to a electron
 	skip_jet[i] = kTRUE;
       } // overlapping jet/electron
@@ -2164,9 +2155,9 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
     }  
   else if (!dolowmass)
     {
-      if ((jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0)/*
+      if ((jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0)
 	  ||
-	  (jet->rightpt()>30000. && TMath::Abs(jet->righteta()) > 2.5 && TMath::Abs(jet->righteta()) < 4.5)*/) jet->set_lastcut(HllqqJetQuality::kinematics);
+	  (jet->rightpt()>30000. && TMath::Abs(jet->righteta()) > 2.5 && jet->rightE()>0 && TMath::Abs(jet->righteta()) < 4.5 && ExtendedJetRegion)) jet->set_lastcut(HllqqJetQuality::kinematics);
       else return kFALSE;
     }
   
@@ -2269,7 +2260,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	   
 	    if(isMC())
 	      {
-		float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.);
+		float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.),tmpDPhijjZWeight(1.);
 		
 		tmpMCWeight      = getEventWeight(); //ntuple->eventinfo.mc_event_weight();
 		tmpPileupWeight  = getPileupWeight();
@@ -2277,7 +2268,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		tmpggFWeight     = getggFWeight();
 		tmpVertexZWeight = getVertexZWeight();
 		tmpTriggerSF     = getCandidateTriggerSF();
-		
+		tmpDPhijjZWeight = getDPhijjZWeight();
 		
 		if(tmpMCWeight>=0)
 		  tmpWeight       *= tmpMCWeight;
@@ -2297,6 +2288,9 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		if(tmpTriggerSF>=0)
 		  tmpWeight       *= tmpTriggerSF;
 		else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		if(tmpDPhijjZWeight>=0)
+		  tmpWeight       *= tmpDPhijjZWeight;
+		else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
 		
 		if(Print_weights)
 		  {
@@ -2309,6 +2303,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 			<<"|"<<tmpggFWeight
 			<<"|"<<tmpVertexZWeight
 			<<"|"<<tmpTriggerSF
+			<<"|"<<tmpDPhijjZWeight
 			<<"|"<<tmpWeight
 			<<"|"<<endl;
 		  }
@@ -2954,12 +2949,14 @@ Float_t HiggsllqqAnalysis::getggFWeight()
 {
   Float_t result = 1.;
   
-  if (isMC()) {
-    // check if this is a signal PowHeg ggF sample
-    if (m_SignalSampleMass.find(ntuple->eventinfo.mc_channel_number()) != m_SignalSampleMass.end()) {
-      result = m_ggFReweighter->getWeight(getTruthHiggsPt() / 1000);
+  if (isMC() && DoggFWeight) //Inserted the DoggFWeight in 2012! Discarded weight in 2012 data. (October 2013)
+    {
+      // check if this is a signal PowHeg ggF sample
+      if (m_SignalSampleMass.find(ntuple->eventinfo.mc_channel_number()) != m_SignalSampleMass.end())
+	{
+	  result = m_ggFReweighter->getWeight(getTruthHiggsPt() / 1000);
+	}
     }
-  }
   
   return result;
 }
@@ -3114,8 +3111,8 @@ Bool_t HiggsllqqAnalysis::JetKinematicFitterResult()
   
   TLorentzVector hadZ = j1 + j2;
   
-  if((((m_bestdijet->index1!=-1)    && (m_bestdijet->index2!=-1) && (hadZ.M()>Mjj_low_min)  && (hadZ.M()<Mjj_low_max))  &&  dolowmass) 
-     || (((m_bestdijet->index1!=-1) && (m_bestdijet->index2!=-1) && (hadZ.M()>Mjj_high_min) && (hadZ.M()<Mjj_high_max)) && !dolowmass))
+  if (((  /*(m_bestdijet->index1!=-1) && (m_bestdijet->index2!=-1) &&*/ (hadZ.M()>Mjj_low_min)  && (hadZ.M()<Mjj_low_max))  &&  dolowmass) 
+      ||((/*(m_bestdijet->index1!=-1) && (m_bestdijet->index2!=-1) &&*/ (hadZ.M()>Mjj_high_min) && (hadZ.M()<Mjj_high_max)) && !dolowmass))
     return kTRUE; 
   else
     return kFALSE;
@@ -3181,7 +3178,7 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
 	      
 	      dR_GoodEl_BadJet = TMath::Sqrt(TMath::Power(jet->righteta() - el->cl_eta(), 2) + TMath::Power(TVector2::Phi_mpi_pi(jet->rightphi() - el->cl_phi()), 2));
 	      
-	      if(dR_GoodEl_BadJet<0.4 && dR_GoodEl_BadJet>-1.)
+	      if(dR_GoodEl_BadJet<Cone_size && dR_GoodEl_BadJet>-1.)
 		Bad_event = kFALSE;
 	    }
 	  }
@@ -3455,6 +3452,7 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("EventWeight",&m_EventWeight);
   m_reduced_ntuple->Branch("PileupWeight",&m_PileupWeight);
   m_reduced_ntuple->Branch("VertexZWeight",&m_VertexZWeight);
+  m_reduced_ntuple->Branch("DPhijjZWeight",&m_DPhijjZWeight);
   m_reduced_ntuple->Branch("TriggerSFWeight",&m_TriggerSFWeight);
   m_reduced_ntuple->Branch("mu",&m_mu);
   m_reduced_ntuple->Branch("NPV",&m_NPV);
@@ -3519,6 +3517,7 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_EventWeight       = 1.;
   m_PileupWeight      = 1.;
   m_VertexZWeight     = 1.;
+  m_DPhijjZWeight     = 1.;
   m_TriggerSFWeight   = 1.;
   m_mu                = 1;
   m_NPV               = 0;
@@ -3559,6 +3558,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
       m_EventWeight     = 1.;
       m_PileupWeight    = 1.;
       m_VertexZWeight   = 1.;
+      m_DPhijjZWeight   = 1.;
       m_TriggerSFWeight = 1.;
       m_mu              = 1.;
       m_truthH_pt       = -1.;
@@ -3698,8 +3698,9 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	  m_EventWeight     *= getEventWeight();
 	  m_PileupWeight    *= getPileupWeight();
 	  m_VertexZWeight   *= getVertexZWeight();
+	  m_DPhijjZWeight   *= getDPhijjZWeight();
 	  m_TriggerSFWeight *= getCandidateTriggerSF();
-	  m_weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF();
+	  m_weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getDPhijjZWeight()*getCandidateTriggerSF();
 	  m_mu               = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
 	  m_truthH_pt        = getTruthHiggsPt();
 	}
@@ -3882,7 +3883,8 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->ggFweight             = 1.00; //Careful, these are weights, initialization = 1.00
   str->EventWeight           = 1.00; //Careful, these are weights, initialization = 1.00
   str->PileupWeight          = 1.00; //Careful, these are weights, initialization = 1.00
-  str->VertexZWeight         = 1.00; //Careful, these are weights, initialization = 1.00
+  str->VertexZWeight         = 1.00; //Careful, these are weights, initialization = 1.0
+  str->DPhijjZWeight         = 1.00; //Careful, these are weights, initialization = 1.0
   str->TriggerSFWeight       = 1.00; //Careful, these are weights, initialization = 1.00
   str->truthH_pt             =   -1;
   str->btagSF                = 1.00; //Careful, these are weights, initialization = 1.00
@@ -4169,6 +4171,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("EventWeight",           &(str->EventWeight));
   analysistree->Branch("PileupWeight",          &(str->PileupWeight));
   analysistree->Branch("VertexZWeight",         &(str->VertexZWeight));
+  analysistree->Branch("DPhijjZWeight",         &(str->DPhijjZWeight));
   analysistree->Branch("TriggerSFWeight",       &(str->TriggerSFWeight));
   analysistree->Branch("truthH_pt",             &(str->truthH_pt));
   analysistree->Branch("mu",                    &(str->mu));
@@ -4490,6 +4493,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       str->EventWeight     = 1.;
       str->PileupWeight    = 1.;
       str->VertexZWeight   = 1.;
+      str->DPhijjZWeight   = 1.;
       str->TriggerSFWeight = 1.;
       str->weight          = 1.;
       str->mu              = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
@@ -4502,8 +4506,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  str->EventWeight     *= getEventWeight();
 	  str->PileupWeight    *= getPileupWeight();
 	  str->VertexZWeight   *= getVertexZWeight();
+	  str->DPhijjZWeight   *= getDPhijjZWeight();
 	  str->TriggerSFWeight *= getCandidateTriggerSF();
-	  str->weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF();
+	  str->weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getDPhijjZWeight()*getCandidateTriggerSF();
 	}      
       
       //  Reset and fill trigger flag word. Agosto2013. ERROR!
@@ -6468,6 +6473,25 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       if(b1==1) last1tag = HllqqCutFlow1tag::NumTagJets1;
       if(b2==1) last2tag = HllqqCutFlow2tag::NumTagJets2;
       
+      cout<<"before"<<endl;
+      
+      Bool_t goodLeading1 = kFALSE,goodLeading2 = kFALSE;
+      int itr=0;
+      std::vector<Analysis::Jet *>::iterator jet_it;
+      for (jet_it = m_GoodJets.begin(); jet_it != m_GoodJets.end(); ++jet_it)
+	{
+	  cout<<"while"<<endl;
+	  if(itr==0 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5 && (*jet_it)->rightpt() >45000.) goodLeading1 = kTRUE;
+	  if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5 && (*jet_it)->rightpt() >20000.) goodLeading1 = kTRUE;
+	  itr++;
+	}
+      
+      cout<<"after"<<endl;
+ 
+      if(b0==1 && goodLeading1 && goodLeading2)                                                            last0tag = HllqqCutFlow0tag::PtLeadingJet0;
+      if(b1==1 && goodLeading1 && goodLeading2)                                                            last1tag = HllqqCutFlow1tag::PtLeadingJet1;
+      if(b2==1 && goodLeading1 && goodLeading2)                                                            last2tag = HllqqCutFlow2tag::PtLeadingJet2;
+      
       if(b0==1 && ((JetBestPairResult() && BP_Selection) || (JetKinematicFitterResult() && LJ_Selection))) last0tag = HllqqCutFlow0tag::DiJetMass0;
       if(b1==1 && JetDimassOneTagged())                                                                    last1tag = HllqqCutFlow1tag::DiJetMass1;
       if(b2==1 && JetDimassTagged())                                                                       last2tag = HllqqCutFlow2tag::DiJetMass2;
@@ -6478,7 +6502,7 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       
       if(isMC()) 
 	{
-	  float weight_now = 1.*getSFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF()*getggFWeight();
+	  float weight_now = 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getDPhijjZWeight()*getCandidateTriggerSF();
 	  m_EventCutflow0tag_rw[chan].addCutCounter(last0tag, weight_now);
 	  m_EventCutflow1tag_rw[chan].addCutCounter(last1tag, weight_now);
 	  m_EventCutflow2tag_rw[chan].addCutCounter(last2tag, weight_now);
@@ -6580,6 +6604,22 @@ Float_t HiggsllqqAnalysis::getCandidateTriggerSF(TString syst)
 	  
 	  result = m_MuonTrigSF->GetTriggerSF(representative_run_number, false, muons_4m, mu_qualities, electrons_4m, el_qualities, syst_code).first;
 	} // passes single lepton trigger for 2011
+    }
+  
+  return result;
+}
+
+Float_t HiggsllqqAnalysis::getDPhijjZWeight()
+{
+  Float_t result = 1.;
+  Int_t last_event = getLastCutPassed();
+  if (isMC() && last_event >= HllqqCutFlow::MET)
+    {
+      TF1* f = new TF1("DPhiRatio", "pol1", 0, 3.14);
+      f->SetParameter(0, 0.900369 * 0.9905); 
+      f->SetParameter(1, 0.0632042);
+      
+      result = result * f->Eval(1.4);
     }
   
   return result;
