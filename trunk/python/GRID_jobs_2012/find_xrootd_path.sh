@@ -14,8 +14,8 @@
 
 ###################################################################################################################################################################
 FILE=$1                                                                                                                                                          ##
-SITE="INFN-ROMA1_LOCALGROUPDISK"                                                                                                                                 ##
-SERVER="grid-cert-03.roma1.infn.it"                                                                                                                              ##
+SITE="INFN-ROMA1_LOCALGROUPDISK" ##"INFN-NAPOLI-ATLAS_LOCALGROUPDISK"                                                                                            ##
+SERVER="grid-cert-03.roma1.infn.it" ##"t2-dpm-01.na.infn.it"                                                                                                     ##
 date                                                                                                                                                             ##
 echo "  "                                                                                                                                                        ##
 echo "################################"                                                                                                                          ##
@@ -29,10 +29,10 @@ while read files;do                                                             
         echo "dq2-ls -L $SITE -fp user.$2.$sample.$3/|grep srm|awk '{print \"lcg-la \"\$1}'|awk '{system(\$0 \"|sed 's#lfn:/grid#root://$SERVER:1094/#g'\")}'"   ##
         ((k++))                                                                                                                                                  ##
     done < $files                                                                                                                                                ##   
-    echo "                       "                                                                                                                               ##
-    echo "End of Samples = $files"                                                                                                                               ##
-    echo " ##########################  "                                                                                                                         ##
-    echo "                       "                                                                                                                               ##
+    echo "                                     "                                                                                                                 ##
+    echo " ### End of Samples = $files ###     "                                                                                                                 ##
+    echo " ##################################  "                                                                                                                 ##
+    echo "                                     "                                                                                                                 ##
 done  < $FILE                                                                                                                                                    ##
                                                                                                                                                                  ##
 echo "  "                                                                                                                                                        ##

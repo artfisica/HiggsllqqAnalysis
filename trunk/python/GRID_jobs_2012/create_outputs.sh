@@ -19,8 +19,8 @@ while read files;do                                                        ##
         ((k++))                                                            ##
     done < $files                                                          ##   
     echo "                       "                                         ##
-    echo "End of Samples = $files"                                         ##
-    echo " ##########################  "                                   ##
+    echo " ### End of Samples = $files ###     "                           ##
+    echo " ##################################  "                           ##
     echo "                       "                                         ##
 done  < $FILE                                                              ##
                                                                            ##
