@@ -130,8 +130,8 @@ namespace HllqqCutFlow {
 namespace HllqqCutFlow0tag {
   enum {
     NumTagJets0,
+    PtLeadingJet0,
     DiJetMass0,
-    //    PtLeadingJet0,
     //    JetPt0,
     //    Ptleptons0,
     //    Dphileptons0,
@@ -142,8 +142,8 @@ namespace HllqqCutFlow0tag {
 namespace HllqqCutFlow1tag {
   enum {
     NumTagJets1,
+    PtLeadingJet1,
     DiJetMass1,
-    //    PtLeadingJet0,
     //    JetPt0,
     //    Ptleptons0,
     //    Dphileptons0,
@@ -154,8 +154,8 @@ namespace HllqqCutFlow1tag {
 namespace HllqqCutFlow2tag {
   enum {
     NumTagJets2,
+    PtLeadingJet2,
     DiJetMass2,
-    //    PtLeadingJet0,
     //    JetPt0,
     //    Ptleptons0,
     //    Dphileptons0,
@@ -468,6 +468,7 @@ typedef struct {
   float EventWeight;
   float PileupWeight;
   float VertexZWeight;
+  float DPhijjZWeight;
   float TriggerSFWeight;
   //////////////////////
   float xWin_44p_4var;
@@ -537,81 +538,95 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   
   // constructor, destructor
-  HiggsllqqAnalysis(TTree * /*tree*/ = 0) {
-  }
+  HiggsllqqAnalysis(TTree * /*tree*/ = 0)
+    {
+    }
   ~HiggsllqqAnalysis();
   
   
   // options setters
-  virtual void setAnalysisVersion(TString val) {
+  virtual void setAnalysisVersion(TString val)
+  {
     m_analysis_version = val;
   }
   
-  virtual void setSmearing(Bool_t val) {
+  virtual void setSmearing(Bool_t val)
+  {
     m_doSmearing = val;
   }
   
-  virtual void setTopoIso(Bool_t val) {
+  virtual void setTopoIso(Bool_t val)
+  {
     m_useTopoIso = val;
   }
   
-  virtual void setMuonFamily(Int_t val) {
+  virtual void setMuonFamily(Int_t val)
+  {
     m_muonFamily = val;
   }
   
-  virtual void setElectronFamily(Int_t val) {
+  virtual void setElectronFamily(Int_t val)
+  {
     m_electronFamily = val;
   }
   
-  virtual void setJetFamily(Int_t val) {
+  virtual void setJetFamily(Int_t val)
+  {
     m_jetFamily = val;
   }
   
-  virtual void setOutputFile(TString val) {
+  virtual void setOutputFile(TString val)
+  {
     m_outputFileName = val;
+  }
+  
+  // Method to setup the Systematic Jet Studies (JES-JER)
+  virtual void SetSysStudy(Bool_t val) 
+  {
+    m_sysstudy = val;
   }
   
   
  protected:
   
   // pointers to ATLAS tools
-  Root::TGoodRunsListReader         *m_GRL;
-  Root::TPileupReweighting          *m_PileupReweighter;
-  D3PD::TrigDecisionToolD3PD        *m_TrigDecisionToolD3PD;
-  egRescaler::EnergyRescalerUpgrade *m_ElectronEnergyRescaler;
+  Root::TGoodRunsListReader          *m_GRL;
+  Root::TPileupReweighting           *m_PileupReweighter;
+  D3PD::TrigDecisionToolD3PD         *m_TrigDecisionToolD3PD;
+  egRescaler::EnergyRescalerUpgrade  *m_ElectronEnergyRescaler;
   
-  Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSF;
-  Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSFCalo;
-  Analysis::AnalysisMuonConfigurableScaleFactors *m_MuonEffSFSA;
+  Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSF;
+  Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFCalo;
+  Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFSA;
   
   MuonSmear::SmearingClass *m_MuonSmearer;
   
-  egammaSFclass                 *m_ElectronEffSF;
-  VertexPositionReweightingTool *m_VertexPositionReweighter;
-  LeptonTriggerSF               *m_MuonTrigSF;
-  ggFReweighting                *m_ggFReweighter;
-  TriggerNavigationVariables     m_trigNavVar;
-  MuonTriggerMatching           *m_MuonTriggerMatchTool;
-  ElectronTriggerMatching       *m_ElectronTriggerMatchTool;
-  TH2F     *m_smearD0[3];
-  TRandom3  m_smearD0_rand;
-  TAxis    *m_smearD0_x;
-  TAxis    *m_smearD0_y;
+  egammaSFclass                  *m_ElectronEffSF;
+  VertexPositionReweightingTool  *m_VertexPositionReweighter;
+  LeptonTriggerSF                *m_MuonTrigSF;
+  ggFReweighting                 *m_ggFReweighter;
+  TriggerNavigationVariables      m_trigNavVar;
+  MuonTriggerMatching            *m_MuonTriggerMatchTool;
+  ElectronTriggerMatching        *m_ElectronTriggerMatchTool;
+  TH2F      *m_smearD0[3];
+  TRandom3   m_smearD0_rand;
+  TAxis     *m_smearD0_x;
+  TAxis     *m_smearD0_y;
   
   
   // containers for leptons, Jets, dileptons, in the event
-  std::vector<Analysis::ChargedLepton *> m_Muons;
-  std::vector<Analysis::ChargedLepton *> m_Electrons;
-  std::vector<Analysis::Jet *>           m_Jets;
-  std::vector<Analysis::ChargedLepton *> m_GoodMuons;
-  std::vector<Analysis::ChargedLepton *> m_GoodElectrons;
-  std::vector<Analysis::Jet *>           m_GoodJets;
-  std::vector<Analysis::Dilepton *>      m_Dileptons;
+  std::vector<Analysis::ChargedLepton *>  m_Muons;
+  std::vector<Analysis::ChargedLepton *>  m_Electrons;
+  std::vector<Analysis::Jet *>            m_Jets;
+  std::vector<Analysis::ChargedLepton *>  m_GoodMuons;
+  std::vector<Analysis::ChargedLepton *>  m_GoodElectrons;
+  std::vector<Analysis::Jet *>            m_GoodJets;
+  std::vector<Analysis::Dilepton *>       m_Dileptons;
   
   
   // utility maps
-  std::map<UInt_t, Float_t> m_CrossSection;
-  std::map<UInt_t, Int_t>   m_SignalSampleMass;
+  std::map<UInt_t, Float_t>  m_CrossSection;
+  std::map<UInt_t, Int_t>    m_SignalSampleMass;
   
   
   // channels to be processed and cutflows
@@ -680,36 +695,51 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t Pair_Quality();
   
   // utility functions for the selection
-  virtual Bool_t isMC() {
+  virtual Bool_t isMC()
+  {
     return ntuple->mc.n.IsAvailable();
   }
-  virtual TString analysis_version() {
+  
+  virtual TString analysis_version()
+  {
     return m_analysis_version;
   }
-  virtual Bool_t doSmearing() {
+  
+  virtual Bool_t doSmearing()
+  {
     return m_doSmearing;
   }
-  virtual Bool_t useTopoIso() {
+  
+  virtual Bool_t useTopoIso()
+  {
     return m_useTopoIso;
   }
-  virtual Int_t getMuonFamily() {
+  
+  virtual Int_t getMuonFamily()
+  {
     return m_muonFamily;
   }
-  virtual Int_t getElectronFamily() {
+  
+  virtual Int_t getElectronFamily()
+  {
     return m_electronFamily;
   }
-  virtual Int_t getJetFamily() {
+  
+  virtual Int_t getJetFamily()
+  {
     return m_jetFamily;
   }
   
   virtual Int_t getTriggerInfo(TString chain);
   virtual Int_t getPeriod();
   
-  virtual void setChannel(Int_t chan) {
+  virtual void setChannel(Int_t chan)
+  {
     m_thisChannel = chan;
   }
   
-  virtual Int_t getChannel() {
+  virtual Int_t getChannel()
+  {
     return m_thisChannel;
   }
   
@@ -721,6 +751,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual Float_t getLeptonWeight(Analysis::ChargedLepton *lep);
   virtual Float_t getSFWeight();
   virtual Float_t getggFWeight();
+  virtual Float_t getDPhijjZWeight();
+  
   
   // Trigger SF 
   Float_t getCandidateTriggerSF(TString syst = "");
@@ -811,7 +843,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   
   // Method to flag/control the QCD selection  
-  Bool_t GetDoQCDSelection() { 
+  Bool_t GetDoQCDSelection()
+  { 
     if(!isMC()) return m_doqcdselection; 
     return kFALSE;
   }  
@@ -821,10 +854,6 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   // Method to flag/control the Low or High Mass selection    
   void SetDoLowMass(Bool_t val) { m_dolowmass = val; }
-  
-  
-  // Method to setup the Systematic Jet Studies (JES-JER)
-  void SetSysStudy(Bool_t val) { m_sysstudy = val; }
   
   
   // Methods to sort the Jets or Leptons by pt
@@ -991,6 +1020,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t m_EventWeight;
   Float_t m_PileupWeight;
   Float_t m_VertexZWeight;
+  Float_t m_DPhijjZWeight;
   Float_t m_TriggerSFWeight;
   Float_t m_mu;
   Float_t m_truthH_pt;
