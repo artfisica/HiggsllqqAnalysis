@@ -6473,21 +6473,17 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       if(b1==1) last1tag = HllqqCutFlow1tag::NumTagJets1;
       if(b2==1) last2tag = HllqqCutFlow2tag::NumTagJets2;
       
-      cout<<"before"<<endl;
-      
+           
       Bool_t goodLeading1 = kFALSE,goodLeading2 = kFALSE;
       int itr=0;
       std::vector<Analysis::Jet *>::iterator jet_it;
       for (jet_it = m_GoodJets.begin(); jet_it != m_GoodJets.end(); ++jet_it)
 	{
-	  cout<<"while"<<endl;
 	  if(itr==0 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5 && (*jet_it)->rightpt() >45000.) goodLeading1 = kTRUE;
-	  if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5 && (*jet_it)->rightpt() >20000.) goodLeading1 = kTRUE;
+	  if(itr==1 && (*jet_it)->righteta() >-2.5 && (*jet_it)->righteta()<2.5 && (*jet_it)->rightpt() >20000.) goodLeading2 = kTRUE;
 	  itr++;
 	}
       
-      cout<<"after"<<endl;
- 
       if(b0==1 && goodLeading1 && goodLeading2)                                                            last0tag = HllqqCutFlow0tag::PtLeadingJet0;
       if(b1==1 && goodLeading1 && goodLeading2)                                                            last1tag = HllqqCutFlow1tag::PtLeadingJet1;
       if(b2==1 && goodLeading1 && goodLeading2)                                                            last2tag = HllqqCutFlow2tag::PtLeadingJet2;
