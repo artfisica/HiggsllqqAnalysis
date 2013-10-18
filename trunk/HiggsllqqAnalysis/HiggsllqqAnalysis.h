@@ -674,15 +674,17 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual TString getSingleElectronTriggerName();
   virtual TString getDiElectronTriggerName();
   virtual TString getElectronMuonTriggerName();
-  virtual void    applyChanges(Analysis::ChargedLepton *lep);
-  virtual void    applyChanges(Analysis::Jet *jet);
-  virtual void    getMuons(D3PDReader::MuonD3PDObject *mu_branch, Int_t family);
-  virtual void    getElectrons(D3PDReader::ElectronD3PDObject *el_branch, Int_t family);
-  virtual void    getJets(D3PDReader::JetD3PDObject *jet_branch);
+  virtual void    applyChanges( Analysis::ChargedLepton *lep );
+  virtual void    applyChanges( Analysis::Jet           *jet );
+  virtual void    getMuons( D3PDReader::MuonD3PDObject     *mu_branch, Int_t family );
+  virtual void    getElectrons( D3PDReader::ElectronD3PDObject *el_branch, Int_t family );
+  virtual void    getJets( D3PDReader::JetD3PDObject       *jet_branch );
   virtual void    getGoodMuons();
   virtual void    getGoodElectrons();
   virtual void    getGoodJets();
   virtual void    getGoodLeptons();
+  virtual Float_t getDiLeptonMass();
+  
   virtual std::vector<TString> getListOfAlternativeTriggers(TString sequence);
   
   
@@ -791,10 +793,10 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t  GetSysStudy()  { return m_sysstudy;  }
   Bool_t  IsConsistentWithTrigger();
   
-  void  LoadGRL();
-  void  InitReducedNtuple();
-  void  ResetReducedNtupleMembers();
-  void  FillReducedNtuple(Int_t cut, UInt_t channel);
+  void    LoadGRL();
+  void    InitReducedNtuple();
+  void    ResetReducedNtupleMembers();
+  void    FillReducedNtuple(Int_t cut, UInt_t channel);
   
   Float_t getCorrectMETValue();
   Float_t GetMV1value(Analysis::Jet *jet);
@@ -806,7 +808,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t isGluonJet(Int_t pdg);
   
   // Higgs MC (weight) Methods
-  void InitMasses();
+  void    InitMasses();
   Float_t GetTruthHiggsPt();
   Float_t GetggFWeight();
   
