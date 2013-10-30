@@ -2196,194 +2196,197 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_generatedEntriesHisto->Fill("Sherpa_Veto",(!SherpaPt0Veto()) ? 1 : 0);   
   
   
-  for (UInt_t i = 0; i < m_Channels.size(); i++) {    
-    
-    UInt_t chan = m_Channels.at(i);
-    
-    setChannel(chan);
-    
-    for(int sel=0; sel<2; sel++) //Looping on the Low/High Mass selections 
-      {
-	if(sel==0)
-	  {  //Set the Low or High Mass Analysis
-	    SetDoLowMass(kTRUE);
-	  }
-	else
-	  {  //Set the Low or High Mass Analysis
-	    SetDoLowMass(kFALSE);
-	  }
-		
-	m_called_getGoodLeptons = kFALSE;      
-	m_called_getGoodObjects = kFALSE;
-	ResetReducedNtupleMembers();
-	// TestSelection Reset 
-	ResetAnalysisOutputBranches(&m_outevent);
-	
-
-        //Set the QCD flag FALSE
-        SetDoQCDSelection(kFALSE);
-	
-	Int_t last_event = getLastCutPassed();	
-	
-	if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
-	  {
-	    // update cutflows
-	    m_EventCutflow[chan].addCutCounter(last_event, 1);
-	   
-	    if(isMC())
-	      {
-		float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.),tmpDPhijjZWeight(1.);
-		
-		tmpMCWeight      = getEventWeight(); //ntuple->eventinfo.mc_event_weight();
-		tmpPileupWeight  = getPileupWeight();
-		tmpSFWeight      = getSFWeight();
-		tmpggFWeight     = getggFWeight();
-		tmpVertexZWeight = getVertexZWeight();
-		tmpTriggerSF     = getCandidateTriggerSF();
-		tmpDPhijjZWeight = getDPhijjZWeight();
-		
-		if(tmpMCWeight>=0)
-		  tmpWeight       *= tmpMCWeight;
-		else cout<<"   ERROR: Upps the MC event weight is negative!!!!   "<<tmpMCWeight     <<endl;
-		if(tmpPileupWeight>=0)
-		  tmpWeight       *= tmpPileupWeight;
-		else cout<<"   ERROR: Upps the PileupWeight is negative!!!!      "<<tmpPileupWeight <<endl;
-		if(tmpSFWeight>=0)
-		  tmpWeight       *= tmpSFWeight;
-		else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
-		if(tmpggFWeight>=0)
-		  tmpWeight       *= tmpggFWeight;
-		else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
-		if(tmpVertexZWeight>=0)
-		  tmpWeight       *= tmpVertexZWeight;
-		else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
-		if(tmpTriggerSF>=0)
-		  tmpWeight       *= tmpTriggerSF;
-		else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
-		if(tmpDPhijjZWeight>=0)
-		  tmpWeight       *= tmpDPhijjZWeight;
-		else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
-		
-		if(Print_weights)
-		  {
-		    cout<<"|"<<ntuple->eventinfo.mc_channel_number()
-			<<"|"<<ntuple->eventinfo.EventNumber()
-			<<"|"<<chan
-			<<"|"<<tmpMCWeight
-			<<"|"<<tmpPileupWeight
-			<<"|"<<tmpSFWeight
-			<<"|"<<tmpggFWeight
-			<<"|"<<tmpVertexZWeight
-			<<"|"<<tmpTriggerSF
-			<<"|"<<tmpDPhijjZWeight
-			<<"|"<<tmpWeight
-			<<"|"<<endl;
-		  }
-		
-		m_EventCutflow_rw[chan].addCutCounter(last_event,1.*tmpWeight);
+  for (UInt_t i = 0; i < m_Channels.size(); i++)
+    {    
+      UInt_t chan = m_Channels.at(i);      
+      setChannel(chan);
+      
+      for(int sel=0; sel<2; sel++) //Looping on the Low/High Mass selections 
+	{
+	  float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.),tmpDPhijjZWeight(1.);
+	  
+	  if(sel==0)
+	    {  //Set the Low or High Mass Analysis
+	      SetDoLowMass(kTRUE);
+	    }
+	  else
+	    {  //Set the Low or High Mass Analysis
+	      SetDoLowMass(kFALSE);
+	    }
+	  
+	  m_called_getGoodLeptons = kFALSE;      
+	  m_called_getGoodObjects = kFALSE;
+	  ResetReducedNtupleMembers();
+	  // TestSelection Reset 
+	  ResetAnalysisOutputBranches(&m_outevent);
+	  
+	  
+	  //Set the QCD flag FALSE
+	  SetDoQCDSelection(kFALSE);
+	  
+	  Int_t last_event = getLastCutPassed();	
+	  
+	  if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
+	    {
+	      // update cutflows
+	      m_EventCutflow[chan].addCutCounter(last_event, 1);
+	      
+	      if(isMC())
+		{		
+		  tmpMCWeight      = getEventWeight(); //ntuple->eventinfo.mc_event_weight();
+		  tmpPileupWeight  = getPileupWeight();
+		  tmpSFWeight      = getSFWeight();
+		  tmpggFWeight     = getggFWeight();
+		  tmpVertexZWeight = getVertexZWeight();
+		  tmpTriggerSF     = getCandidateTriggerSF();
+		  tmpDPhijjZWeight = getDPhijjZWeight();
+		  
+		  if(tmpMCWeight>=0)
+		    tmpWeight       *= tmpMCWeight;
+		  else cout<<"   ERROR: Upps the MC event weight is negative!!!!   "<<tmpMCWeight     <<endl;
+		  if(tmpPileupWeight>=0)
+		    tmpWeight       *= tmpPileupWeight;
+		  else cout<<"   ERROR: Upps the PileupWeight is negative!!!!      "<<tmpPileupWeight <<endl;
+		  if(tmpSFWeight>=0)
+		    tmpWeight       *= tmpSFWeight;
+		  else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
+		  if(tmpggFWeight>=0)
+		    tmpWeight       *= 1;//tmpggFWeight;
+		  else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
+		  if(tmpVertexZWeight>=0)
+		    tmpWeight       *= tmpVertexZWeight;
+		  else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
+		  if(tmpTriggerSF>=0)
+		    tmpWeight       *= tmpTriggerSF;
+		  else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		  if(tmpDPhijjZWeight>=0)
+		    tmpWeight       *= 1;//tmpDPhijjZWeight;
+		  else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		  
+		  if(Print_weights)
+		    {
+		      cout<<"|"<<ntuple->eventinfo.mc_channel_number()
+			  <<"|"<<ntuple->eventinfo.EventNumber()
+			  <<"|"<<chan
+			  <<"|"<<tmpMCWeight
+			  <<"|"<<tmpPileupWeight
+			  <<"|"<<tmpSFWeight
+			  <<"|"<<tmpggFWeight
+			  <<"|"<<tmpVertexZWeight
+			  <<"|"<<tmpTriggerSF
+			  <<"|"<<tmpDPhijjZWeight
+			  <<"|"<<tmpWeight
+			  <<"|"<<endl;
+		    }
+		  
+		  m_EventCutflow_rw[chan].addCutCounter(last_event,1.*tmpWeight);
+		}
+	      else
+		{
+		  m_EventCutflow_rw[chan].addCutCounter(last_event, 1.);
+		}	    
+	      
+	      // Filling the jet binning tag cutflows
+	      FillHllqqCutFlowXtag(last_event,chan);
+	      
+	      // Fill the cutflow histograms
+	      for (int cut = 0; cut<=last_event; cut++)
+		{
+		  //cout<<"    The cut now = "<<cut<<"    with channel = "<<chan<<"   and *tmpWeight =  "<<tmpWeight<<endl;
+		  h_cutflow->Fill(cut,1);
+		  if(isMC()) h_cutflow_weight->Fill(cut,1*tmpWeight);
+		  else       h_cutflow_weight->Fill(cut,1);
+		  if(chan==2)
+		    {
+		      h_cutflow_E2->Fill(cut,1);
+		      if(isMC()) h_cutflow_weight_E2->Fill(cut,1*tmpWeight);
+		      else       h_cutflow_weight_E2->Fill(cut,1);
+		    }
+		  if(chan==0)
+		    {
+		      h_cutflow_MU2->Fill(cut,1);
+		      if(isMC()) h_cutflow_weight_MU2->Fill(cut,1*tmpWeight);
+		      else       h_cutflow_weight_MU2->Fill(cut,1);
+		    }
+		}
+	      
+	      
+	      std::vector<Analysis::ChargedLepton*>::iterator lep;
+	      for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep) {
+		if ((*lep)->lastcut() != -1)
+		  m_MuonCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
 	      }
-	    else
-	      {
-		m_EventCutflow_rw[chan].addCutCounter(last_event, 1.);
-	      }	    
-	    
-	    // Filling the jet binning tag cutflows
-	    FillHllqqCutFlowXtag(last_event,chan);
-	    
-	    // Fill the cutflow histograms
-	    for (int cut = 0; cut<=last_event; cut++)
-	      {
-		h_cutflow->Fill(cut);
-		h_cutflow_weight->Fill(cut);
-		if(chan==2)
-		  {
-		    h_cutflow_E2->Fill(cut);
-		    h_cutflow_weight_E2->Fill(cut);
-		  }
-		if(chan==0)
-		  {
-		    h_cutflow_MU2->Fill(cut);
-		    h_cutflow_weight_MU2->Fill(cut);
-		  }
+	      
+	      
+	      for (lep = m_Electrons.begin(); lep != m_Electrons.end(); ++lep) {
+		if ((*lep)->lastcut() != -1)
+		  m_ElectronCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
 	      }
-	    
-	    
-	    std::vector<Analysis::ChargedLepton*>::iterator lep;
-	    for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep) {
-	      if ((*lep)->lastcut() != -1)
-		m_MuonCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
-	    }
-	    
-	    
-	    for (lep = m_Electrons.begin(); lep != m_Electrons.end(); ++lep) {
-	      if ((*lep)->lastcut() != -1)
-		m_ElectronCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
-	    }
-	    
-	    
-	    std::vector<Analysis::Jet*>::iterator jet;
-	    for (jet = m_Jets.begin(); jet != m_Jets.end(); ++jet) {
-	      if ((*jet)->lastcut() != -1)
-		m_JetCutflow[chan].addCutCounter((*jet)->lastcut(), 1);
-	    }
-	    
-	  } //End Printing of the cutflow shows Low==0 OR High==1 !!!!
-	
-	
-	if(chan!=1)// error: repare the mixing MUE channel
-	  {
-	    //Filling of the equivalent qqll tree (2011)
-	    FillReducedNtuple(last_event,chan);    
-	    
-	    
-	    // TestSelection Filling candidate struct
-	    FillAnalysisOutputTree(&m_outevent,last_event,chan);
-	  }	
-	
-	last_event = -1;
-
-	m_Muons.clear();
-	m_Electrons.clear();
-	m_Jets.clear();
-	m_GoodMuons.clear();
-	m_GoodElectrons.clear();
-	m_GoodJets.clear();
-  
-       
-	/////////////////////
-	// QCD selection - only for data
-	/////////////////////
-	if(!isMC())
-	  {
-	    m_called_getGoodLeptons = kFALSE;      
-	    m_called_getGoodObjects = kFALSE;
-	    ResetReducedNtupleMembers();
-	    // TestSelection Reset 
-	    ResetAnalysisOutputBranches(&m_outevent);
-	    SetDoQCDSelection(kTRUE);
-	    last_event = getLastCutPassed();
-	    
-	    if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
-	      {
-		// Filling of the equivalent qqll tree (2011)
-		FillReducedNtuple(last_event,chan);       
-		
-		// TestSelection Filling candidate struct
-		FillAnalysisOutputTree(&m_outevent,last_event,chan);
-	      }	
-	    
-	    last_event = -1;
-	    
-	    m_Muons.clear();
-	    m_Electrons.clear();
-	    m_Jets.clear();
-	    m_GoodMuons.clear();
-	    m_GoodElectrons.clear();
-	    m_GoodJets.clear();
-	    
-	  } //end QCD selection
-      } //End of loop into the Low/high Selection
-  } // end of loop into the different channels
+	      
+	      
+	      std::vector<Analysis::Jet*>::iterator jet;
+	      for (jet = m_Jets.begin(); jet != m_Jets.end(); ++jet) {
+		if ((*jet)->lastcut() != -1)
+		  m_JetCutflow[chan].addCutCounter((*jet)->lastcut(), 1);
+	      }
+	      
+	    } //End Printing of the cutflow shows Low==0 OR High==1 !!!!
+	  
+	  
+	  if(chan!=1)// error: repare the mixing MUE channel
+	    {
+	      //Filling of the equivalent qqll tree (2011)
+	      FillReducedNtuple(last_event,chan);    
+	      
+	      
+	      // TestSelection Filling candidate struct
+	      FillAnalysisOutputTree(&m_outevent,last_event,chan);
+	    }	
+	  
+	  last_event = -1;
+	  
+	  m_Muons.clear();
+	  m_Electrons.clear();
+	  m_Jets.clear();
+	  m_GoodMuons.clear();
+	  m_GoodElectrons.clear();
+	  m_GoodJets.clear();
+	  
+	  
+	  /////////////////////
+	  // QCD selection - only for data
+	  /////////////////////
+	  if(!isMC())
+	    {
+	      m_called_getGoodLeptons = kFALSE;      
+	      m_called_getGoodObjects = kFALSE;
+	      ResetReducedNtupleMembers();
+	      // TestSelection Reset 
+	      ResetAnalysisOutputBranches(&m_outevent);
+	      SetDoQCDSelection(kTRUE);
+	      last_event = getLastCutPassed();
+	      
+	      if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
+		{
+		  // Filling of the equivalent qqll tree (2011)
+		  FillReducedNtuple(last_event,chan);       
+		  
+		  // TestSelection Filling candidate struct
+		  FillAnalysisOutputTree(&m_outevent,last_event,chan);
+		}	
+	      
+	      last_event = -1;
+	      
+	      m_Muons.clear();
+	      m_Electrons.clear();
+	      m_Jets.clear();
+	      m_GoodMuons.clear();
+	      m_GoodElectrons.clear();
+	      m_GoodJets.clear();
+	      
+	    } //end QCD selection
+	} //End of loop into the Low/high Selection
+    } // end of loop into the different channels
   
   
   for (UInt_t k = 0; k < m_Dileptons.size(); k++)
@@ -2427,7 +2430,7 @@ Bool_t HiggsllqqAnalysis::finalize_analysis()
     m_JetCutflow[i].print();
   }
   
-
+  
   //Printing number of events rejected in the medium cases!
   cout<<"  >  Number of events rejected by Medium quality in Electrons = "<<mediumElectrons<<endl;
   cout<<"  >    Number of events rejected by Medium quality in Muons   = "<<mediumMuons<<endl;
