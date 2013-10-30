@@ -1,0 +1,23 @@
+#!/bin/bash
+## author: arturos@cern.ch
+## September 30th 2013
+## Taking the file produced with: ls *.root >root_files
+#############################################################################
+FILE=$1
+
+k=1
+while read files;do
+        sample=${files//"mc12_8TeV."/}
+	sample=${sample//.root/}
+	sampleE=$sample"_E2.root"
+	sampleM=$sample"_MU2.root"
+        echo "cp $files $sampleE"   
+        echo "cp $files $sampleM"   
+        ((k++))
+done  < $FILE
+
+echo "  "
+echo "        ## Total number of Samples to be copied: $k ##"
+echo "               ################################"
+echo "  "
+#############################################################################
