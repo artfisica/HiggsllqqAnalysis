@@ -12,3 +12,13 @@ cp */*.root .
 ## To change the names of the files adiding the channel: E2 or MU2.
 ./Changes_names_channels
 
+## to obtain the xrootd path do:
+./xrootd_HZZllqq_<production> >paths_xrootd_production_<production>
+
+## to Download the production samples, do:
+cd /tmp/<user>
+
+./download_HZZllqq_14.9
+
+nohup ./download_HZZllqq_14.9&
+

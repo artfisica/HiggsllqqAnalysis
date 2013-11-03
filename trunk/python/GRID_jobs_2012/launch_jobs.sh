@@ -25,13 +25,16 @@ if [ $LAUNCH = "yes" ];                                                         
 then                                                                                       ##
    nohup                                                ./production_HZZllqq_$PRODUCTION;  ##
 fi                                                                                         ##
-rm    xrootd_HZZllqq_$PRODUCTION    outs_HZZllqq_$PRODUCTION    Jobs_HZZllqq_$PRODUCTION;  ##
+rm xrootd_HZZllqq_$PRODUCTION       outs_HZZllqq_$PRODUCTION;                              ##
+rm   Jobs_HZZllqq_$PRODUCTION   download_HZZllqq_$PRODUCTION;                              ##
 mv               production_HZZllqq_$PRODUCTION                 Jobs_HZZllqq_$PRODUCTION;  ##
                                                                                            ##
 ./create_outputs.sh   $FILE $USER $PRODUCTION $TAR $EXCLUDE >   outs_HZZllqq_$PRODUCTION;  ##
 ./find_xrootd_path.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE > xrootd_HZZllqq_$PRODUCTION;  ##
 chmod 755                                                       outs_HZZllqq_$PRODUCTION;  ##
 chmod 755                                                     xrootd_HZZllqq_$PRODUCTION;  ##
+sed 's/user\./dq2-get\ user\./g' outs_HZZllqq_$PRODUCTION  >download_HZZllqq_$PRODUCTION;  ##
+chmod 755                                                   download_HZZllqq_$PRODUCTION;  ##
 echo "        ## Done!"                                                                    ##
 ls -lhrt --col                                                                             ##
 #############################################################################################
