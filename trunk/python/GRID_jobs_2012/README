@@ -18,7 +18,7 @@ cp */*.root .
 ## to Download the production samples, do:
 cd /tmp/<user>
 
-./download_HZZllqq_14.9
+./download_HZZllqq_<production>
 
-nohup ./download_HZZllqq_14.9&
+nohup ./download_HZZllqq_<production>&
 
