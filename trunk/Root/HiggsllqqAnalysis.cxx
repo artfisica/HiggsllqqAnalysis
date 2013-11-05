@@ -1,7 +1,6 @@
 #define HiggsllqqAnalysis_cxx
 
 #include "HiggsllqqAnalysis/HiggsllqqAnalysis.h"
-
 #include <fstream>
 #include <TStyle.h>
 
@@ -62,7 +61,8 @@ Bool_t MuonSmearing          = kTRUE,
   ExtendedJetRegion          = kTRUE,
   
 //Calculating the DPhi weight
-  DoDPhiWeight               = kTRUE;
+  DoDPhiWeight               = kTRUE,
+  DoMV1c                     = kFALSE;
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0), JetTag1(-1), JetTag2(-1), JetSemiTag1(-1), JetSemiTag2(-1);
@@ -96,8 +96,9 @@ Float_t MET_high_cut  = 60000.;  // 50000.;
 
 int HFOR_value        = -999;
 
-// MV1 operating point 70%
-Float_t MV1_OP70      = 0.8119; // 0.795; // 0.601713;
+// MV1 (MV1c in use) operating point 70%    (November 2013)
+// Float_t MV1_OP70      = 0.8119; // 0.795; // 0.601713;    
+Float_t    MV1_OP70      = 0.7028;
 
 // Actual Jet Cone Size in used
 Float_t Cone_size     = 0.4;
@@ -399,7 +400,11 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   
   //initiate the bTag SFs tool
-  calib = new Analysis::CalibrationDataInterfaceROOT("MV1","BTagCalibration.env","./HiggsllqqAnalysis/util/btagSF/");
+  std::string tagger = "MV1";
+  if(DoMV1c)  tagger = "MV1c";
+  const std::string MV1tagger = tagger;
+  
+  calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,"BTagCalibration.env","./HiggsllqqAnalysis/util/btagSF/");
   
   if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEMJVF0_5";
   else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLCJVF0_5";
@@ -2475,7 +2480,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      for (int cut = 0; cut<last_event; cut++)
 		{
 		  h_cutflow->Fill(cut,1);
-		  if(isMC()) h_cutflow_weight->Fill(cut,1);//*tWeight);
+		  if(isMC()) h_cutflow_weight->Fill(cut,1*tWeight);
 		  else       h_cutflow_weight->Fill(cut,1);
 		  if(chan==2)
 		    {
@@ -3445,10 +3450,33 @@ Float_t HiggsllqqAnalysis::GetMV1value(Analysis::Jet *jet)
   Float_t w_IP3D            = Jet->flavor_weight_IP3D();
   Float_t w_SV1             = Jet->flavor_weight_SV1();
   Float_t w_JetFitterCOMBNN = Jet->flavor_weight_JetFitterCOMBNN();
-  Float_t MV1               = mv1Eval(w_IP3D,w_SV1,w_JetFitterCOMBNN,jet->rightpt(),jet->righteta());
+  Float_t w_pu              = Jet->flavor_component_jfitc_pu();
+  Float_t w_pc              = Jet->flavor_component_jfitc_pc();
+  Float_t w_pb              = Jet->flavor_component_jfitc_pb();
+  double jet_pt             = jet->rightpt();
+  double jet_eta            =jet->righteta();
   
-  if (analysis_version() == "rel_17_2")  MV1 = Jet->flavor_weight_MV1();
+  Float_t MV1               = mv1Eval( w_IP3D,w_SV1,w_JetFitterCOMBNN,jet_pt,jet_eta);
+  Float_t MV1c              = mv1cEval(w_IP3D,w_SV1,w_pu, w_pc, w_pb, jet_pt,jet_eta);
+  Float_t MV1d3pd           = Jet->flavor_weight_MV1();
   
+  //  Function to be called by the user: update included the 4th November 2013
+  //    double mv1cEval(double w_IP3D, double w_SV1, double w_pu, double w_pc, double w_pb, double jet_pt, double jet_eta)
+  //    where 
+  //      w_IP3D  = IP3D weight
+  //      w_SV1   = SV1 weight
+  //      w_pu    = light-jet prob. from JetFitterCOMBNN
+  //      w_pc    = c-jet prob. from JetFitterCOMBNN
+  //      w_pb    = b-jet prob. from JetFitterCOMBNN
+  //      jet_pt  = pt of the jet [in MeV]
+  //      jet_eta = eta of the jet
+  
+  //if (MV1d3pd!=MV1c) cout<<"MV1! = MV1c   ---> "<<MV1<<" != "<<MV1c<<" != "<<MV1d3pd<<endl;
+  if (analysis_version() == "rel_17_2") 
+    {
+      if(DoMV1c)  MV1 = MV1c;
+      else        MV1 = MV1d3pd;
+    }
   return MV1;
 }
 
@@ -3878,14 +3906,14 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
       
       if (isMC())
 	{
-	  m_SFWeight        *= getSFWeight();   DoggFWeight=kTRUE;
-	  m_ggFweight       *= getggFWeight();  DoggFWeight=kFALSE;
-	  m_EventWeight     *= getEventWeight();
-	  m_PileupWeight    *= getPileupWeight();
-	  m_VertexZWeight   *= getVertexZWeight();
-	  m_DPhijjZWeight   *= getDPhijjZWeight();
-	  m_TriggerSFWeight *= getCandidateTriggerSF();
-	  m_weight          *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getDPhijjZWeight()*getCandidateTriggerSF();
+	  m_SFWeight        *= getSFWeight();           // YES in weight
+	  m_ggFweight       *= getggFWeight();          // NOT in weight
+	  m_EventWeight     *= getEventWeight();        // YES in weight
+	  m_PileupWeight    *= getPileupWeight();       // YES in weight
+	  m_VertexZWeight   *= getVertexZWeight();      // YES in weight
+	  m_DPhijjZWeight   *= getDPhijjZWeight();      // NOT in weight
+	  m_TriggerSFWeight *= getCandidateTriggerSF(); // YES in weight
+	  m_weight          *= m_SFWeight * m_EventWeight * m_PileupWeight * m_VertexZWeight * m_TriggerSFWeight;
 	  m_mu               = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
 	  m_truthH_pt        = getTruthHiggsPt();
 	}
@@ -4670,14 +4698,14 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       if(isMC()) 
 	{
 	  str->truthH_pt            = getTruthHiggsPt();
-	  str->SFWeight            *= getSFWeight();   DoggFWeight=kTRUE;
-	  str->ggFweight           *= getggFWeight();  DoggFWeight=kFALSE;
-	  str->EventWeight         *= getEventWeight();
-	  str->PileupWeight        *= getPileupWeight();
-	  str->VertexZWeight       *= getVertexZWeight();
-	  str->DPhijjZWeight       *= getDPhijjZWeight();
-	  str->TriggerSFWeight     *= getCandidateTriggerSF();
-	  str->weight              *= getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getDPhijjZWeight()*getCandidateTriggerSF();
+	  str->SFWeight            *= getSFWeight();           // YES in weight
+	  str->ggFweight           *= getggFWeight();          // YES in weight
+	  str->EventWeight         *= getEventWeight();        // YES in weight
+	  str->PileupWeight        *= getPileupWeight();       // YES in weight
+	  str->VertexZWeight       *= getVertexZWeight();      // YES in weight
+	  str->DPhijjZWeight       *= getDPhijjZWeight();      // YES in weight
+	  str->TriggerSFWeight     *= getCandidateTriggerSF(); // YES in weight
+	  str->weight              *= str->SFWeight * str->EventWeight * str->PileupWeight * str->VertexZWeight * str->TriggerSFWeight;
 	}      
       
       //  Reset and fill trigger flag word. ERROR!
@@ -5724,18 +5752,23 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   
   Analysis::CalibResult res;
   
+  std::string  OP_tagger = "0_8119"; // 70% https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
+  if(DoMV1c)   OP_tagger = "0_7028"; // 70% https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
+  const std::string OP_MV1x = OP_tagger;
+  
+  
   if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
-    { 
+    {       
       // jet flavor truth values checked on lxr
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , "0_8119", uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet,  "C"  , "0_8119", uncertainty);
-      else                                                                            res = calib->getScaleFactor(ajet,"Light", "0_8119", uncertainty);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
+      else                                                                            res = calib->getScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
     } 
   else
     {
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , "0_8119", uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , "0_8119", uncertainty);
-      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", "0_8119", uncertainty);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
+      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
     }
   
   pair <double,double> result;
@@ -6657,7 +6690,7 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       
       if(isMC()) 
 	{
-	  float weight_now = 1.*getSFWeight()*getggFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getDPhijjZWeight()*getCandidateTriggerSF();
+	  float weight_now = 1.*getSFWeight()*getEventWeight()*getPileupWeight()*getVertexZWeight()*getCandidateTriggerSF();
 	  m_EventCutflow0tag_rw[chan].addCutCounter(last0tag, weight_now);
 	  m_EventCutflow1tag_rw[chan].addCutCounter(last1tag, weight_now);
 	  m_EventCutflow2tag_rw[chan].addCutCounter(last2tag, weight_now);
@@ -6838,7 +6871,6 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight()
 	  Float_t val       = f->Eval(dphi2jets);
 	  cout<<"    F(x)   = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
 	  result           *= val;
-	  cout<<"  Result   = "<<result<<endl;  
 	}
     }
   else
