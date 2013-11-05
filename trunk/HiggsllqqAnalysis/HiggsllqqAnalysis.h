@@ -45,6 +45,7 @@
 // HiggsqqllAnalysis needs
 #include "egammaAnalysisUtils/IsEMPlusPlusDefs.h"
 #include "JetTagAlgorithms/MV1.h"
+#include "JetTagAlgorithms/MV1c.h"
 #include "ApplyJetCalibration/ApplyJetCalibration.h"
 #include "ApplyJetResolutionSmearing/ApplyJetSmearing.h"
 #include "HiggsllqqAnalysis/JetKinematicFitter.h"
