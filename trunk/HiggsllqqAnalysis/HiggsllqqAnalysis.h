@@ -575,6 +575,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     m_jetFamily = val;
   }
+
+  virtual void setJetbTagger(Int_t val)
+  {
+    m_JetbTagger = val;
+  }
   
   virtual void setOutputFile(TString val)
   {
@@ -732,7 +737,13 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     return m_jetFamily;
   }
-  
+ 
+
+  virtual Int_t getJetbTagger()
+  {
+    return m_JetbTagger;
+  }
+ 
   virtual Int_t getTriggerInfo(TString chain);
   virtual Int_t getPeriod();
   
@@ -778,6 +789,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     Info("printAllOptions", "muonFamily       = %d", m_muonFamily);
     Info("printAllOptions", "electronFamily   = %d", m_electronFamily);
     Info("printAllOptions", "jetFamily        = %d", m_jetFamily);
+    Info("printAllOptions", "jet b Tagger     = %d", m_JetbTagger);
     Info("printAllOptions", "outputFileName   = %s", m_outputFileName.Data());
     Info("printAllOptions", "========================");
   }
@@ -928,14 +940,16 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Long64_t m_entriesInChain;
   Long64_t m_processedEntries;
   
- private:
+ private: 
   TString m_analysis_version;
   Bool_t  m_doSmearing;
   Bool_t  m_useTopoIso;
   Int_t   m_muonFamily;
   Int_t   m_electronFamily;
   Int_t   m_jetFamily;
+  Int_t   m_JetbTagger;
   Int_t   m_thisChannel;
+
   TH1D *m_generatedEntriesHisto;
   TH1D *h_cutflow;
   TH1D *h_cutflow_weight;

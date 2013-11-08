@@ -97,8 +97,7 @@ Float_t MET_high_cut  = 60000.;  // 50000.;
 int HFOR_value        = -999;
 
 // MV1 (MV1c in use) operating point 70%    (November 2013)
-// Float_t MV1_OP70      = 0.8119; // 0.795; // 0.601713;    
-Float_t    MV1_OP70      = 0.7028;
+Float_t    MV1_OP70   = 0.8119; // 0.795; // 0.601713;    
 
 // Actual Jet Cone Size in used
 Float_t Cone_size     = 0.4;
@@ -305,8 +304,8 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
     } 
   else if (analysis_version() == "rel_17_2")
     {
-      muonEffConfig   = Analysis::AnalysisMuonConfigurableScaleFactors::AverageOverRuns;
-      muonEffConfigSA = Analysis::AnalysisMuonConfigurableScaleFactors::AverageOverRuns;
+      muonEffConfig   = Analysis::AnalysisMuonConfigurableScaleFactors::AverageOverPeriods;//AverageOverRuns;
+      muonEffConfigSA = Analysis::AnalysisMuonConfigurableScaleFactors::AverageOverPeriods;//AverageOverRuns;
     }
   
   std::vector<Double_t> int_lum = m_PileupReweighter->getIntegratedLumiVector();
@@ -320,29 +319,29 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
     {
       if (getMuonFamily() == Muon::STACO)
 	{
-	  mu_alg = "STACO_CB_plus_ST_2011_SF.txt";
-	  mu_alg_sa = "STACOHighEta.txt";
+	  mu_alg = "STACO_CB_plus_ST_2011_SF.txt.gz";
+	  mu_alg_sa = "STACOHighEta.txt.gz";
 	} 
       else if (getMuonFamily() == Muon::MUID)
 	{
-	  mu_alg = "Muid_CB_plus_ST_2011_SF.txt";
-	  mu_alg_sa = "MuidHighEta.txt";
+	  mu_alg = "Muid_CB_plus_ST_2011_SF.txt.gz";
+	  mu_alg_sa = "MuidHighEta.txt.gz";
 	}
-      mu_alg_calo = "CaloTag_2011_SF.txt";
+      mu_alg_calo = "CaloTag_2011_SF.txt.gz";
     } 
   else if (analysis_version() == "rel_17_2")
     {
       if (getMuonFamily() == Muon::STACO)
 	{
-	  mu_alg =  "STACO_CB_plus_ST_2012_SF.txt";
-	  mu_alg_sa = "STACO_CB_plus_ST_2012_SFms.txt";
+	  mu_alg =  "STACO_CB_plus_ST_2012_SF.txt.gz";
+	  mu_alg_sa = "STACO_CB_plus_ST_2012_SFms.txt.gz";
 	} 
       else if (getMuonFamily() == Muon::MUID)
 	{
-	  mu_alg = "Muid_CB_plus_ST_2012_SF.txt";
-	  mu_alg_sa = "Muid_CB_plus_ST_2012_SFms.txt";
+	  mu_alg = "Muid_CB_plus_ST_2012_SF.txt.gz";
+	  mu_alg_sa = "Muid_CB_plus_ST_2012_SFms.txt.gz";
 	}
-      mu_alg_calo =  "CaloTag_2012_SF.txt";
+      mu_alg_calo =  "CaloTag_2012_SF.txt.gz";
     }
   
   
@@ -399,12 +398,21 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_ggFReweighter = 0;
   
   
-  //initiate the bTag SFs tool
-  std::string tagger = "MV1";
-  if(DoMV1c)  tagger = "MV1c";
-  const std::string MV1tagger = tagger;
+  // Initiate the bTag SFs tool
   
-  calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,"BTagCalibration.env","./HiggsllqqAnalysis/util/btagSF/");
+  // Setting the MV1 selector tagger as a input from the comand line! 
+  if (getJetbTagger() == 1)   DoMV1c    = kTRUE;
+  if(DoMV1c)                MV1_OP70    = 0.7028;
+  
+  std::string tagger                    = "MV1";
+  if(DoMV1c)  tagger                    = "MV1c";
+  const std::string MV1tagger           = tagger;
+  
+  std::string env_tagger                = "BTagCalibrationMV1.env";
+  if(DoMV1c)  env_tagger                = "BTagCalibrationMV1c.env";
+  const std::string MV1_env_tagger_file = env_tagger;
+  
+  calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,MV1_env_tagger_file,"./HiggsllqqAnalysis/util/btagSF/");
   
   if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEMJVF0_5";
   else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLCJVF0_5";
@@ -1620,7 +1628,8 @@ void HiggsllqqAnalysis::getGoodMuons()
   
   for (std::vector<Analysis::ChargedLepton *>::iterator mu_itr_i = m_Muons.begin(); mu_itr_i != m_Muons.end(); ++mu_itr_i)
     {
-      Analysis::ChargedLepton *mu_i = *mu_itr_i;
+      Analysis::ChargedLepton           *mu_i = *mu_itr_i;
+      D3PDReader::MuonD3PDObjectElement *i_mu = mu_i->GetMuon();
       
       Bool_t keepMe(kTRUE);
       
@@ -1679,10 +1688,11 @@ void HiggsllqqAnalysis::getGoodMuons()
 	  {
 	    Analysis::Jet *jet = (*jet_itr);
 	    
-	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass()) ||
-		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass()))
+	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
+		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
-		// found an jet overlapped to a jet
+		cout<<"   Removing low pt muon overlaping a good jet!... continue..."<<endl;
+		  // found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
 	      } // overlapping muon/jet
 	  } // jet loop
@@ -2886,7 +2896,7 @@ Float_t HiggsllqqAnalysis::getLeptonWeight(Analysis::ChargedLepton * lep)
 	    } 
 	  else
 	    {
-	      overall = m_MuonEffSFCalo->scaleFactor(*(lep->Get4Momentum()));
+	      overall = m_MuonEffSFCalo->scaleFactor((Int_t)lep->charge(), *(lep->Get4Momentum()));
 	    }
 	  
 	  result = overall;
@@ -3784,7 +3794,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	{
 	  for (std::vector<Analysis::ChargedLepton*>::iterator mu_itr = m_GoodMuons.begin(); mu_itr != m_GoodMuons.end(); ++mu_itr)
 	    {
-	      Analysis::ChargedLepton *mu_a = (*mu_itr);
+	      Analysis::ChargedLepton           *mu_a = (*mu_itr);
 	      D3PDReader::MuonD3PDObjectElement *b_mu = mu_a->GetMuon();
 	      
 	      m_lep_m->push_back(mu_pdg_mass);
@@ -3813,7 +3823,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	{
 	  for (std::vector<Analysis::ChargedLepton*>::iterator el_itr = m_GoodElectrons.begin(); el_itr != m_GoodElectrons.end(); ++el_itr)
 	    {
-	      Analysis::ChargedLepton *el_a = (*el_itr);
+	      Analysis::ChargedLepton               *el_a = (*el_itr);
 	      D3PDReader::ElectronD3PDObjectElement *b_el = el_a->GetElectron();
 	      
 	      m_lep_m->push_back(el_pdg_mass);
@@ -5752,8 +5762,8 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   
   Analysis::CalibResult res;
   
-  std::string  OP_tagger = "0_8119"; // 70% https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
-  if(DoMV1c)   OP_tagger = "0_7028"; // 70% https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
+  std::string  OP_tagger = "0_8119";                 // 70% https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
+  if(DoMV1c)   OP_tagger = "continuous";// "0_7028"; // 70% https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
   const std::string OP_MV1x = OP_tagger;
   
   
