@@ -4,7 +4,7 @@ atlasoff/DataQuality/GoodRunsLists/tags/GoodRunsLists-00-01-06
 
 atlasoff/PhysicsAnalysis/AnalysisCommon/PileupReweighting/tags/PileupReweighting-00-02-12
 
-atlasoff/PhysicsAnalysis/MuonID/MuonIDAnalysis/MuonEfficiencyCorrections/tags/MuonEfficiencyCorrections-02-01-12
+atlasoff/PhysicsAnalysis/MuonID/MuonIDAnalysis/MuonEfficiencyCorrections/tags/MuonEfficiencyCorrections-02-01-17
 
 atlasoff/PhysicsAnalysis/MuonID/MuonIDAnalysis/MuonMomentumCorrections/tags/MuonMomentumCorrections-00-09-00
 
@@ -20,8 +20,9 @@ svn+ssh://svn.cern.ch/reps/vippolitsvn/Higgs/HiggsAnalysis/trunk
 svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/PATCore/tags/PATCore-00-00-12
 
 atlasoff/Reconstruction/Jet/ApplyJetCalibration/tags/ApplyJetCalibration-00-03-12
+ 
+atlasoff/Reconstruction/Jet/JetAnalysisTools/ApplyJetResolutionSmearing/tags/ApplyJetResolutionSmearing-00-01-02
 
-atlasperf/CombPerf/JetETMiss/JetCalibrationTools/ApplyJetResolutionSmearing/tags/ApplyJetResolutionSmearing-00-01-00
 atlasoff/Reconstruction/Jet/JetResolution/tags/JetResolution-02-00-02
 
 atlasgrp/CombPerf/FlavorTag/JetTagAlgorithms/trunk
@@ -30,14 +31,19 @@ atlasoff/Reconstruction/Jet/JetUncertainties/tags/JetUncertainties-00-08-07
 atlasoff/Reconstruction/egamma/egammaEvent/tags/egammaEvent-03-06-43
 
 atlasoff/PhysicsAnalysis/JetTagging/JetTagCalibration/tags/JetTagCalibration-00-02-07
-atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-03-04
+atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-03-06
 
 svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/egamma/egammaAnalysis/egammaFourMomentumError/tags/egammaFourMomentumError-00-00-11
 svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/egamma/egammaAnalysis/egParticleConditions/tags/egParticleConditions-00-00-03
 
-svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/ElectronPhotonID/ElectronEfficiencyCorrection/tags/ElectronEfficiencyCorrection-00-00-30
+svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/ElectronPhotonID/ElectronEfficiencyCorrection/tags/ElectronEfficiencyCorrection-00-00-34
 
 
-atlasoff/Reconstruction/MissingETUtility/tags/MissingETUtility-01-02-04
+atlasoff/Reconstruction/MissingETUtility/tags/MissingETUtility-01-02-06
 
-atlasoff/Reconstruction/Jet/JetAnalysisTools/JVFUncertaintyTool/tags/JVFUncertaintyTool-00-00-03
+atlasoff/Reconstruction/Jet/JetAnalysisTools/JVFUncertaintyTool/tags/JVFUncertaintyTool-00-00-04
+
+atlasoff/PhysicsAnalysis/TileID/TileTripReader/tags/TileTripReader-00-00-15
+atlasoff/PhysicsAnalysis/ElectronPhotonID/ElectronPhotonSelectorTools/tags/ElectronPhotonSelectorTools-00-00-55
+atlasoff/PhysicsAnalysis/JetMissingEtID/JetSelectorTools/tags/JetSelectorTools-00-00-23
+atlasoff/PhysicsAnalysis/MuonID/MuonIDAnalysis/MuonIsolationCorrection/tags/MuonIsolationCorrection-01-01
