@@ -404,15 +404,16 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   if (getJetbTagger() == 1)   DoMV1c    = kTRUE;
   if(DoMV1c)                MV1_OP70    = 0.7028;
   
+  const std::string pathbtagger         ="./HiggsllqqAnalysis/util/btagSF/";
   std::string tagger                    = "MV1";
   if(DoMV1c)  tagger                    = "MV1c";
   const std::string MV1tagger           = tagger;
   
   std::string env_tagger                = "BTagCalibrationMV1.env";
   if(DoMV1c)  env_tagger                = "BTagCalibrationMV1c.env";
-  const std::string MV1_env_tagger_file = env_tagger;
+  const std::string MV1_env_tagger_file = pathbtagger+env_tagger;
   
-  calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,MV1_env_tagger_file,"./HiggsllqqAnalysis/util/btagSF/");
+  calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,MV1_env_tagger_file,pathbtagger);
   
   if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEMJVF0_5";
   else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLCJVF0_5";
@@ -1683,16 +1684,18 @@ void HiggsllqqAnalysis::getGoodMuons()
 	if (skip_muon[i]) continue;
 	
 	
+	int theJetNow=-1;
 	std::vector<Analysis::Jet*>::iterator jet_itr;
 	for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr)
 	  {
+	    theJetNow++;
 	    Analysis::Jet *jet = (*jet_itr);
 	    
 	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
 		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
-		cout<<"   Removing low pt muon overlaping a good jet!... continue..."<<endl;
-		  // found an jet overlapped to a jet
+		cout<<"   Removing low pt muon "<<i<<" overlaping the good jet "<<theJetNow<<"!... continue..."<<endl;
+		// found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
 	      } // overlapping muon/jet
 	  } // jet loop
@@ -5767,7 +5770,8 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   const std::string OP_MV1x = OP_tagger;
   
   
-  if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
+  
+if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
     {       
       // jet flavor truth values checked on lxr
       if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
@@ -5776,9 +5780,9 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
     } 
   else
     {
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
-      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty,2);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty,2);
+      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", OP_MV1x, uncertainty,2);
     }
   
   pair <double,double> result;
@@ -6879,7 +6883,7 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight()
 	  
 	  Float_t dphi2jets = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
 	  Float_t val       = f->Eval(dphi2jets);
-	  cout<<"    F(x)   = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
+	  //cout<<"    F(x)   = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
 	  result           *= val;
 	}
     }
