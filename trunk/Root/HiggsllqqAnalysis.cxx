@@ -176,11 +176,11 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
 {    
   printAllOptions();
   
-  if(DoJetSystematics && GetSysStudy())
-    cout <<"  Syst JER ON!  "<<endl;
-  else
-    cout <<"  Syst JER OFF! "<<endl;
+  if(getSystematicToDo()>=0)
+    cout<<"     +++++ PLEASE! Take Care, Systematic "<<getSystematicToDo()<<" is ON. Check the dictionary for details!!"<<endl;
   
+  // JER systematic activation
+  SetSysStudy(getSystematicToDo()==2);
   
   // initiate the calibration tool
   TString jetAlgo="";
@@ -189,14 +189,17 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   
   TString JES_config_file;
+  TString JER_config_file;
   
   if (analysis_version() == "rel_17_2")
     {
-      JES_config_file="ApplyJetCalibration/data/CalibrationConfigs/JES_Full2012dataset_Preliminary_Jan13.config";
+      JES_config_file = "ApplyJetCalibration/data/CalibrationConfigs/JES_Full2012dataset_Preliminary_Jan13.config";
+      JER_config_file = "JetResolution/share/JERProviderPlots_2012.root";
     } 
   else if (analysis_version() == "rel_17")
     {
-      JES_config_file="ApplyJetCalibration/data/CalibrationConfigs/Rel17_JES.config";
+      JES_config_file = "ApplyJetCalibration/data/CalibrationConfigs/Rel17_JES.config";
+      JER_config_file = "JetResolution/share/JERProviderPlots_2011.root";
     }
   
   
@@ -207,8 +210,8 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
     isData = true;
   
   myJES = new JetCalibrationTool(jetAlgo,JES_config_file, isData);
-  myJER = new JetSmearingTool(jetAlgo);
-  
+  myJER = new JetSmearingTool(jetAlgo,JER_config_file);
+  myJER->init();
   
   // initialize the kinematic fitter
   Info("doAnalysis", "Initializing JetKinematicFitter");
@@ -425,6 +428,12 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLC";
   
   SetTmvaReaders(reader,var1,var2);
+  
+  
+  // Before the event loop create an instance of JVFUncertaintyTool. It takes as argument the jet collection: "AntiKt4TopoEM","AntiKt6TopoEM","AntiKt4LCTopo","AntiKt6LCTopo"
+  jvfTool = new JVFUncertaintyTool(jetAlgo);
+  
+  
   
   return kTRUE;
 }
@@ -886,6 +895,7 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   m_GoodMuons.clear();
   m_GoodElectrons.clear();
   m_GoodJets.clear();  
+  m_TruthJets.clear();  
   m_called_getGoodLeptons = kFALSE;
   // After clean all that have to be clean, do:
   getGoodLeptons();
@@ -1694,7 +1704,8 @@ void HiggsllqqAnalysis::getGoodMuons()
 	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
 		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
-		cout<<"   Removing low pt muon "<<i<<" overlaping the good jet "<<theJetNow<<"!... continue..."<<endl;
+		//cout<<"   Removing low pt muon "<<i<<" overlaping the good jet "<<theJetNow<<"!... continue..."<<endl;
+		
 		// found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
 	      } // overlapping muon/jet
@@ -2293,7 +2304,46 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
 {
   D3PDReader::JetD3PDObjectElement *Jet = jet->GetJet();
   
+  Bool_t isPU = kFALSE;
+  if ( isMC() && (getSystematicToDo()==0||getSystematicToDo()==1) )
+    {
+      // Get the Vector of Truth Jets for systematic studies   November 2013
+      const std::vector<TLorentzVector> vectorTruth = getTruthJets();
+      
+      TLorentzVector TLjet;
+      TLjet.SetPtEtaPhiM(jet->rightpt(),jet->righteta(),jet->rightphi(),jet->Get4Momentum()->M());
+      
+      // Verify is the jet is classified as a PU or HS jet
+      isPU = jvfTool->isPileUpJet(TLjet, vectorTruth);
+    }
+  
+  Float_t jvtxf_cut  = (analysis_version() == "rel_17") ? 0.75 : 0.50;
+  Float_t JVFcutUp   = jvtxf_cut; 
+  Float_t JVFcutDown = jvtxf_cut;
+  Float_t eta_det    = Jet->emscale_eta();
+  Float_t cal_pt     = jet->rightpt();
+  
+  if(cal_pt<50000. && TMath::Abs(eta_det) < 2.4 )
+    {
+      JVFcutUp   = jvfTool->getJVFcut(jvtxf_cut, isPU, cal_pt, eta_det, true);
+      JVFcutDown = jvfTool->getJVFcut(jvtxf_cut, isPU, cal_pt, eta_det, false);
+      //cout<<"   The JVF cut is = "<< jvtxf_cut <<", where the cut with SysUp is = "<< JVFcutUp <<"; and SysDown = "<< JVFcutDown <<endl;
+    }
+  
+  if(getSystematicToDo()==0)
+    {
+      jvtxf_cut=JVFcutUp;
+      //cout<<"     +++++ Systematic for JVF Up Is ON.... continue...."<<endl; 
+    } 
+  if(getSystematicToDo()==1)
+    {
+      jvtxf_cut=JVFcutDown;
+      //cout<<"     +++++ Systematic for JVF Down Is ON.... continue...."<<endl; 
+    }
+  
+  
   Bool_t dolowmass = GetDoLowMass();
+  
   
   if(Jet->isBadLooseMinus() == 0) jet->set_lastcut(HllqqJetQuality::jetCleaning);
   else return kFALSE;
@@ -2301,29 +2351,25 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   
   if(dolowmass)
     {
-      if (jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
+      if (jet->rightpt()>20000. && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) < 2.5 && jet->rightE()>0) jet->set_lastcut(HllqqJetQuality::kinematics);
       else return kFALSE;
     }  
   else if (!dolowmass)
     {
-      if ((jet->rightpt()>20000. && TMath::Abs(jet->righteta()) < 2.5 && jet->rightE()>0)
+      if ((jet->rightpt()>20000. && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) < 2.5 && jet->rightE()>0)
 	  ||
-	  (jet->rightpt()>30000. && TMath::Abs(jet->righteta()) > 2.5 && jet->rightE()>0 && TMath::Abs(jet->righteta()) < 4.5 && ExtendedJetRegion)) jet->set_lastcut(HllqqJetQuality::kinematics);
+	  (jet->rightpt()>30000. && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) > 2.5 && jet->rightE()>0 && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) < 4.5 && ExtendedJetRegion)) 
+	jet->set_lastcut(HllqqJetQuality::kinematics);
+      
       else return kFALSE;
     }
   
-  Float_t jvtxf_cut = (analysis_version() == "rel_17") ? 0.75 : 0.50;
-  
-  if(dolowmass)
+  if(jet->rightpt()<50000. && TMath::Abs(Jet->emscale_eta()) < 2.4)
     {
       if (TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
       else return kFALSE;
-    }  
-  else if (!dolowmass)
-    {
-      if (TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
-      else return kFALSE;
-    }  
+    }
+  else jet->set_lastcut(HllqqJetQuality::Pileup); 
   
   
   if(dolowmass)
@@ -2343,7 +2389,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
 	    {
 	      Float_t j_fmax = Jet->fracSamplingMax();
 	      Float_t j_smax = Jet->SamplingMax();
-	      Float_t j_eta = jet->righteta();
+	      Float_t j_eta = Jet->emscale_eta();/*jet->righteta();*/
 	      Float_t j_phi = jet->rightphi();
 	      
 	      Bool_t etaphi28(kFALSE);
@@ -2551,7 +2597,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  m_GoodMuons.clear();
 	  m_GoodElectrons.clear();
 	  m_GoodJets.clear();
-	  
+	  m_TruthJets.clear();
 	  
 	  /////////////////////
 	  // QCD selection - only for data
@@ -2583,7 +2629,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      m_GoodMuons.clear();
 	      m_GoodElectrons.clear();
 	      m_GoodJets.clear();
-	      
+	      m_TruthJets.clear();
 	    } //end QCD selection
 	} //End of loop into the Low/high Selection
     } // end of loop into the different channels
@@ -2605,7 +2651,8 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_GoodElectrons.clear();
   m_GoodJets.clear();
   m_Dileptons.clear();
-  
+  m_TruthJets.clear();
+
   return kTRUE;
 }
 
@@ -6894,3 +6941,41 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight()
   
   return result;
 }
+
+
+std::vector<TLorentzVector> HiggsllqqAnalysis::getTruthJets()
+{
+  D3PDReader::JetD3PDObject *jet_branch(0);
+  jet_branch = &(ntuple->jet_antikt4truth);
+  
+  std::vector<TLorentzVector> vector;
+  
+  // Filling the Vector of Trtuh Jets in order to use for the different systematics calibrations
+  // TruthJets = pT-ordered truth jets with pT>10 GeV. Anti-kT jets reconstructed from truth particles without neutrinos and muons have to be used, 
+  //             i.e. AntiKt4Truth_pt/eta/phi/m or AntiKt6Truth_pt/eta/phi/m 
+  
+  for (Int_t i = 0; i < jet_branch->n(); i++)
+    {
+      Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
+      
+      if (jet->rightpt()>10000. && TMath::Abs(jet->righteta()) < 2.5)  m_TruthJets.push_back(jet);
+    }  
+  
+  //Sort the truth jets by pt
+  if(m_TruthJets.size()>0)
+    {
+      SortIndex(m_TruthJets);
+      
+      std::vector<Analysis::Jet *>::iterator jet_itr_i;
+      for (jet_itr_i = m_TruthJets.begin(); jet_itr_i != m_TruthJets.end(); ++jet_itr_i)
+	{	  
+	  TLorentzVector TLjet;
+	  TLjet.SetPtEtaPhiM((*jet_itr_i)->rightpt(),(*jet_itr_i)->righteta(),(*jet_itr_i)->rightphi(),(*jet_itr_i)->Get4Momentum()->M());
+	  vector.push_back(TLjet);  
+	}
+    }
+  
+  return vector;
+}
+
+
