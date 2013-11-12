@@ -1,11 +1,13 @@
 #include "HiggsllqqAnalysis/HiggsllqqAnalysis.h"
 #include <Cintex/Cintex.h>
 #include <TTreeCache.h>
+#include <stdio.h>      /* printf, fgets */
+#include <stdlib.h>     /* atol */
 
 void print_usage(char *app_name)
 {
   std::cout << "Usage:" << std::endl;
-  std::cout << app_name << " [--MUID] [--GSF] [--JET] [--noSmearing] [--useTopoIso] [--analysis <rel_17|rel_17_2>] [--input <filename.txt>] [--output <filename.root>] [--MV1c]" << std::endl;
+  std::cout << app_name << " [--MUID] [--GSF] [--JET] [--noSmearing] [--useTopoIso] [--analysis <rel_17|rel_17_2>] [--input <filename.txt>] [--output <filename.root>] [--MV1c] [--DoSystematic X]" << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -13,17 +15,17 @@ int main(int argc, char **argv)
   ROOT::Cintex::Cintex::Enable();
   
   // option parser
-  Bool_t doSTACO(kTRUE);
-  Bool_t doGSF(kFALSE);
-  Bool_t doJET(kFALSE);
-  Bool_t doMV1c(kFALSE);
-  Bool_t doSmearing(kTRUE);
-  Bool_t useTopoIso(kFALSE);
+  Bool_t  doSTACO(kTRUE);
+  Bool_t  doGSF(kFALSE);
+  Bool_t  doJET(kFALSE);
+  Bool_t  doMV1c(kFALSE);
+  Bool_t  doSmearing(kTRUE);
+  Bool_t  useTopoIso(kFALSE);
   TString output_filename("output_test.root");
   TString analysis_version("rel_17");
   TString input_filename("input.txt");
-  
-  Bool_t error_in_options(kFALSE);
+  Int_t   number_systematic(-1); 
+  Bool_t  error_in_options(kFALSE);
   
   for (int i = 1; i < argc; i++)
     {
@@ -33,14 +35,15 @@ int main(int argc, char **argv)
       else if (TString(argv[i]) == "--MV1c")       doMV1c     = kTRUE;
       else if (TString(argv[i]) == "--noSmearing") doSmearing = kFALSE;
       else if (TString(argv[i]) == "--useTopoIso") useTopoIso = kTRUE;
-      else if (TString(argv[i]) == "--analysis") {
-	if (i + 1 < argc)
-	  {
-	    analysis_version = argv[++i];
-	  } else {
-	  error_in_options = kTRUE;
+      else if (TString(argv[i]) == "--analysis")
+	{
+	  if (i + 1 < argc)
+	    {
+	      analysis_version = argv[++i];
+	    } else {
+	    error_in_options = kTRUE;
+	  }
 	}
-      }
       else if (TString(argv[i]) == "--input")
 	{
 	  if (i + 1 < argc)
@@ -51,11 +54,23 @@ int main(int argc, char **argv)
 	    {
 	      error_in_options = kTRUE;
 	    }
-	} else if (TString(argv[i]) == "--output")
+	} 
+      else if (TString(argv[i]) == "--output")
 	{
 	  if (i + 1 < argc)
 	    {
 	      output_filename = argv[++i];
+	    } 
+	  else
+	    {
+	      error_in_options = kTRUE;
+	    }
+	} 
+      else if (TString(argv[i]) == "--DoSystematic")
+	{
+	  if (i + 1 < argc)
+	    {
+	      number_systematic = atol(argv[++i]);
 	    } 
 	  else
 	    {
@@ -67,7 +82,7 @@ int main(int argc, char **argv)
 	  error_in_options = kTRUE;
 	}
     }
-   
+  
   if (error_in_options)
     {
       print_usage(argv[0]);
@@ -75,16 +90,17 @@ int main(int argc, char **argv)
     } 
   else
     {
-      std::cout << argv[0] << " called with options:"           << std::endl;
-      std::cout << "  analysis_version = " << analysis_version  << std::endl;
-      std::cout << "           doSTACO = " << doSTACO           << std::endl;
-      std::cout << "             doGSF = " << doGSF             << std::endl;
-      std::cout << "             doJET = " << doJET             << std::endl;
-      std::cout << "            doMV1c = " << doMV1c            << std::endl;
-      std::cout << "        doSmearing = " << doSmearing        << std::endl;
-      std::cout << "        useTopoIso = " << useTopoIso        << std::endl;
-      std::cout << "    input_filename = " << input_filename    << std::endl;
-      std::cout << "   output_filename = " << output_filename   << std::endl;
+      std::cout << argv[0] << " called with options:"            << std::endl;
+      std::cout << "   analysis_version = " << analysis_version  << std::endl;
+      std::cout << "            doSTACO = " << doSTACO           << std::endl;
+      std::cout << "              doGSF = " << doGSF             << std::endl;
+      std::cout << "              doJET = " << doJET             << std::endl;
+      std::cout << "             doMV1c = " << doMV1c            << std::endl;
+      std::cout << "         doSmearing = " << doSmearing        << std::endl;
+      std::cout << "         useTopoIso = " << useTopoIso        << std::endl;
+      std::cout << "     input_filename = " << input_filename    << std::endl;
+      std::cout << "    output_filename = " << output_filename   << std::endl;
+      std::cout << " doing systematic # = " << number_systematic << std::endl;
       std::cout << std::endl;
     }
   ///
@@ -117,6 +133,7 @@ int main(int argc, char **argv)
   analysis->setSmearing(doSmearing);
   analysis->setTopoIso(useTopoIso);
   analysis->setOutputFile(output_filename);
+  analysis->setSystematicToDo(number_systematic);
   
   theChain->Process(analysis);
   
