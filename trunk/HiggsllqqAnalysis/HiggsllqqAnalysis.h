@@ -74,152 +74,176 @@
 #include "Math/Interpolator.h"
 #include "CalibrationDataInterface/CalibrationDataInterfaceROOT.h"
 
+
+//New package due to systematic inclution
+#include "JVFUncertaintyTool/JVFUncertaintyTool.h"
+
 using namespace std;
 
 
-namespace DataPeriod {
-  enum {
-    y2011_A, // data11
-    y2011_B,
-    y2011_C,
-    y2011_D,
-    y2011_E,
-    y2011_F,
-    y2011_G,
-    y2011_H,
-    y2011_I,
-    y2011_J,
-    y2011_K,
-    y2011_L,
-    y2011_M,
-    y2012_A, // data12
-    y2012_B, // data12
-    y2012_C, // data12
-    y2012_D, // data12
-    y2012_E, // data12
-    // DO NOT USE VALUES BELOW THIS LINE FOR COMPARISON (e.g. AI < JM makes no sense)
-    y2011_BD, // MC
-    y2011_EH,
-    y2011_LM,
-    y2012_AllYear,
-  };
+namespace DataPeriod
+{
+  enum
+    {
+      y2011_A, // data11
+      y2011_B,
+      y2011_C,
+      y2011_D,
+      y2011_E,
+      y2011_F,
+      y2011_G,
+      y2011_H,
+      y2011_I,
+      y2011_J,
+      y2011_K,
+      y2011_L,
+      y2011_M,
+      y2012_A, // data12
+      y2012_B, // data12
+      y2012_C, // data12
+      y2012_D, // data12
+      y2012_E, // data12
+      // DO NOT USE VALUES BELOW THIS LINE FOR COMPARISON (e.g. AI < JM makes no sense)
+      y2011_BD, // MC
+      y2011_EH,
+      y2011_LM,
+      y2012_AllYear,
+    };
 }
 
 
-namespace HllqqCutFlow {
-  enum {
-    Entries,
-    HFOR,
-    GRL,
-    larError,
-    Trigger,
-    Vertex,
-    METcleaning,
-    LArHole,
-    NumberOfLeptons,
-    TriggerConsistency,
-    OppositeSign,
-    TwoJets,
-    DileptonMass,
-    MET,
-    NumTagJets,
-    DiJetMass,
-  };
+namespace HllqqCutFlow
+{
+  enum
+    {
+      Entries,
+      HFOR,
+      GRL,
+      larError,
+      Trigger,
+      Vertex,
+      METcleaning,
+      LArHole,
+      NumberOfLeptons,
+      TriggerConsistency,
+      OppositeSign,
+      TwoJets,
+      DileptonMass,
+      MET,
+      NumTagJets,
+      DiJetMass,
+    };
 }
 
 
-namespace HllqqCutFlow0tag {
-  enum {
-    NumTagJets0,
-    PtLeadingJet0,
-    DiJetMass0,
-    //    JetPt0,
-    //    Ptleptons0,
-    //    Dphileptons0,
-  };
+namespace HllqqCutFlow0tag
+{
+  enum
+    {
+      NumTagJets0,
+      PtLeadingJet0,
+      DiJetMass0,
+      //    JetPt0,
+      //    Ptleptons0,
+      //    Dphileptons0,
+    };
 }
 
 
-namespace HllqqCutFlow1tag {
-  enum {
-    NumTagJets1,
-    PtLeadingJet1,
-    DiJetMass1,
-    //    JetPt0,
-    //    Ptleptons0,
-    //    Dphileptons0,
-  };
+namespace HllqqCutFlow1tag
+{
+  enum
+    {
+      NumTagJets1,
+      PtLeadingJet1,
+      DiJetMass1,
+      //    JetPt0,
+      //    Ptleptons0,
+      //    Dphileptons0,
+    };
 }
 
 
-namespace HllqqCutFlow2tag {
-  enum {
-    NumTagJets2,
-    PtLeadingJet2,
-    DiJetMass2,
-    //    JetPt0,
-    //    Ptleptons0,
-    //    Dphileptons0,
-  };
+namespace HllqqCutFlow2tag
+{
+  enum
+    {
+      NumTagJets2,
+      PtLeadingJet2,
+      DiJetMass2,
+      //    JetPt0,
+      //    Ptleptons0,
+      //    Dphileptons0,
+    };
 }
 
 
-namespace HllqqMuonQuality {
-  enum {
-    family,
-    quality,
-    eta,
-    pt,
-    MCP,
-    cosmic,
-    z0,
-    d0Sig, 
-    Isolation,
-    overlap,
-    medium,
-  };
+namespace HllqqMuonQuality
+{
+  enum
+    {
+      family,
+      quality,
+      eta,
+      pt,
+      MCP,
+      cosmic,
+      z0,
+      d0Sig, 
+      Isolation,
+      overlap,
+      medium,
+    };
 }
 
 
-namespace HllqqElectronQuality {
-  enum {
-    family,
-    algorithm,
-    quality,
-    eta,
-    Et,
-    objectquality,
-    z0,
-    d0Sig, 
-    Isolation,
-    overlap,
-    medium,
-  };
+namespace HllqqElectronQuality
+{
+  enum
+    {
+      family,
+      algorithm,
+      quality,
+      eta,
+      Et,
+      objectquality,
+      z0,
+      d0Sig, 
+      Isolation,
+      overlap,
+      medium,
+    };
 }
 
 
-namespace HllqqJetQuality {
-  enum {
-    jetCleaning,
-    kinematics,
-    Pileup,
-    overlap,
-  };
+namespace HllqqJetQuality
+{
+  enum
+    {
+      jetCleaning,
+      kinematics,
+      Pileup,
+      overlap,
+    };
 }
 
 
-namespace HllqqGRL {
-  enum {
-    // offset in the vector of GRLs: this number, plus the output of getChannel(), gives the location of the GRL to be read for that channel and that year
-    // the difference between two consecutive members of this enum it must be equal to the number of entries in the enum of the class HiggsllqqAnalysis (i.e. { MU2, MUE, E2 } -> 3)
-    data11 = 0,
-    data12 = 3,
-  };
+namespace HllqqGRL
+{
+  enum
+    {
+      // offset in the vector of GRLs: this number, plus the output of getChannel(), gives the location of the GRL to be read for that channel and that year
+      // the difference between two consecutive members of this enum it must be equal to the number of entries in the enum of the class HiggsllqqAnalysis (i.e. { MU2, MUE, E2 } -> 3)
+      data11 = 0,
+      data12 = 3,
+    };
 }
 
 
-namespace HllqqSystematics {
-  class ChargedLepton {
+namespace HllqqSystematics
+{
+  class ChargedLepton
+  {
   public:
     Float_t ptCB_nosmearnoscale;
     Float_t ptME_nosmearnoscale;
@@ -228,21 +252,23 @@ namespace HllqqSystematics {
     Float_t cl_eta;
     Float_t cl_phi;
     
-    ChargedLepton() {
-      ptCB_nosmearnoscale    = -9999.9;
-      ptME_nosmearnoscale    = -9999.9;
-      ptID_nosmearnoscale    = -9999.9;
-      cl_E_calibsmearnoscale = -9999.9;
-      cl_eta = -9999.9;
-      cl_phi = -9999.9;
-    }
+    ChargedLepton()
+      {
+	ptCB_nosmearnoscale    = -9999.9;
+	ptME_nosmearnoscale    = -9999.9;
+	ptID_nosmearnoscale    = -9999.9;
+	cl_E_calibsmearnoscale = -9999.9;
+	cl_eta = -9999.9;
+	cl_phi = -9999.9;
+      }
     ~ChargedLepton() {}
   };
 };
 
 
 //TestSelection Candidate Structures
-typedef struct {
+typedef struct
+{
   unsigned int runnumber;
   unsigned int eventnumber;
   int   istagged;
@@ -523,7 +549,8 @@ typedef struct {
 } analysis_output_struct;
 
 
-typedef struct SOMVar{
+typedef struct SOMVar
+{
   float Ntrk, width, JetMass;
 } SOMVar;
 
@@ -551,6 +578,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     m_analysis_version = val;
   }
   
+  virtual void setSystematicEffect(TString val)
+  {
+    m_systematic_effect = val;
+  }
+  
   virtual void setSmearing(Bool_t val)
   {
     m_doSmearing = val;
@@ -575,10 +607,15 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     m_jetFamily = val;
   }
-
+  
   virtual void setJetbTagger(Int_t val)
   {
     m_JetbTagger = val;
+  }
+
+  virtual void setSystematicToDo(Int_t val)
+  {
+    m_SystematicToDo = val;
   }
   
   virtual void setOutputFile(TString val)
@@ -627,6 +664,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Analysis::ChargedLepton *>  m_GoodMuons;
   std::vector<Analysis::ChargedLepton *>  m_GoodElectrons;
   std::vector<Analysis::Jet *>            m_GoodJets;
+  std::vector<Analysis::Jet *>            m_TruthJets;
   std::vector<Analysis::Dilepton *>       m_Dileptons;
   
   
@@ -693,6 +731,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   virtual std::vector<TString> getListOfAlternativeTriggers(TString sequence);
   
+  std::vector<TLorentzVector> getTruthJets();
   
   // object selection
   virtual Bool_t isMCPMuon(Analysis::ChargedLepton *lep);
@@ -711,6 +750,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual TString analysis_version()
   {
     return m_analysis_version;
+  }
+  
+  virtual TString systematic_effect()
+  {
+    return m_systematic_effect;
   }
   
   virtual Bool_t doSmearing()
@@ -743,7 +787,13 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     return m_JetbTagger;
   }
- 
+  
+  
+  virtual Int_t getSystematicToDo()
+  {
+    return m_SystematicToDo;
+  }
+  
   virtual Int_t getTriggerInfo(TString chain);
   virtual Int_t getPeriod();
   
@@ -783,14 +833,16 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void printAllOptions()
   {
     Info("printAllOptions", "======== options =======");
-    Info("printAllOptions", "analysis_version = %s", m_analysis_version.Data());
-    Info("printAllOptions", "doSmearing       = %s", m_doSmearing ? "kTRUE" : "kFALSE");
-    Info("printAllOptions", "useTopoIso       = %s", m_useTopoIso ? "kTRUE" : "kFALSE");
-    Info("printAllOptions", "muonFamily       = %d", m_muonFamily);
-    Info("printAllOptions", "electronFamily   = %d", m_electronFamily);
-    Info("printAllOptions", "jetFamily        = %d", m_jetFamily);
-    Info("printAllOptions", "jet b Tagger     = %d", m_JetbTagger);
-    Info("printAllOptions", "outputFileName   = %s", m_outputFileName.Data());
+    Info("printAllOptions", "analysis_version  = %s", m_analysis_version.Data());
+    Info("printAllOptions", "systematic_effect = %s", m_systematic_effect.Data());
+    Info("printAllOptions", "doSmearing        = %s", m_doSmearing ? "kTRUE" : "kFALSE");
+    Info("printAllOptions", "useTopoIso        = %s", m_useTopoIso ? "kTRUE" : "kFALSE");
+    Info("printAllOptions", "muonFamily        = %d", m_muonFamily);
+    Info("printAllOptions", "electronFamily    = %d", m_electronFamily);
+    Info("printAllOptions", "jetFamily         = %d", m_jetFamily);
+    Info("printAllOptions", "jet MV1c Tagger   = %d", m_JetbTagger);
+    Info("printAllOptions", "running Syst #    = %d", m_SystematicToDo);
+    Info("printAllOptions", "outputFileName    = %s", m_outputFileName.Data());
     Info("printAllOptions", "========================");
   }
   
@@ -942,14 +994,16 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
  private: 
   TString m_analysis_version;
+  TString m_systematic_effect;
   Bool_t  m_doSmearing;
   Bool_t  m_useTopoIso;
   Int_t   m_muonFamily;
   Int_t   m_electronFamily;
   Int_t   m_jetFamily;
   Int_t   m_JetbTagger;
+  Int_t   m_SystematicToDo;
   Int_t   m_thisChannel;
-
+  
   TH1D *m_generatedEntriesHisto;
   TH1D *h_cutflow;
   TH1D *h_cutflow_weight;
@@ -987,6 +1041,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   // Jet kinematic fitter
   JetKinematicFitter *m_jetkinematicfitter;
   
+  // JVF uncertainty tool
+  JVFUncertaintyTool *jvfTool;
+
   // HFOR TOOL
   HforToolD3PD *hforTool;
   
