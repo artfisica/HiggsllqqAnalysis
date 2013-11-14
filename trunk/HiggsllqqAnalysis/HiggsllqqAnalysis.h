@@ -30,7 +30,9 @@
 #include "egammaAnalysisUtils/VertexPositionReweightingTool.h"
 #include "HiggsZZ4lUtils/McOverlapRemoval.h"
 #include "egammaEvent/egammaPIDdefs.h"
+#include "egammaAnalysisUtils/EnergyRescaler.h"
 #include "egammaAnalysisUtils/EnergyRescalerUpgrade.h"
+#include "MissingETUtility/METUtility.h"
 
 // Higgs[llqq-4lep]Analysis common tools
 #include "HiggsllqqAnalysis/ggFReweighting.h"
@@ -1031,9 +1033,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   // Beginning
  protected:
   
-  // JES AND JER TOOL
+  // JES AND JER TOOLS
   JetCalibrationTool *myJES;
   JetSmearingTool    *myJER;
+  // MET TOOL
+  METUtility         *m_systUtil;
   
   // ggF reweighting tool
   ggFReweighting *fggFReweighter;
