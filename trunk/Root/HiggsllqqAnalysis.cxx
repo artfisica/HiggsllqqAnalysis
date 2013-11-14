@@ -58,10 +58,10 @@ Bool_t MuonSmearing          = kTRUE,
   DoTriggerSystematics       = kFALSE,
   
 //Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
-  ExtendedJetRegion          = kTRUE,
+  ExtendedJetRegion          = kFALSE,
   
 //Calculating the DPhi weight
-  DoDPhiWeight               = kTRUE,
+  DoDPhiWeight               = kFALSE,
   DoMV1c                     = kFALSE;
 
 //Global Jets Variables.
@@ -203,17 +203,28 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
     }
   
   
+
   bool isData(0);
   if (isMC())
     isData = false;
   else if (!isMC())
     isData = true;
+
   
   myJES = new JetCalibrationTool(jetAlgo,JES_config_file, isData);
   myJER = new JetSmearingTool(jetAlgo,JER_config_file);
   myJER->init();
   
-  // initialize the kinematic fitter
+  
+  // MET intitalization tools
+  m_systUtil = new METUtility;
+  //DefineMissingET(doRefEle, doRefGamma, doRefTau, doRefJet, doSoftJets, doRefMuon, doMuonTotal, doCellOut, doCellOutEflow)
+  //m_systUtil->defineMissingET(true, true, true, true, false, false, true, false, true);
+  //m_systUtil->setVerbosity(false);
+  //m_systUtil->setIsMuid(false); 
+  
+  
+ // Initialize the kinematic fitter
   Info("doAnalysis", "Initializing JetKinematicFitter");
   
   int maxjet_KF = 7;
@@ -1701,8 +1712,8 @@ void HiggsllqqAnalysis::getGoodMuons()
 	    theJetNow++;
 	    Analysis::Jet *jet = (*jet_itr);
 	    
-	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
-		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
+	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() /*&& i_mu->pt()<20000.*/) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
+		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() /*&& i_mu->pt()<20000.*/))
 	      {
 		//cout<<"   Removing low pt muon "<<i<<" overlaping the good jet "<<theJetNow<<"!... continue..."<<endl;
 		
@@ -3484,11 +3495,139 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
 Float_t HiggsllqqAnalysis::getCorrectMETValue()
 {
   if (METtype_RefFinal) 
-    return  ntuple->MET_RefFinal.et();
+    {
+      return  ntuple->MET_RefFinal.et();
+    }
   else
     {
       cout<<"WARNING!!! Retuning MET_Final NOT Topo Implemented yet!!"<<endl;
       return  ntuple->MET_RefFinal.et();
+      
+      /*
+      m_systUtil->reset();
+      
+      vector<float> *RecalibratedJetPtVec = new vector<float>();
+      vector<float> *jet_eta = new vector<float>();
+      vector<float> *jet_phi = new vector<float>();
+      vector<float> *jet_E = new vector<float>();
+      vector<float> *jet_MET_wet = new vector<float>();
+      vector<float> *jet_MET_wpx = new vector<float>();
+      vector<float> *jet_MET_wpy = new vector<float>();
+      vector<float> *jet_MET_statusWord = new vector<float>();
+      
+
+      vector<float> *el_smeared_pt        = new vector<float>();
+      vector<float> *muon_smeared_pt      = new vector<float>();
+      vector<float> *muon_smeared_ms_pt   = new vector<float>();
+      
+      // Jet       
+      for (Int_t i = 0; i < jet_branch->n(); i++)
+	{ 
+	  Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
+	  D3PDReader::JetD3PDObjectElement  *Jet = jet->GetJet();
+	  
+	  jet_eta->push_back(jet->emscale_eta());
+	  jet_phi->push_back(jet->emscale_phi());
+	  jet_E->push_back(jet->emscale_E());
+	  jet_MET_wet->push_back();
+	  jet_MET_wpx->push_back();
+	  jet_MET_wpy->push_back();
+	  jet_MET_statusWord->push_back();
+	  
+	  applyChanges(jet);
+	  
+	  RecalibratedJetPtVec->push_back(jet->rightpt());
+	}
+      
+
+      // Electron
+      for (Int_t i = 0; i < el_branch->n(); i++)
+	{
+	  Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*el_branch)[i]), family);
+	  applyChanges(lep);
+	  
+	  
+	  el_smeared_pt->push_back(newEt);
+	}
+      
+      // Muon
+      for (Int_t i = 0; i < mu_branch->n(); i++)
+	{
+	  Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*mu_branch)[i]), family);
+	  applyChanges(lep);
+	  
+	  muon_smeared_pt->push_back(muon_pT_forMET);
+	  muon_smeared_ms_pt->push_back(muon_pTStandalone_forMET);
+	}
+      
+      ///////////////////////////////////////////////////
+      float MET_RefTau_etx                          = 0.;
+      float MET_RefTau_ety                          = 0.;
+      float MET_RefGamma_etx                        = 0.;
+      float MET_RefGamma_ety                        = 0.;
+      float MET_CellOut_Eflow_etx                   = 0.;
+      float MET_CellOut_Eflow_ety                   = 0.;
+      
+      MET_RefTau_etx                          = MET_RefTau_et * TMath::Cos(MET_RefTau_phi);
+      MET_RefTau_ety                          = MET_RefTau_et * TMath::Sin(MET_RefTau_phi);
+      MET_RefGamma_etx                        = MET_RefGamma_et * TMath::Cos(MET_RefGamma_phi);
+      MET_RefGamma_ety                        = MET_RefGamma_et * TMath::Sin(MET_RefGamma_phi);
+      MET_CellOut_Eflow_etx                   = MET_CellOut_Eflow_et * TMath::Cos(MET_CellOut_Eflow_phi);
+      MET_CellOut_Eflow_ety                   = MET_CellOut_Eflow_et * TMath::Sin(MET_CellOut_Eflow_phi);
+      
+      ////////
+      m_systUtil->setJetParameters(RecalibratedJetPtVec,
+				   jet_eta,
+				   jet_phi,
+				   jet_E,
+				   jet_MET_wet,
+				   jet_MET_wpx,
+				   jet_MET_wpy,
+				   jet_MET_statusWord);
+      
+    //m_systUtil->setOriJetParameters(jet_pt); (no more needed in MIssingETUtility-01-02-05)
+      
+      m_systUtil->setElectronParameters(el_smeared_pt,
+					el_eta, el_phi,
+					el_MET_wet_new,
+					el_MET_wpx_new,
+					el_MET_wpy_new,
+					el_MET_statusWord_new);
+      
+      m_systUtil->setMuonParameters(muon_smeared_pt,
+				    mu_eta,
+				    mu_phi,
+				    mu_MET_wet,
+				    mu_MET_wpx,
+				    mu_MET_wpy,
+				    mu_MET_statusWord);
+      
+      // In this instance there is an overloaded version of setExtraMuonParameters that accepts smeared pTs for spectro
+      m_systUtil->setExtraMuonParameters(muon_smeared_ms_pt,
+					 mu_ms_theta,
+					 mu_ms_phi);// charge ??
+      
+    //m_systUtil->setMETTerm(METUtil::RefEle, MET_RefEle_etx, MET_RefEle_ety, MET_RefEle_sumet);
+    //m_systUtil->setMETTerm(METUtil::MuonTotal, MET_MuonBoy_etx, MET_MuonBoy_ety, MET_MuonBoy_sumet);
+      m_systUtil->setMETTerm(METUtil::RefTau,       MET_RefTau_etx,        MET_RefTau_ety,        MET_RefTau_sumet);
+      m_systUtil->setMETTerm(METUtil::RefGamma,     MET_RefGamma_etx,      MET_RefGamma_ety,      MET_RefGamma_sumet);
+      m_systUtil->setMETTerm(METUtil::CellOutEflow, MET_CellOut_Eflow_etx, MET_CellOut_Eflow_ety, MET_CellOut_Eflow_sumet);
+      
+      
+      //to get METRefFinal
+      METUtility::METObject met_refFinal = m_systUtil->getMissingET(METUtil::RefFinal);
+      //met_refFinal_et  = met_refFinal.et();
+      //met_refFinal_etx = met_refFinal.etx();
+      //met_refFinal_ety = met_refFinal.ety();
+      //met_refFinal_phi = met_refFinal.phi();
+      
+      delete RecalibratedJetPtVec;
+      delete muon_smeared_pt;
+      delete muon_smeared_ms_pt;
+      delete el_smeared_pt;
+      
+      return met_refFinal.et();
+      */
     }
 }
 
@@ -6934,11 +7073,11 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight()
 	  result           *= val;
 	}
     }
-  else
+  /*else
     {
       cout<<"Calling DPhi weight... for the moment is OFF"<<endl;
     }
-  
+  */
   return result;
 }
 
@@ -6977,5 +7116,4 @@ std::vector<TLorentzVector> HiggsllqqAnalysis::getTruthJets()
   
   return vector;
 }
-
 
