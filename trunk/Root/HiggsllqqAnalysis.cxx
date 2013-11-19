@@ -58,7 +58,7 @@ Bool_t MuonSmearing          = kTRUE,
   DoTriggerSystematics       = kFALSE,
   
 //Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
-  ExtendedJetRegion          = kFALSE,
+  ExtendedJetRegion          = kTRUE,
   
 //Calculating the DPhi weight
   DoDPhiWeight               = kFALSE,
@@ -843,20 +843,22 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
   
   // Including hfor veto 
   if (isMC())
-    HFOR_value = hforTool->getDecision(ntuple->eventinfo.mc_channel_number(),
-				       mc_n,
-				       mc_pt,
-				       mc_eta,
-				       mc_phi,
-				       mc_m,
-				       mc_pdgId,
-				       mc_status,
-				       mc_vx_barcode,
-				       mc_parent_index,
-				       mc_child_index,
-				       HforToolD3PD::BBONLY);
+    {
+      HFOR_value = hforTool->getDecision(ntuple->eventinfo.mc_channel_number(),
+					 mc_n,
+					 mc_pt,
+					 mc_eta,
+					 mc_phi,
+					 mc_m,
+					 mc_pdgId,
+					 mc_status,
+					 mc_vx_barcode,
+					 mc_parent_index,
+					 mc_child_index,
+					 HforToolD3PD::BBONLY);
+    }
   else
-    HFOR_value = -99999;
+    {   HFOR_value = -99999;  }
   
   if (HFOR_value!=4) last = HllqqCutFlow::HFOR;
   else return last;   
@@ -1712,8 +1714,8 @@ void HiggsllqqAnalysis::getGoodMuons()
 	    theJetNow++;
 	    Analysis::Jet *jet = (*jet_itr);
 	    
-	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() /*&& i_mu->pt()<20000.*/) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
-		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() /*&& i_mu->pt()<20000.*/))
+	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
+		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
 		//cout<<"   Removing low pt muon "<<i<<" overlaping the good jet "<<theJetNow<<"!... continue..."<<endl;
 		
