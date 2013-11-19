@@ -1,3 +1,10 @@
+####### November 2013 #######
+TO OBTAIN ALL THE CONFIGURATION FILES
+ 
+./launch_jobs.sh <ProductionVersion.VersionProduction> <SystematicNumber>
+
+## Where: Systematic has to correspond with dictionary. SystematicNumber==3 means Nominal selection!
+
 ORDER TO USE THE FILES:
 
 ####### October 2013 #######

@@ -1,43 +1,43 @@
 #!/bin/bash
 ## author: arturos@cern.ch
 ## Ceation: September 30th 2013
-## Update:  November   7th 2013
+## Update:  November  18th 2013
 
 ## User Options to Setup:
 FILE="samples.txt"         ## The name of the text file where the list of files are saved.
 USER="arturos"             ## User who will send the GRID jobs.
-PRODUCTION="15.1"          ## Tag of the production version.
+PRODUCTION=$1              ## "16.0"                  ## Tag of the production version.
 TAR="yes"                  ## To create the tar file.               Possible answer: "yes" or "not"
 LAUNCH="not"               ## To really execute the production now. Possible answer: "yes" or "not"
 EXCLUDE="ANALY_SARA"       ## Site to exclude due to known problems. (In case of any, just write "")  Ex = ANALY_INFN-NAPOLI,ANALY_SARA
-SYST="\$1"                 ## Systematic to evaluate. the number '3' is for Nominal. Please, check the dictionary
+SYST=$2                    ## Systematic to evaluate. the number '3' is for Nominal. Please, check the dictionary
 ## End of User Options, please do not chance the lines bellow if you are not sure of the procedures.
 
 
-################################################################################################
-echo "        ## ";date;                                                                      ##
-echo "           "                                                                            ##
-                                                                                              ##
-./read_file.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE $SYST > production_HZZllqq_$PRODUCTION;  ##
-cat                                                       production_HZZllqq_$PRODUCTION;  ##
-chmod 755                                                    production_HZZllqq_$PRODUCTION;  ##
-if [ $LAUNCH = "yes" ];                                                                       ##
-then                                                                                          ##
-   nohup                                                   ./production_HZZllqq_$PRODUCTION;  ##
-fi                                                                                            ##
-rm xrootd_HZZllqq_$PRODUCTION       outs_HZZllqq_$PRODUCTION;                                 ##
-rm   Jobs_HZZllqq_$PRODUCTION   download_HZZllqq_$PRODUCTION;                                 ##
-mv               production_HZZllqq_$PRODUCTION                    Jobs_HZZllqq_$PRODUCTION;  ##
-                                                                                              ##
-./create_outputs.sh   $FILE $USER $PRODUCTION $TAR $EXCLUDE    >   outs_HZZllqq_$PRODUCTION;  ##
-./find_xrootd_path.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE    > xrootd_HZZllqq_$PRODUCTION;  ##
-chmod 755                                                          outs_HZZllqq_$PRODUCTION;  ##
-chmod 755                                                        xrootd_HZZllqq_$PRODUCTION;  ##
-sed 's/user\./dq2-get\ user\./g' outs_HZZllqq_$PRODUCTION    > download_HZZllqq_$PRODUCTION;  ##
-chmod 755                                                      download_HZZllqq_$PRODUCTION;  ##
-echo "        ## Done!"                                                                       ##
-ls -lhrt --col                                                                                ##
-################################################################################################
+#########################################################################################################
+echo "        ## ";date;                                                                               ##
+echo "           "                                                                                     ##
+                                                                                                       ##
+./read_file.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE $SYST >    production_HZZllqq_$PRODUCTION.$SYST;  ##
+## cat                                                          production_HZZllqq_$PRODUCTION.$SYST;  ##
+chmod 755                                                       production_HZZllqq_$PRODUCTION.$SYST;  ##
+if [ $LAUNCH = "yes" ];                                                                                ##
+then                                                                                                   ##
+   nohup                                                      ./production_HZZllqq_$PRODUCTION.$SYST;  ##
+fi                                                                                                     ##
+rm xrootd_HZZllqq_$PRODUCTION.$SYST       outs_HZZllqq_$PRODUCTION.$SYST;                              ##
+rm   Jobs_HZZllqq_$PRODUCTION.$SYST   download_HZZllqq_$PRODUCTION.$SYST;                              ##
+mv               production_HZZllqq_$PRODUCTION.$SYST                 Jobs_HZZllqq_$PRODUCTION.$SYST;  ##
+                                                                                                       ##
+./create_outputs.sh   $FILE $USER $PRODUCTION $TAR $EXCLUDE     >     outs_HZZllqq_$PRODUCTION.$SYST;  ##
+./find_xrootd_path.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE     >   xrootd_HZZllqq_$PRODUCTION.$SYST;  ##
+chmod 755                                                             outs_HZZllqq_$PRODUCTION.$SYST;  ##
+chmod 755                                                           xrootd_HZZllqq_$PRODUCTION.$SYST;  ##
+sed 's/user\./dq2-get\ user\./g' outs_HZZllqq_$PRODUCTION.$SYST > download_HZZllqq_$PRODUCTION.$SYST;  ##
+chmod 755                                                         download_HZZllqq_$PRODUCTION.$SYST;  ##
+echo "        ## Done!"                                                                                ##
+ls -lhrt --col                                                                                         ##
+#########################################################################################################
 
 ## Example of "samples.txt" file ##
     ##########################

@@ -1,8 +1,6 @@
 Top.txt
 Diboson.txt
-Z_jets.txt
-DY_jets.txt
-W_jets.txt
-Signal_low_mass.txt
+Z_jets_short.txt
+W_jets_short.txt
 Signal_high_mass.txt
 Data.txt
