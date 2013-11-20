@@ -661,15 +661,15 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
   
   // initialize the cutflows
   m_Channels.push_back(HiggsllqqAnalysis::E2);
-  m_Channels.push_back(HiggsllqqAnalysis::MU2);
   m_Channels.push_back(HiggsllqqAnalysis::MUE);
+  m_Channels.push_back(HiggsllqqAnalysis::MU2);
   
   
   std::map<Int_t, TString> chan_name;
   chan_name.clear();
   chan_name[HiggsllqqAnalysis::E2]  = "E2";
-  chan_name[HiggsllqqAnalysis::MU2] = "MU2";
   chan_name[HiggsllqqAnalysis::MUE] = "MUE";
+  chan_name[HiggsllqqAnalysis::MU2] = "MU2";
   
   
   m_EventCutflow.clear();
@@ -2467,9 +2467,6 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  
 	  if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
 	    {
-	      // update cutflows
-	      m_EventCutflow[chan].addCutCounter(last_event, 1);
-	      
 	      if(isMC())
 		{		   
                   float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.),tmpDPhijjZWeight(1.);	
@@ -2519,10 +2516,14 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 			  <<"|"<<endl;
 		    }
 		  
+		  // update cutflows
+		  m_EventCutflow[chan].addCutCounter(last_event, 1);
 		  m_EventCutflow_rw[chan].addCutCounter(last_event,1.*tmpWeight);
 		}
 	      else
 		{
+		  // update cutflows
+		  m_EventCutflow[chan].addCutCounter(last_event, 1);
 		  m_EventCutflow_rw[chan].addCutCounter(last_event, 1.);
 		}	    
 	      
@@ -2549,18 +2550,21 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      
 	      
 	      // Fill the cutflow histograms
-	      for (int cut = 0; cut<last_event; cut++)
+	      for (int cut = 0; cut<=last_event; cut++)
 		{
-		  h_cutflow->Fill(cut,1);
-		  if(isMC()) h_cutflow_weight->Fill(cut,1*tWeight);
-		  else       h_cutflow_weight->Fill(cut,1);
-		  if(chan==2)
+		  if(getChannel() == HiggsllqqAnalysis::E2 || getChannel() == HiggsllqqAnalysis::MU2)
+		    {
+		      h_cutflow->Fill(cut,1);
+		      if(isMC()) h_cutflow_weight->Fill(cut,1*tWeight);
+		      else       h_cutflow_weight->Fill(cut,1);
+		    }
+		  if(getChannel() == HiggsllqqAnalysis::E2)
 		    {
 		      h_cutflow_E2->Fill(cut,1);
 		      if(isMC()) h_cutflow_weight_E2->Fill(cut,1*tWeight);
 		      else       h_cutflow_weight_E2->Fill(cut,1);
 		    }
-		  if(chan==0)
+		  if(getChannel() == HiggsllqqAnalysis::MU2)
 		    {
 		      h_cutflow_MU2->Fill(cut,1);
 		      if(isMC()) h_cutflow_weight_MU2->Fill(cut,1*tWeight);
