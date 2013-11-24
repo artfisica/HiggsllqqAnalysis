@@ -65,7 +65,11 @@ int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), medi
 
 float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
 
+
 int Print_low_OR_high = 1; // 0 for LowSelection ; 1 for HighSelection
+// Print Just High Selection CutFlows
+Bool_t PrintJustHighSelectionCutFlows =kTRUE;
+
 
 Int_t    count_events(0), eventNow(-1),   overElectron(0), overMuon(0),  overJet(0); 
 Int_t    badevent(0),     prebadevent(0), ptchange(0),     ptelecChange(0);
@@ -176,7 +180,7 @@ Bool_t HiggsllqqAnalysis::change_input()
 Bool_t HiggsllqqAnalysis::initialize_tools()
 {    
   printAllOptions();
-    
+  
   // initiate the calibration tool
   TString jetAlgo="";
   if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEM";
@@ -198,13 +202,13 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
     }
   
   
-
+  
   bool isData(0);
   if (isMC())
     isData = false;
   else if (!isMC())
     isData = true;
-
+  
   
   myJES = new JetCalibrationTool(jetAlgo,JES_config_file, isData);
   myJER = new JetSmearingTool(jetAlgo,JER_config_file);
@@ -465,7 +469,7 @@ Bool_t HiggsllqqAnalysis::execute_tools(Long64_t entry)
 	    }
 	  
 	  //Printing the Cutflow for signal mass value!
-	  if(ntuple->eventinfo.mc_channel_number() < 160420)
+	  if(ntuple->eventinfo.mc_channel_number() < 160420 || PrintJustHighSelectionCutFlows)
 	    Print_low_OR_high=0;
 	}
     }
@@ -785,45 +789,45 @@ Bool_t HiggsllqqAnalysis::SherpaPt0Veto()
   
   if (isMC())
     {  
-      if (ntuple->eventinfo.mc_channel_number() > 167748 && ntuple->eventinfo.mc_channel_number() < 167758) {
-	
-	int pdg(0),one(0);
-	TLorentzVector lepton_1;
-	TLorentzVector lepton_2;
-	TLorentzVector Z_12;
-	
-	for (Int_t i = 0; i < ntuple->mc.n(); i++)
-	  {
-	    
-	    if (ntuple->mc[i].status() != 3) { continue; }
-	    
-	    pdg = TMath::Abs(ntuple->mc[i].pdgId());
-	    
-	    if(pdg < 11) { continue; }
-	    if(pdg > 16) { continue; }
-	    
-	    one++;
-	    
-	    if(one==1)
-	      lepton_1.SetPtEtaPhiM(ntuple->mc[i].pt(),
-				    ntuple->mc[i].eta(),
-				    ntuple->mc[i].phi(),
-				    ntuple->mc[i].m());
-	    
-	    if(one==2)
-	      lepton_2.SetPtEtaPhiM(ntuple->mc[i].pt(),
-				    ntuple->mc[i].eta(),
-				    ntuple->mc[i].phi(),
-				    ntuple->mc[i].m());
-	    
-	  } // loop over truth particles
-	
-	Z_12 = lepton_1 + lepton_2;
-	
-	if(Z_12.Pt()>SherpaORptCut && one==2) {
-	  result = kTRUE;
-	}
-      } // Sherpa Z+Jets samples
+      if (ntuple->eventinfo.mc_channel_number() > 167748 && ntuple->eventinfo.mc_channel_number() < 167758)
+	{	
+	  int pdg(0),one(0);
+	  TLorentzVector lepton_1;
+	  TLorentzVector lepton_2;
+	  TLorentzVector Z_12;
+	  
+	  for (Int_t i = 0; i < ntuple->mc.n(); i++)
+	    {
+	      if (ntuple->mc[i].status() != 3) { continue; }
+	      
+	      pdg = TMath::Abs(ntuple->mc[i].pdgId());
+	      
+	      if(pdg < 11) { continue; }
+	      if(pdg > 16) { continue; }
+	      
+	      one++;
+	      
+	      if(one==1)
+		lepton_1.SetPtEtaPhiM(ntuple->mc[i].pt(),
+				      ntuple->mc[i].eta(),
+				      ntuple->mc[i].phi(),
+				      ntuple->mc[i].m());
+	      
+	      if(one==2)
+		lepton_2.SetPtEtaPhiM(ntuple->mc[i].pt(),
+				      ntuple->mc[i].eta(),
+				      ntuple->mc[i].phi(),
+				      ntuple->mc[i].m());
+	      
+	    } // loop over truth particles
+	  
+	  Z_12 = lepton_1 + lepton_2;
+	  
+	  if(Z_12.Pt()>SherpaORptCut && one==2)
+	    {
+	      result = kTRUE;
+	    }
+	} // Sherpa Z+Jets samples
     }
   
   return result;
@@ -983,14 +987,16 @@ std::vector<TString> HiggsllqqAnalysis::getListOfAlternativeTriggers(TString seq
   
   TObjArray *chains = sequence.Tokenize(";");  
   
-  if (chains->GetEntriesFast()) {
-    TIter iChain(chains);
-    TObjString *os = 0;
-    
-    while ((os = (TObjString*)iChain())) {
-      result.push_back(os->GetString().Data());
-    } // loop over chains
-  } // non-zero input
+  if (chains->GetEntriesFast())
+    {
+      TIter iChain(chains);
+      TObjString *os = 0;
+      
+      while ((os = (TObjString*)iChain()))
+	{
+	  result.push_back(os->GetString().Data());
+	} // loop over chains
+    } // non-zero input
   
   delete chains;
   
@@ -1000,16 +1006,23 @@ std::vector<TString> HiggsllqqAnalysis::getListOfAlternativeTriggers(TString seq
 
 Bool_t HiggsllqqAnalysis::passesTrigger()
 {
-  if (getChannel() == HiggsllqqAnalysis::MU2) {
-    return (passesSingleMuonTrigger() || passesDiMuonTrigger());
-  } else if (getChannel() == HiggsllqqAnalysis::MUE) {
-    return (passesSingleMuonTrigger() || passesDiMuonTrigger() || passesSingleElectronTrigger() || passesDiElectronTrigger());// || passesElectronMuonTrigger());
-  } else if (getChannel() == HiggsllqqAnalysis::E2) {
-    return (passesSingleElectronTrigger() || passesDiElectronTrigger());
-  } else {
-    Abort("Unexpected channel passed to HiggsllqqAnalysis::passesTrigger()");
-    return kFALSE;
-  }
+  if (getChannel() == HiggsllqqAnalysis::MU2)
+    {
+      return (passesSingleMuonTrigger() || passesDiMuonTrigger());
+    } 
+  else if (getChannel() == HiggsllqqAnalysis::MUE)
+    {
+      return (passesSingleMuonTrigger() || passesDiMuonTrigger() || passesSingleElectronTrigger() || passesDiElectronTrigger());// || passesElectronMuonTrigger());
+    } 
+  else if (getChannel() == HiggsllqqAnalysis::E2)
+    {
+      return (passesSingleElectronTrigger() || passesDiElectronTrigger());
+    }
+  else
+    {
+      Abort("Unexpected channel passed to HiggsllqqAnalysis::passesTrigger()");
+      return kFALSE;
+    }
 }
 
 
@@ -1427,8 +1440,8 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
 	tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
       
       
-      Float_t tmp_E = el->cl_E() * TMath::Abs(tmp_calibration);
-      Float_t tmp_Et = tmp_E / TMath::CosH(el->tracketa());
+      Float_t tmp_E     = el->cl_E() * TMath::Abs(tmp_calibration);
+      Float_t tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
       Float_t tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
       
       
@@ -2188,79 +2201,79 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
       else return kFALSE;
       
       
-      if (analysis_version() == "rel_17") { // rel. 17
-	
-	if(dolowmass)
-	  {
-	    if (el->tightPP() == 1) lep->set_lastcut(HllqqElectronQuality::quality);
-	    
-	    else return kFALSE;
-	  }
-	else if(!dolowmass)
-	  {
-	    if (el->mediumPP() == 1) lep->set_lastcut(HllqqElectronQuality::quality);
-	    
-	    else return kFALSE;
-	  }
-      } // rel. 17
+      if (analysis_version() == "rel_17") // rel. 17
+	{ 
+	  if(dolowmass)
+	    {
+	      if (el->tightPP() == 1) lep->set_lastcut(HllqqElectronQuality::quality);
+	      
+	      else return kFALSE;
+	    }
+	  else if(!dolowmass)
+	    {
+	      if (el->mediumPP() == 1) lep->set_lastcut(HllqqElectronQuality::quality);
+	      
+	      else return kFALSE;
+	    }
+	} // rel. 17
       
       
-      else if (analysis_version() == "rel_17_2") { // rel. 17.2
-	
-	if(dolowmass)
-	  {
-	    if (isTightPlusPlus(el->etas2(),
-				el->cl_E() / TMath::CosH(el->etas2()),
-				el->f3(),
-				el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
-				el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
-				el->reta(),
-				el->weta2(),
-				el->f1(),
-				el->wstot(),
-				el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
-				el->deltaeta1(),
-				el->trackd0_physics(),
-				el->TRTHighTOutliersRatio(),
-				el->nTRTHits(),
-				el->nTRTOutliers(),
-				el->nSiHits(),
-				el->nSCTOutliers() + el->nPixelOutliers(),
-				el->nPixHits(),
-				el->nPixelOutliers(),
-				el->nBLHits(),
-				el->nBLayerOutliers(),
-				el->expectBLayerHit(),
-				el->cl_E() * TMath::Abs(el->trackqoverp()),
-				el->deltaphi2(), 
-				el->isEM() & (1 << 1),
-				egammaMenu::eg2012,
-				false,
-				false)) lep->set_lastcut(HllqqElectronQuality::quality);
-	    
-	    else return kFALSE;
-	  }
-	else if(!dolowmass)
-	  {
-	    if (isLoosePlusPlus(el->etas2(),el->cl_E() / TMath::CosH(el->etas2()),el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
-				el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
-				el->reta(),
-				el->weta2(),
-				el->f1(),
-				el->wstot(),
-				el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
-				el->deltaeta1(),
-				el->nSiHits(),
-				el->nSCTOutliers() + el->nPixelOutliers(),
-				el->nPixHits(),
-				el->nPixelOutliers(),
-				egammaMenu::eg2012,
-				false,
-				false)) lep->set_lastcut(HllqqElectronQuality::quality);
-	    
-	    else return kFALSE;
-	  }
-      } // rel. 17.2
+      else if (analysis_version() == "rel_17_2") // rel. 17.2
+	{
+	  if(dolowmass)
+	    {
+	      if (isTightPlusPlus(el->etas2(),
+				  el->cl_E() / TMath::CosH(el->etas2()),
+				  el->f3(),
+				  el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
+				  el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
+				  el->reta(),
+				  el->weta2(),
+				  el->f1(),
+				  el->wstot(),
+				  el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
+				  el->deltaeta1(),
+				  el->trackd0_physics(),
+				  el->TRTHighTOutliersRatio(),
+				  el->nTRTHits(),
+				  el->nTRTOutliers(),
+				  el->nSiHits(),
+				  el->nSCTOutliers() + el->nPixelOutliers(),
+				  el->nPixHits(),
+				  el->nPixelOutliers(),
+				  el->nBLHits(),
+				  el->nBLayerOutliers(),
+				  el->expectBLayerHit(),
+				  el->cl_E() * TMath::Abs(el->trackqoverp()),
+				  el->deltaphi2(), 
+				  el->isEM() & (1 << 1),
+				  egammaMenu::eg2012,
+				  false,
+				  false)) lep->set_lastcut(HllqqElectronQuality::quality);
+	      
+	      else return kFALSE;
+	    }
+	  else if(!dolowmass)
+	    {
+	      if (isLoosePlusPlus(el->etas2(),el->cl_E() / TMath::CosH(el->etas2()),el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
+				  el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
+				  el->reta(),
+				  el->weta2(),
+				  el->f1(),
+				  el->wstot(),
+				  el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
+				  el->deltaeta1(),
+				  el->nSiHits(),
+				  el->nSCTOutliers() + el->nPixelOutliers(),
+				  el->nPixHits(),
+				  el->nPixelOutliers(),
+				  egammaMenu::eg2012,
+				  false,
+				  false)) lep->set_lastcut(HllqqElectronQuality::quality);
+	      
+	      else return kFALSE;
+	    }
+	} // rel. 17.2
       
       
       if (TMath::Abs(el->cl_eta()) < 2.47) lep->set_lastcut(HllqqElectronQuality::eta);
@@ -2415,8 +2428,8 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
 	    {
 	      Float_t j_fmax = Jet->fracSamplingMax();
 	      Float_t j_smax = Jet->SamplingMax();
-	      Float_t j_eta = Jet->emscale_eta();/*jet->righteta();*/
-	      Float_t j_phi = jet->rightphi();
+	      Float_t j_eta  = Jet->emscale_eta();/*jet->righteta();*/
+	      Float_t j_phi  = jet->rightphi();
 	      
 	      Bool_t etaphi28(kFALSE);
 	      if (j_eta > -0.2 && j_eta < -0.1 && j_phi > 2.65 && j_phi < 2.75) etaphi28 = kTRUE;
@@ -2473,12 +2486,12 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      setSystematicToDo(syst);
 	      
 	      /*
-	      if(getSystematicToDo()>=0)
+		if(getSystematicToDo()>=0)
 		cout<<"     +++++ PLEASE! Take Care, Systematic "<<getSystematicToDo()<<" is ON. Check the dictionary for details!!"<<endl;
-	      else if(getSystematicToDo()==-1)
+		else if(getSystematicToDo()==-1)
 		cout<<"     +++++ PLEASE! Take Care, All Systematic are OFF, running NOMINAL!.   Check the dictionary for details!!"<<endl;
 	      */
- 
+	      
 	      // JER systematic activation
 	      SetSysStudy(getSystematicToDo()==2);
 	      
@@ -2790,64 +2803,101 @@ Int_t HiggsllqqAnalysis::getPeriod()
   if (!isMC())
     {
       // DATA
-      if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_A").second) {
-	// A
-	return DataPeriod::y2011_A;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_B").second) {
-	// B
-	return DataPeriod::y2011_B;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_C").second) {
-	// C
-	return DataPeriod::y2011_C;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_D").second) {
-	// D
-	return DataPeriod::y2011_D;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_E").second) {
-	// E
-	return DataPeriod::y2011_E;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_F").second) {
-	// F
-	return DataPeriod::y2011_F;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_G").second) {
-	// G
-	return DataPeriod::y2011_G;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_H").second) {
-	// H
-	return DataPeriod::y2011_H;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_I").second) {
-	// I
-	return DataPeriod::y2011_I;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_J").second) {
-	// J
-	return DataPeriod::y2011_J;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_K").second) {
-	// K
-	return DataPeriod::y2011_K;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_L").second) {
-	// L
-	return DataPeriod::y2011_L;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_M").second) {
-	// M
-	return DataPeriod::y2011_M;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_A").second) {
-	// 2012: A
-	return DataPeriod::y2012_A;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_B").second) {
-	// B
-	return DataPeriod::y2012_B;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_C").second) {
-	// C
-	return DataPeriod::y2012_C;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_D").second) {
-	// D
-	return DataPeriod::y2012_D;
-      } else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_E").second) {
-	// E
-	return DataPeriod::y2012_E;
-      } else {
-	// SAFETY : consider last runs as belonging to the latest period
-	return DataPeriod::y2012_E;
-      }
+      if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_A").second)
+	{
+	  // A
+	  return DataPeriod::y2011_A;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_B").second)
+	{
+	  // B
+	  return DataPeriod::y2011_B;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_C").second)
+	{
+	  // C
+	  return DataPeriod::y2011_C;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_D").second)
+	{
+	  // D
+	  return DataPeriod::y2011_D;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_E").second)
+	{
+	  // E
+	  return DataPeriod::y2011_E;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_F").second)
+	{
+	  // F
+	  return DataPeriod::y2011_F;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_G").second)
+	{
+	  // G
+	  return DataPeriod::y2011_G;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_H").second)
+	{
+	  // H
+	  return DataPeriod::y2011_H;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_I").second)
+	{
+	  // I
+	  return DataPeriod::y2011_I;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_J").second)
+	{
+	  // J
+	  return DataPeriod::y2011_J;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_K").second)
+	{
+	  // K
+	  return DataPeriod::y2011_K;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_L").second)
+	{
+	  // L
+	  return DataPeriod::y2011_L;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2011_M").second)
+	{
+	  // M
+	  return DataPeriod::y2011_M;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_A").second)
+	{
+	  // 2012: A
+	  return DataPeriod::y2012_A;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_B").second)
+	{
+	  // B
+	  return DataPeriod::y2012_B;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_C").second)
+	{
+	  // C
+	  return DataPeriod::y2012_C;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_D").second)
+	{
+	  // D
+	  return DataPeriod::y2012_D;
+	}
+      else if (ntuple->eventinfo.RunNumber() <= DataPeriodTool::GetPeriodRange("y2012_E").second)
+	{
+	  // E
+	  return DataPeriod::y2012_E;
+	}
+      else
+	{
+	  // SAFETY : consider last runs as belonging to the latest period
+	  return DataPeriod::y2012_E;
+	}
     } 
   else
     {
@@ -3544,7 +3594,7 @@ Float_t HiggsllqqAnalysis::getCorrectMETValue()
       
       /*
       m_systUtil->reset();
-      
+	
       vector<float> *RecalibratedJetPtVec = new vector<float>();
       vector<float> *jet_eta = new vector<float>();
       vector<float> *jet_phi = new vector<float>();
@@ -5485,53 +5535,62 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      if(FillGluon)
 		{	  	    
-		  if (CheckMap("44p_4var",idx1,idx2)) { str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
-		    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
-		    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
-		    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
-		  }
-		  if (CheckMap("44p_6var",idx1,idx2)) {
-		    str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
-		    str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
-		    str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
-		    str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
-		  }
-		  if (CheckMap("44h_4var",idx1,idx2)) {
-		    str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
-		    str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
-		    str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
-		    str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
-		  }
-		  if (CheckMap("44h_6var",idx1,idx2)) {
-		    str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
-		    str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
-		    str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
-		    str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
-		  }
-		  if (CheckMap("64p_4var",idx1,idx2)) {
-		    str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
-		    str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
-		    str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
-		    str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
-		  }
-		  if (CheckMap("64p_6var",idx1,idx2)) {
-		    str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
-		    str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
-		    str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
-		    str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
-		  }
-		  if (CheckMap("64h_4var",idx1,idx2)) {
-		    str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
-		    str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
-		    str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
-		    str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
-		  }
-		  if (CheckMap("64h_6var",idx1,idx2)) {
-		    str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
-		    str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
-		    str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
-		    str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
-		  }
+		  if (CheckMap("44p_4var",idx1,idx2))
+		    {
+		      str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+		      str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+		      str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+		      str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+		    }
+		  if (CheckMap("44p_6var",idx1,idx2))
+		    {
+		      str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+		      str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+		      str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+		      str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+		    }
+		  if (CheckMap("44h_4var",idx1,idx2))
+		    {
+		      str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+		      str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+		      str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+		      str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+		    }
+		  if (CheckMap("44h_6var",idx1,idx2))
+		    {
+		      str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+		      str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+		      str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+		      str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+		    }
+		  if (CheckMap("64p_4var",idx1,idx2))
+		    {
+		      str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+		      str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+		      str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+		      str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+		    }
+		  if (CheckMap("64p_6var",idx1,idx2))
+		    {
+		      str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+		      str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+		      str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+		      str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+		    }
+		  if (CheckMap("64h_4var",idx1,idx2))
+		    {
+		      str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+		      str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+		      str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+		      str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+		    }
+		  if (CheckMap("64h_6var",idx1,idx2))
+		    {
+		      str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+		      str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+		      str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+		      str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+		    }
 		  
 		  //Filling of MVA variables
 		  if(str->realJ1_KF_eta<2.5 && str->realJ2_KF_eta<2.5 && str->realJ1_KF_eta>-2.5 && str->realJ2_KF_eta>-2.5 && str->realJ1_KF_pt>20000 && str->realJ2_KF_pt>20000)
@@ -5698,54 +5757,62 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      if(FillGluon)
 		{	  	    
-		  if (CheckMap("44p_4var",idx1,idx2)) {
-		    str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
-		    str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
-		    str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
-		    str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
-		  }
-		  if (CheckMap("44p_6var",idx1,idx2)) {
-		    str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
-		    str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
-		    str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
-		    str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
-		  }
-		  if (CheckMap("44h_4var",idx1,idx2)) {
-		    str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
-		    str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
-		    str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
-		    str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
-		  }
-		  if (CheckMap("44h_6var",idx1,idx2)) {
-		    str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
-		    str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
-		    str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
-		    str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
-		  }
-		  if (CheckMap("64p_4var",idx1,idx2)) {
-		    str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
-		    str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
-		    str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
-		    str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
-		  }
-		  if (CheckMap("64p_6var",idx1,idx2)) {
-		    str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
-		    str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
-		    str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
-		    str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
-		  }
-		  if (CheckMap("64h_4var",idx1,idx2)) {
-		    str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
-		    str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
-		    str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
-		    str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
-		  }
-		  if (CheckMap("64h_6var",idx1,idx2)) {
-		    str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
-		    str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
-		    str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
-		    str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
-		  }
+		  if (CheckMap("44p_4var",idx1,idx2))
+		    {
+		      str->xWin_44p_4var = GetSOMx("44p_4var",idx1,idx2);
+		      str->yWin_44p_4var = GetSOMy("44p_4var",idx1,idx2);
+		      str->zWin_44p_4var = GetSOMz("44p_4var",idx1,idx2);
+		      str->gWin_44p_4var = GetSOMg("44p_4var",idx1,idx2);
+		    }
+		  if (CheckMap("44p_6var",idx1,idx2))
+		    {
+		      str->xWin_44p_6var = GetSOMx("44p_6var",idx1,idx2);
+		      str->yWin_44p_6var = GetSOMy("44p_6var",idx1,idx2);
+		      str->zWin_44p_6var = GetSOMz("44p_6var",idx1,idx2);
+		      str->gWin_44p_6var = GetSOMg("44p_6var",idx1,idx2);
+		    }
+		  if (CheckMap("44h_4var",idx1,idx2))
+		    {
+		      str->xWin_44h_4var = GetSOMx("44h_4var",idx1,idx2);
+		      str->yWin_44h_4var = GetSOMy("44h_4var",idx1,idx2);
+		      str->zWin_44h_4var = GetSOMz("44h_4var",idx1,idx2);
+		      str->gWin_44h_4var = GetSOMg("44h_4var",idx1,idx2);
+		    }
+		  if (CheckMap("44h_6var",idx1,idx2))
+		    {
+		      str->xWin_44h_6var = GetSOMx("44h_6var",idx1,idx2);
+		      str->yWin_44h_6var = GetSOMy("44h_6var",idx1,idx2);
+		      str->zWin_44h_6var = GetSOMz("44h_6var",idx1,idx2);
+		      str->gWin_44h_6var = GetSOMg("44h_6var",idx1,idx2);
+		    }
+		  if (CheckMap("64p_4var",idx1,idx2))
+		    {
+		      str->xWin_64p_4var = GetSOMx("64p_4var",idx1,idx2);
+		      str->yWin_64p_4var = GetSOMy("64p_4var",idx1,idx2);
+		      str->zWin_64p_4var = GetSOMz("64p_4var",idx1,idx2);
+		      str->gWin_64p_4var = GetSOMg("64p_4var",idx1,idx2);
+		    }
+		  if (CheckMap("64p_6var",idx1,idx2))
+		    {
+		      str->xWin_64p_6var = GetSOMx("64p_6var",idx1,idx2);
+		      str->yWin_64p_6var = GetSOMy("64p_6var",idx1,idx2);
+		      str->zWin_64p_6var = GetSOMz("64p_6var",idx1,idx2);
+		      str->gWin_64p_6var = GetSOMg("64p_6var",idx1,idx2);
+		    }
+		  if (CheckMap("64h_4var",idx1,idx2))
+		    {
+		      str->xWin_64h_4var = GetSOMx("64h_4var",idx1,idx2);
+		      str->yWin_64h_4var = GetSOMy("64h_4var",idx1,idx2);
+		      str->zWin_64h_4var = GetSOMz("64h_4var",idx1,idx2);
+		      str->gWin_64h_4var = GetSOMg("64h_4var",idx1,idx2);
+		    }
+		  if (CheckMap("64h_6var",idx1,idx2))
+		    {
+		      str->xWin_64h_6var = GetSOMx("64h_6var",idx1,idx2);
+		      str->yWin_64h_6var = GetSOMy("64h_6var",idx1,idx2);
+		      str->zWin_64h_6var = GetSOMz("64h_6var",idx1,idx2);
+		      str->gWin_64h_6var = GetSOMg("64h_6var",idx1,idx2);
+		    }
 		  
 		  //Filling of MVA variables
 		  if(str->realJ1_BP_eta<2.5 && str->realJ2_BP_eta<2.5 && str->realJ1_BP_eta>-2.5 && str->realJ2_BP_eta>-2.5 && str->realJ1_BP_pt>20000 && str->realJ2_BP_pt>20000)
@@ -6005,7 +6072,7 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   
   
   
-if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
+  if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
     {       
       // jet flavor truth values checked on lxr
       if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
@@ -6137,6 +6204,7 @@ void HiggsllqqAnalysis::SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36]
 	  reader[i]->BookMVA( methodName3 + TString(" method"), weightfile );
 	}
     }
+  
   std::cout<<"Inizialization of TMVA Readers Done"<<std::endl;
 }
 
@@ -6164,10 +6232,12 @@ Float_t HiggsllqqAnalysis::getFisher_KF(TMVA::Reader *reader[4],Float_t var1[4],
     {
       indexReader = 3;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6195,10 +6265,12 @@ Float_t HiggsllqqAnalysis::getFisher_BP(TMVA::Reader *reader[4],Float_t var1[4],
     {
       indexReader = 7;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6226,10 +6298,12 @@ Float_t HiggsllqqAnalysis::getFisher_LJ(TMVA::Reader *reader[4],Float_t var1[4],
     {
       indexReader = 11;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6257,10 +6331,12 @@ Float_t HiggsllqqAnalysis::getLikelihood_KF(TMVA::Reader *reader[4],Float_t var1
     {
       indexReader = 15;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6288,10 +6364,12 @@ Float_t HiggsllqqAnalysis::getLikelihood_BP(TMVA::Reader *reader[4],Float_t var1
     {
       indexReader = 19;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6319,10 +6397,12 @@ Float_t HiggsllqqAnalysis::getLikelihood_LJ(TMVA::Reader *reader[4],Float_t var1
     {
       indexReader = 23;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6350,10 +6430,12 @@ Float_t HiggsllqqAnalysis::getLikelihoodMIX_KF(TMVA::Reader *reader[4],Float_t v
     {
       indexReader = 27;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6381,10 +6463,12 @@ Float_t HiggsllqqAnalysis::getLikelihoodMIX_BP(TMVA::Reader *reader[4],Float_t v
     {
       indexReader = 31;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6412,10 +6496,12 @@ Float_t HiggsllqqAnalysis::getLikelihoodMIX_LJ(TMVA::Reader *reader[4],Float_t v
     {
       indexReader = 35;
     }
+  
   // Book method(s)
   var1[indexReader] = ntrk_jet;
   var2[indexReader] = width_jet;
   LL=reader[indexReader]->EvaluateMVA( methodName );
+  
   return LL;
 }
 
@@ -6423,7 +6509,7 @@ Float_t HiggsllqqAnalysis::getLikelihoodMIX_LJ(TMVA::Reader *reader[4],Float_t v
 // SOM METHODS
 int HiggsllqqAnalysis::GetSOMg(TString which_map, int jetidx1, int jetidx2)
 { 
-  int g=0;
+  int g = 0;
   pair <int, int> WinnerNode = GetSOMWinner(which_map, jetidx1,jetidx2); 
   std::vector< pair<int,int> > LinearMap;
   LinearMap.clear();
@@ -6497,6 +6583,7 @@ pair<int, float> HiggsllqqAnalysis::GetWinnerInfo(std::vector< pair<SOMVar, SOMV
       pow(SOMVectors.at(i).first.width  - Event.first.width,2) +
       pow(SOMVectors.at(i).second.Ntrk  - Event.second.Ntrk,2) +
       pow(SOMVectors.at(i).second.width - Event.second.width,2);
+    
     if (SOMVectors.at(i).first.JetMass != -1. && SOMVectors.at(i).second.JetMass != -1.) dist2 += pow(SOMVectors.at(i).first.JetMass - Event.first.JetMass,2) + pow(SOMVectors.at(i).second.JetMass - Event.second.JetMass,2); 
     distances.push_back(sqrt(dist2));
   }
@@ -6509,6 +6596,7 @@ pair<int, float> HiggsllqqAnalysis::GetWinnerInfo(std::vector< pair<SOMVar, SOMV
   pair <int, float> result;
   result.first  = idx_min;
   result.second = distances.at(idx_min);
+  
   return result;
 }
 
@@ -6530,18 +6618,19 @@ std::vector< pair<SOMVar,SOMVar> > HiggsllqqAnalysis::GetSOMVectors(TString whic
   
   float Ntrk1, Ntrk2, width1, width2, JetMass1, JetMass2; 
   
-  while (1){
-    if      (ps_dim == "4var") map >> Ntrk1 >> width1 >> Ntrk2 >> width2;
-    else if (ps_dim == "6var") map >> Ntrk1 >> width1 >> JetMass1 >> Ntrk2 >> width2 >> JetMass2;
-    if (!map.good()) break;
-    tmp.first.Ntrk   = Ntrk1;
-    tmp.second.Ntrk  = Ntrk2;
-    tmp.first.width  = width1;
-    tmp.second.width = width2;
-    if      (ps_dim == "6var") {tmp.first.JetMass = JetMass1; tmp.first.JetMass = JetMass2;}
-    else if (ps_dim == "4var") {tmp.first.JetMass = -1.; tmp.first.JetMass = -1;}
-    SOMVectors.push_back(tmp);
-  }
+  while (1)
+    {
+      if      (ps_dim == "4var") map >> Ntrk1 >> width1 >> Ntrk2 >> width2;
+      else if (ps_dim == "6var") map >> Ntrk1 >> width1 >> JetMass1 >> Ntrk2 >> width2 >> JetMass2;
+      if (!map.good()) break;
+      tmp.first.Ntrk   = Ntrk1;
+      tmp.second.Ntrk  = Ntrk2;
+      tmp.first.width  = width1;
+      tmp.second.width = width2;
+      if      (ps_dim == "6var") {tmp.first.JetMass = JetMass1; tmp.first.JetMass = JetMass2;}
+      else if (ps_dim == "4var") {tmp.first.JetMass = -1.; tmp.first.JetMass = -1;}
+      SOMVectors.push_back(tmp);
+    }
   map.close();
   
   return SOMVectors;
@@ -6576,13 +6665,15 @@ std::vector< pair<int,int> > HiggsllqqAnalysis::GetCoordinates(TString which_map
   if (which_map == "44p_4var" || which_map == "44h_4var" || which_map == "44p_6var" || which_map == "44h_6var") {xDimension = 4; yDimension = 4;}
   else if (which_map == "64p_4var" || which_map == "64h_4var" || which_map == "64p_6var" || which_map == "64h_6var") {xDimension = 6; yDimension = 4;}
   
-  for (int j=0; j<yDimension; j++){
-    for (int i=0; i<xDimension; i++){
-      point.first = i;
-      point.second = j;
-      result.push_back(point);
+  for (int j=0; j<yDimension; j++)
+    {
+      for (int i=0; i<xDimension; i++)
+	{
+	  point.first = i;
+	  point.second = j;
+	  result.push_back(point);
+	}
     }
-  }
   
   return result;
 }
@@ -6740,8 +6831,10 @@ Float_t HiggsllqqAnalysis::Rightcut(Int_t efficiency, Float_t pt_jet, Float_t et
   else 
     {
       likebin = 14;
-    }  
+    } 
+  
   right=cut[likebin];
+
   return right;
 }
 
@@ -6954,7 +7047,9 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
       last1tag   = -1;
       last2tag   = -1;
     }
-}      
+}
+
+
 //TRIGGER MATCHING AND SF's
 /*
   Bool_t HiggsllqqAnalysis::isTriggerMatched()
@@ -6962,6 +7057,7 @@ void HiggsllqqAnalysis::FillHllqqCutFlowXtag(int last_event,UInt_t chan)
   
   }
 */
+
 
 Float_t HiggsllqqAnalysis::getCandidateTriggerSF(TString syst)
 {
@@ -7099,7 +7195,7 @@ Float_t HiggsllqqAnalysis::getDiLeptonMass()
 
 Float_t HiggsllqqAnalysis::getDPhijjZWeight()
 {
-  Float_t result     = 1.;
+  Float_t result = 1.;
   
   if(DoDPhiWeight)
     {
