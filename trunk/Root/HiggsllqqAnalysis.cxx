@@ -41,21 +41,17 @@ Bool_t MuonSmearing          = kTRUE,
   
   DoLowMass                  = kTRUE, 
   DoCaloMuons                = kTRUE,
-  DoggFWeight                = kFALSE,
+  DoggFWeight                = kTRUE,
   Print_weights              = kFALSE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
   DoKinematicFitter          = kFALSE,
   BP_Selection               = kFALSE,
-  LJ_Selection               = kTRUE,   //The Winner method for 2012 data-paper.
-  FillGluon                  = kTRUE,
+  LJ_Selection               = kTRUE,   // The Winner method for 2012 data-paper.
+  FillGluon                  = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up
+  FillFlavour                = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up
   
-// Systematic Flags
-  DoElectronSystematics      = kFALSE,
-  DoMuonSystematics          = kFALSE,
-  DoJetSystematics           = kTRUE, //!!
-  DoTaggingJetSystematics    = kFALSE,
-  DoTriggerSystematics       = kFALSE,
+// New systematic's variables in the trees:   higgs ->m_SystematicEvent;   tree->issystematicevent;   // November 2013
   
 //Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
   ExtendedJetRegion          = kTRUE,
@@ -105,10 +101,14 @@ Float_t Cone_size     = 0.4;
 // Actual (2012) JVF CUT
 Float_t JVF_CUT       = 0.5;   // 0.75;
 
-//Eta window for jets
+// Eta window for jets
 Float_t EtaWindow     = 4.5;   // 2.5;
 
+// Sherpa OR pt cut
+Float_t SherpaORptCut = 40000.; // 70000.;
 
+// Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
+int NumSystematicsToDo = 3;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -138,11 +138,12 @@ Bool_t HiggsllqqAnalysis::change_input()
 {
   Info("change_input", "Processing a new file...");
   
-  if (!fChain) {
-    Error("change_input", "empty fChain pointer!");
-    
-    return kTRUE;
-  }
+  if (!fChain)
+    {
+      Error("change_input", "empty fChain pointer!");
+      
+      return kTRUE;
+    }
   
   // initialize the trigger decision tool
   
@@ -175,13 +176,7 @@ Bool_t HiggsllqqAnalysis::change_input()
 Bool_t HiggsllqqAnalysis::initialize_tools()
 {    
   printAllOptions();
-  
-  if(getSystematicToDo()>=0)
-    cout<<"     +++++ PLEASE! Take Care, Systematic "<<getSystematicToDo()<<" is ON. Check the dictionary for details!!"<<endl;
-  
-  // JER systematic activation
-  SetSysStudy(getSystematicToDo()==2);
-  
+    
   // initiate the calibration tool
   TString jetAlgo="";
   if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEM";
@@ -785,7 +780,7 @@ Bool_t HiggsllqqAnalysis::initialize_analysis()
 
 Bool_t HiggsllqqAnalysis::SherpaPt0Veto()
 {
-  // check if an event in Sherpa boosted samples Z+jets pt0 should be remove (PT2>70GeV)
+  // check if an event in Sherpa boosted samples Z+jets pt0 should be remove ( PT2>SherpaORptCut (GeV) )
   Bool_t result(kFALSE);
   
   if (isMC())
@@ -825,7 +820,7 @@ Bool_t HiggsllqqAnalysis::SherpaPt0Veto()
 	
 	Z_12 = lepton_1 + lepton_2;
 	
-	if(Z_12.Pt()>70000. && one==2) {
+	if(Z_12.Pt()>SherpaORptCut && one==2) {
 	  result = kTRUE;
 	}
       } // Sherpa Z+Jets samples
@@ -2460,7 +2455,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
       UInt_t chan = m_Channels.at(i);      
       setChannel(chan);
       
-      for(int sel=0; sel<2; sel++) //Looping on the Low/High Mass selections 
+      for(int sel = 0; sel < 2; sel++) //Looping on the Low/High Mass selections 
 	{	  
 	  if(sel==0)
 	    {  //Set the Low or High Mass Analysis
@@ -2471,186 +2466,173 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      SetDoLowMass(kFALSE);
 	    }
 	  
-	  m_called_getGoodLeptons = kFALSE;      
-	  m_called_getGoodObjects = kFALSE;
-	  ResetReducedNtupleMembers();
-	  // TestSelection Reset 
-	  ResetAnalysisOutputBranches(&m_outevent);
-	  
-	  
-	  //Set the QCD flag FALSE
-	  SetDoQCDSelection(kFALSE);
-	  
-	  Int_t last_event = getLastCutPassed();	
-	  
-	  if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
+	  //Including the loop over each of the systematic evaluation!! // November 2013
+	  for (int syst = -1; syst < NumSystematicsToDo; syst++)
 	    {
-	      if(isMC())
-		{		   
-                  float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.),tmpDPhijjZWeight(1.);	
-     	          tmpMCWeight      = getEventWeight();
-		  tmpPileupWeight  = getPileupWeight();
-		  tmpSFWeight      = getSFWeight();
-		  tmpggFWeight     = getggFWeight();
-		  tmpVertexZWeight = getVertexZWeight();
-		  tmpTriggerSF     = getCandidateTriggerSF();
-		  tmpDPhijjZWeight = 1;//getDPhijjZWeight();
-		  
-		  if(tmpMCWeight>=0)
-		    tmpWeight       *= tmpMCWeight;
-		  else cout<<"   ERROR: Upps the MC event weight is negative!!!!   "<<tmpMCWeight     <<endl;
-		  if(tmpPileupWeight>=0)
-		    tmpWeight       *= tmpPileupWeight;
-		  else cout<<"   ERROR: Upps the PileupWeight is negative!!!!      "<<tmpPileupWeight <<endl;
-		  if(tmpSFWeight>=0)
-		    tmpWeight       *= tmpSFWeight;
-		  else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
-		  if(tmpVertexZWeight>=0)
-		    tmpWeight       *= tmpVertexZWeight;
-		  else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
-		  if(tmpTriggerSF>=0)
-		    tmpWeight       *= tmpTriggerSF;
-		  else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
-		  if(tmpggFWeight>=0)
-		    tmpWeight       *= tmpggFWeight;
-		  else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
-		  if(tmpDPhijjZWeight>=0)
-		    tmpWeight       *= tmpDPhijjZWeight;
-		  else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
-		  
-		  if(Print_weights)
-		    {
-		      cout<<"|"<<ntuple->eventinfo.mc_channel_number()
-			  <<"|"<<ntuple->eventinfo.EventNumber()
-			  <<"|"<<chan
-			  <<"|"<<tmpMCWeight
-			  <<"|"<<tmpPileupWeight
-			  <<"|"<<tmpSFWeight
-			  <<"|"<<tmpggFWeight
-			  <<"|"<<tmpVertexZWeight
-			  <<"|"<<tmpTriggerSF
-			  <<"|"<<tmpDPhijjZWeight
-			  <<"|"<<tmpWeight
-			  <<"|"<<endl;
-		    }
-		  
-		  // update cutflows
-		  m_EventCutflow[chan].addCutCounter(last_event, 1);
-		  m_EventCutflow_rw[chan].addCutCounter(last_event,1.*tmpWeight);
-		}
-	      else
-		{
-		  // update cutflows
-		  m_EventCutflow[chan].addCutCounter(last_event, 1);
-		  m_EventCutflow_rw[chan].addCutCounter(last_event, 1.);
-		}	    
+	      // Assigning systematic to run in this lap! // November 2013
+	      setSystematicToDo(syst);
 	      
-	      // Filling the jet binning tag cutflows
-	      FillHllqqCutFlowXtag(last_event,chan);
+	      /*
+	      if(getSystematicToDo()>=0)
+		cout<<"     +++++ PLEASE! Take Care, Systematic "<<getSystematicToDo()<<" is ON. Check the dictionary for details!!"<<endl;
+	      else if(getSystematicToDo()==-1)
+		cout<<"     +++++ PLEASE! Take Care, All Systematic are OFF, running NOMINAL!.   Check the dictionary for details!!"<<endl;
+	      */
+ 
+	      // JER systematic activation
+	      SetSysStudy(getSystematicToDo()==2);
 	      
 	      
-	      float tMCWeight(1.),tPileupWeight(1.),tSFWeight(1.),tggFWeight(1.),tVertexZWeight(1.),tWeight(1.),tTriggerSF(1.),tDPhijjZWeight(1.);
-	      tMCWeight       = getEventWeight();
-	      tPileupWeight   = getPileupWeight();
-	      tSFWeight       = getSFWeight();
-	      tggFWeight      = getggFWeight();
-	      tVertexZWeight  = getVertexZWeight();
-	      tTriggerSF      = getCandidateTriggerSF();
-	      tDPhijjZWeight  = 1;//getDPhijjZWeight();
-	      
-	      if(tMCWeight>=0)      tWeight *= tMCWeight;
-	      if(tPileupWeight>=0)  tWeight *= tPileupWeight;
-	      if(tSFWeight>=0)      tWeight *= tSFWeight;
-	      if(tVertexZWeight>=0) tWeight *= tVertexZWeight;
-	      if(tTriggerSF>=0)     tWeight *= tTriggerSF;
-	      if(tggFWeight>=0)     tWeight *= tggFWeight;
-	      if(tDPhijjZWeight>=0) tWeight *= tDPhijjZWeight;
-	      
-	      
-	      // Fill the cutflow histograms
-	      for (int cut = 0; cut<=last_event; cut++)
-		{
-		  if(getChannel() == HiggsllqqAnalysis::E2 || getChannel() == HiggsllqqAnalysis::MU2)
-		    {
-		      h_cutflow->Fill(cut,1);
-		      if(isMC()) h_cutflow_weight->Fill(cut,1*tWeight);
-		      else       h_cutflow_weight->Fill(cut,1);
-		    }
-		  if(getChannel() == HiggsllqqAnalysis::E2)
-		    {
-		      h_cutflow_E2->Fill(cut,1);
-		      if(isMC()) h_cutflow_weight_E2->Fill(cut,1*tWeight);
-		      else       h_cutflow_weight_E2->Fill(cut,1);
-		    }
-		  if(getChannel() == HiggsllqqAnalysis::MU2)
-		    {
-		      h_cutflow_MU2->Fill(cut,1);
-		      if(isMC()) h_cutflow_weight_MU2->Fill(cut,1*tWeight);
-		      else       h_cutflow_weight_MU2->Fill(cut,1);
-		    }
-		}
-	      
-	      
-	      std::vector<Analysis::ChargedLepton*>::iterator lep;
-	      for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep)
-		{
-		  if ((*lep)->lastcut() != -1)
-		    m_MuonCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
-		}
-	      
-	      for (lep = m_Electrons.begin(); lep != m_Electrons.end(); ++lep)
-		{
-		  if ((*lep)->lastcut() != -1)
-		    m_ElectronCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
-		}
-	      
-	      std::vector<Analysis::Jet*>::iterator jet;
-	      for (jet = m_Jets.begin(); jet != m_Jets.end(); ++jet)
-		{
-		  if ((*jet)->lastcut() != -1)
-		    m_JetCutflow[chan].addCutCounter((*jet)->lastcut(), 1);
-		}
-	      
-	    } //End Printing of the cutflow shows Low==0 OR High==1 !!!!
-	  
-	  
-	  if(chan!=1)// error: repare the mixing MUE channel
-	    {
-	      //Filling of the equivalent qqll tree (2011)
-	      FillReducedNtuple(last_event,chan);    
-	      
-	      
-	      // TestSelection Filling candidate struct
-	      FillAnalysisOutputTree(&m_outevent,last_event,chan);
-	    }	
-	  
-	  last_event = -1;
-	  
-	  m_Muons.clear();
-	  m_Electrons.clear();
-	  m_Jets.clear();
-	  m_GoodMuons.clear();
-	  m_GoodElectrons.clear();
-	  m_GoodJets.clear();
-	  m_TruthJets.clear();
-	  
-	  /////////////////////
-	  // QCD selection - only for data
-	  /////////////////////
-	  if(!isMC())
-	    {
 	      m_called_getGoodLeptons = kFALSE;      
 	      m_called_getGoodObjects = kFALSE;
 	      ResetReducedNtupleMembers();
 	      // TestSelection Reset 
 	      ResetAnalysisOutputBranches(&m_outevent);
-	      SetDoQCDSelection(kTRUE);
-	      last_event = getLastCutPassed();
 	      
-	      if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
+	      
+	      //Set the QCD flag FALSE
+	      SetDoQCDSelection(kFALSE);
+	      
+	      Int_t last_event = getLastCutPassed();	
+	      
+	      if(sel==Print_low_OR_high) //Printing of the cutflow shows Low==0 OR High==1 !!!!
 		{
-		  // Filling of the equivalent qqll tree (2011)
-		  FillReducedNtuple(last_event,chan);       
+		  if(isMC())
+		    {		   
+		      float tmpMCWeight(1.),tmpPileupWeight(1.),tmpSFWeight(1.),tmpggFWeight(1.),tmpVertexZWeight(1.),tmpWeight(1.),tmpTriggerSF(1.),tmpDPhijjZWeight(1.);	
+		      tmpMCWeight      = getEventWeight();
+		      tmpPileupWeight  = getPileupWeight();
+		      tmpSFWeight      = getSFWeight();
+		      tmpggFWeight     = getggFWeight();
+		      tmpVertexZWeight = getVertexZWeight();
+		      tmpTriggerSF     = getCandidateTriggerSF();
+		      tmpDPhijjZWeight = getDPhijjZWeight();
+		      
+		      if(tmpMCWeight>=0)
+			tmpWeight       *= tmpMCWeight;
+		      else cout<<"   ERROR: Upps the MC event weight is negative!!!!   "<<tmpMCWeight     <<endl;
+		      if(tmpPileupWeight>=0)
+			tmpWeight       *= tmpPileupWeight;
+		      else cout<<"   ERROR: Upps the PileupWeight is negative!!!!      "<<tmpPileupWeight <<endl;
+		      if(tmpSFWeight>=0)
+			tmpWeight       *= tmpSFWeight;
+		      else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
+		      if(tmpVertexZWeight>=0)
+			tmpWeight       *= tmpVertexZWeight;
+		      else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
+		      if(tmpTriggerSF>=0)
+			tmpWeight       *= tmpTriggerSF;
+		      else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		      if(tmpggFWeight>=0)
+			tmpWeight       *= tmpggFWeight;
+		      else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
+		      if(tmpDPhijjZWeight>=0)
+			tmpWeight       *= tmpDPhijjZWeight;
+		      else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		      
+		      if(Print_weights)
+			{
+			  cout<<"|"<<ntuple->eventinfo.mc_channel_number()
+			      <<"|"<<ntuple->eventinfo.EventNumber()
+			      <<"|"<<chan
+			      <<"|"<<tmpMCWeight
+			      <<"|"<<tmpPileupWeight
+			      <<"|"<<tmpSFWeight
+			      <<"|"<<tmpggFWeight
+			      <<"|"<<tmpVertexZWeight
+			      <<"|"<<tmpTriggerSF
+			      <<"|"<<tmpDPhijjZWeight
+			      <<"|"<<tmpWeight
+			      <<"|"<<endl;
+			}
+		      
+		      // update cutflows
+		      if(getSystematicToDo()==-1) m_EventCutflow[chan].addCutCounter(last_event, 1);
+		      if(getSystematicToDo()==-1) m_EventCutflow_rw[chan].addCutCounter(last_event,1.*tmpWeight);
+		    }
+		  else
+		    {
+		      // update cutflows
+		      if(getSystematicToDo()==-1) m_EventCutflow[chan].addCutCounter(last_event, 1);
+		      if(getSystematicToDo()==-1) m_EventCutflow_rw[chan].addCutCounter(last_event, 1.);
+		    }	    
+		  
+		  // Filling the jet binning tag cutflows
+		  if(getSystematicToDo()==-1) FillHllqqCutFlowXtag(last_event,chan);
+		  
+		  
+		  float tMCWeight(1.),tPileupWeight(1.),tSFWeight(1.),tggFWeight(1.),tVertexZWeight(1.),tWeight(1.),tTriggerSF(1.),tDPhijjZWeight(1.);
+		  tMCWeight       = getEventWeight();
+		  tPileupWeight   = getPileupWeight();
+		  tSFWeight       = getSFWeight();
+		  tggFWeight      = getggFWeight();
+		  tVertexZWeight  = getVertexZWeight();
+		  tTriggerSF      = getCandidateTriggerSF();
+		  tDPhijjZWeight  = getDPhijjZWeight();
+		  
+		  if(tMCWeight>=0)      tWeight *= tMCWeight;
+		  if(tPileupWeight>=0)  tWeight *= tPileupWeight;
+		  if(tSFWeight>=0)      tWeight *= tSFWeight;
+		  if(tVertexZWeight>=0) tWeight *= tVertexZWeight;
+		  if(tTriggerSF>=0)     tWeight *= tTriggerSF;
+		  if(tggFWeight>=0)     tWeight *= tggFWeight;
+		  if(tDPhijjZWeight>=0) tWeight *= tDPhijjZWeight;
+		  
+		  
+		  // Fill the cutflow histograms
+		  if(getSystematicToDo()==-1) //Filling of the different cutflows just for Nominal selection // November 2013
+		    {
+		      for (int cut = 0; cut<=last_event; cut++)
+			{
+			  if(getChannel() == HiggsllqqAnalysis::E2 || getChannel() == HiggsllqqAnalysis::MU2)
+			    {
+			      h_cutflow->Fill(cut,1);
+			      if(isMC()) h_cutflow_weight->Fill(cut,1*tWeight);
+			      else       h_cutflow_weight->Fill(cut,1);
+			    }
+			  if(getChannel() == HiggsllqqAnalysis::E2)
+			    {
+			      h_cutflow_E2->Fill(cut,1);
+			      if(isMC()) h_cutflow_weight_E2->Fill(cut,1*tWeight);
+			      else       h_cutflow_weight_E2->Fill(cut,1);
+			    }
+			  if(getChannel() == HiggsllqqAnalysis::MU2)
+			    {
+			      h_cutflow_MU2->Fill(cut,1);
+			      if(isMC()) h_cutflow_weight_MU2->Fill(cut,1*tWeight);
+			      else       h_cutflow_weight_MU2->Fill(cut,1);
+			    }
+			}
+		      
+		      
+		      std::vector<Analysis::ChargedLepton*>::iterator lep;
+		      for (lep = m_Muons.begin(); lep != m_Muons.end(); ++lep)
+			{
+			  if ((*lep)->lastcut() != -1)
+			    m_MuonCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
+			}
+		      
+		      for (lep = m_Electrons.begin(); lep != m_Electrons.end(); ++lep)
+			{
+			  if ((*lep)->lastcut() != -1)
+			    m_ElectronCutflow[chan].addCutCounter((*lep)->lastcut(), 1);
+			}
+		      
+		      std::vector<Analysis::Jet*>::iterator jet;
+		      for (jet = m_Jets.begin(); jet != m_Jets.end(); ++jet)
+			{
+			  if ((*jet)->lastcut() != -1)
+			    m_JetCutflow[chan].addCutCounter((*jet)->lastcut(), 1);
+			}
+		    } //End of filling just for Nominal selection // November 2013
+		} //End Printing of the cutflow shows Low==0 OR High==1 !!!!
+	      
+	      
+	      if(chan!=1)// error: repare the mixing MUE channel
+		{
+		  //Filling of the equivalent qqll tree (2011)
+		  FillReducedNtuple(last_event,chan);    
+		  
 		  
 		  // TestSelection Filling candidate struct
 		  FillAnalysisOutputTree(&m_outevent,last_event,chan);
@@ -2665,7 +2647,40 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      m_GoodElectrons.clear();
 	      m_GoodJets.clear();
 	      m_TruthJets.clear();
-	    } //end QCD selection
+	      
+	      /////////////////////
+	      // QCD selection - only for data
+	      /////////////////////
+	      if(!isMC())
+		{
+		  m_called_getGoodLeptons = kFALSE;      
+		  m_called_getGoodObjects = kFALSE;
+		  ResetReducedNtupleMembers();
+		  // TestSelection Reset 
+		  ResetAnalysisOutputBranches(&m_outevent);
+		  SetDoQCDSelection(kTRUE);
+		  last_event = getLastCutPassed();
+		  
+		  if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
+		    {
+		      // Filling of the equivalent qqll tree (2011)
+		      FillReducedNtuple(last_event,chan);       
+		      
+		      // TestSelection Filling candidate struct
+		      FillAnalysisOutputTree(&m_outevent,last_event,chan);
+		    }	
+		  
+		  last_event = -1;
+		  
+		  m_Muons.clear();
+		  m_Electrons.clear();
+		  m_Jets.clear();
+		  m_GoodMuons.clear();
+		  m_GoodElectrons.clear();
+		  m_GoodJets.clear();
+		  m_TruthJets.clear();
+		} //end QCD selection
+	    } //End of Loop of systematics  //November 2013
 	} //End of loop into the Low/high Selection
     } // end of loop into the different channels
   
@@ -2687,7 +2702,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_GoodJets.clear();
   m_Dileptons.clear();
   m_TruthJets.clear();
-
+  
   return kTRUE;
 }
 
@@ -3855,6 +3870,7 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("EventNumber",&m_event);
   m_reduced_ntuple->Branch("channel",&m_channel);
   m_reduced_ntuple->Branch("isqcdevent",&m_qcdevent);
+  m_reduced_ntuple->Branch("SystematicEvent",&m_SystematicEvent);
   m_reduced_ntuple->Branch("islowevent",&m_low_event);
   m_reduced_ntuple->Branch("last_cut",&m_cut);
   m_reduced_ntuple->Branch("jet_m",&m_jets_m);
@@ -3962,6 +3978,7 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_cut               = -1;
   m_channel           = -1;
   m_qcdevent          = -1;
+  m_SystematicEvent   = -1;
   m_low_event         = -1;
   m_met_met           = -9999.;
   m_met_phi           = -9999.;
@@ -4088,7 +4105,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	  m_jets_nTrk->push_back(Jet->nTrk());
 	  m_jets_width->push_back(Jet->WIDTH());
 	  
-	  if (isMC()) 
+	  if (isMC())
 	    {
 	      m_jets_flavortruth->push_back(Jet->flavor_truth_label());
 	      m_jets_flavorpdg->push_back(GetFlavour(*jet_itr).first);
@@ -4121,6 +4138,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
       m_met_phi           = ntuple->MET_RefFinal.phi();
       m_met_sumet         = ntuple->MET_RefFinal.sumet(); 
       m_qcdevent          = GetDoQCDSelection() ? 1 : 0;
+      m_SystematicEvent   = getSystematicToDo();
       m_low_event         = GetDoLowMass() ? 1 : 0;
       m_NPV               = getNumberOfGoodVertices();
       
@@ -4173,34 +4191,37 @@ pair <Int_t,Double_t> HiggsllqqAnalysis::GetFlavour(Analysis::Jet *jet)
   Float_t  pt_leading = 0;
   Float_t  dr         = 0.4;
   Int_t    flavour    = -999;
-  Double_t E_leading = -1.;
+  Double_t E_leading  = -1.;
   pair <Int_t,Double_t> mcinfo;
   
-  for (Int_t i = 0; i < ntuple->mc.n(); i++) 
+  if (FillFlavour)
     {
-      D3PDReader::TruthParticleD3PDObjectElement *p = &(ntuple->mc[i]);
-      D3PDReader::JetD3PDObjectElement *this_jet    = jet->GetJet();
-      
-      Int_t pdg = p->pdgId();
-      
-      if(isGluonJet(pdg) || isHeavyJet(pdg) || isLightJet(pdg))
+      for (Int_t i = 0; i < ntuple->mc.n(); i++) 
 	{
-	  TLorentzVector Tp = CommonTools::getVector(p);
-	  Float_t tmp_dr = TMath::Sqrt(TMath::Power(this_jet->EtaOrigin() - p->eta(), 2) + TMath::Power(TVector2::Phi_mpi_pi(this_jet->PhiOrigin() - p->phi()), 2));
+	  D3PDReader::TruthParticleD3PDObjectElement *p = &(ntuple->mc[i]);
+	  D3PDReader::JetD3PDObjectElement *this_jet    = jet->GetJet();
 	  
-	  if(tmp_dr<dr) 
+	  Int_t pdg = p->pdgId();
+	  
+	  if(isGluonJet(pdg) || isHeavyJet(pdg) || isLightJet(pdg))
 	    {
-	      if(isHeavyJet(pdg))
+	      TLorentzVector Tp = CommonTools::getVector(p);
+	      Float_t tmp_dr = TMath::Sqrt(TMath::Power(this_jet->EtaOrigin() - p->eta(), 2) + TMath::Power(TVector2::Phi_mpi_pi(this_jet->PhiOrigin() - p->phi()), 2));
+	      
+	      if(tmp_dr<dr) 
 		{
-		  pt_leading=p->pt();
-		  flavour=pdg;
-		  E_leading=Tp.E();
-		}
-	      else if(p->pt()>pt_leading)
-		{
-		  pt_leading=p->pt();
-		  flavour=pdg;
-		  E_leading=Tp.E();
+		  if(isHeavyJet(pdg))
+		    {
+		      pt_leading=p->pt();
+		      flavour=pdg;
+		      E_leading=Tp.E();
+		    }
+		  else if(p->pt()>pt_leading)
+		    {
+		      pt_leading=p->pt();
+		      flavour=pdg;
+		      E_leading=Tp.E();
+		    }
 		}
 	    }
 	}
@@ -4299,6 +4320,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->istagged              = -999;
   str->channel               = -999;
   str->isqcdevent            = -999;
+  str->issystematicevent     = -999;
   str->low_event             = -999;
   str->n_jets                = -999;
   str->n_b_jets              = -999;
@@ -4582,6 +4604,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("isTagged",              &(str->istagged));
   analysistree->Branch("channel",               &(str->channel));
   analysistree->Branch("isqcdevent",            &(str->isqcdevent));
+  analysistree->Branch("issystematicevent",     &(str->issystematicevent));
   analysistree->Branch("low_event",             &(str->low_event));
   analysistree->Branch("HFOR",                  &(str->HFOR));
   analysistree->Branch("Entries",               &(str->Entries));
@@ -4904,6 +4927,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       str->channel                  = channel;
       str->low_event                = GetDoLowMass()      ? 1 : 0;
       str->isqcdevent               = GetDoQCDSelection() ? 1 : 0;
+      str->issystematicevent        = getSystematicToDo();
       str->met                      = getCorrectMETValue();
       str->sumet                    = ntuple->MET_RefFinal.sumet();
       str->NPV                      = getNumberOfGoodVertices();
@@ -7097,7 +7121,8 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight()
 	  result           *= val;
 	}
     }
-  /*else
+  /*
+    else
     {
       cout<<"Calling DPhi weight... for the moment is OFF"<<endl;
     }
