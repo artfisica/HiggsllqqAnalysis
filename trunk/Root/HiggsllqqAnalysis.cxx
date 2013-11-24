@@ -2037,9 +2037,18 @@ Bool_t HiggsllqqAnalysis::isMCPMuon(Analysis::ChargedLepton *lep)
     } 
   else
     {
-      Bool_t blayer = (!mu->expectBLayerHit() || mu->nBLHits() > 0);
-      if (!blayer) return kFALSE;
-      if (analysis_version() == "rel_17")
+      if (analysis_version()      == "rel_17")
+	{
+	  Bool_t blayer = (!mu->expectBLayerHit() || mu->nBLHits() > 0);
+	  if (!blayer) return kFALSE;
+	} 
+      else if (analysis_version() == "rel_17_2")
+	{
+	  Bool_t blayer = kTRUE; // (!mu->expectBLayerHit() || mu->nBLHits() > 0); //November 2013, changed it.
+	  if (!blayer) return kFALSE;
+	}
+      
+      if (analysis_version()      == "rel_17")
 	{
 	  Bool_t pixhits = (mu->nPixHits() + mu->nPixelDeadSensors() > 1);
 	  if (!pixhits) return kFALSE;
@@ -2053,6 +2062,7 @@ Bool_t HiggsllqqAnalysis::isMCPMuon(Analysis::ChargedLepton *lep)
 	  Bool_t scthits = (mu->nSCTHits() + mu->nSCTDeadSensors() > 4);
 	  if (!scthits) return kFALSE;
 	}
+      
       Bool_t holes = (mu->nPixHoles() + mu->nSCTHoles() < 3);
       if (!holes) return kFALSE;
       
@@ -2063,21 +2073,29 @@ Bool_t HiggsllqqAnalysis::isMCPMuon(Analysis::ChargedLepton *lep)
 	  Bool_t case1 = ((n > 5) && ((Double_t) mu->nTRTOutliers()) < 0.9 * (Double_t)n);
 	  Bool_t case2 =  (n > 5)  ? ((Double_t) mu->nTRTOutliers()  < 0.9 * (Double_t)n) : kTRUE;
 	  
-	  if (analysis_version()        ==   "rel_17")
+	  if (analysis_version()      ==   "rel_17")
 	    {
 	      Bool_t trt_ext = (eta < 1.9) ? case1 : case2;
 	      if (!trt_ext) return kFALSE;
 	    } 
 	  else if (analysis_version() == "rel_17_2")
 	    {
-	      Bool_t trt_ext = (0.1 < eta && eta < 1.9) ? case1 : case2;
+	      Bool_t trt_ext =  (0.1 < eta && eta < 1.9) ? case1 : kTRUE; // case2; //November 2013, changed it.
 	      if (!trt_ext) return kFALSE;
 	    }
 	} 
       else
 	{
-	  Bool_t good_trt = (eta < 0.1 && ((n < 6 || mu->nTRTOutliers() < 0.9 * (Double_t)n)));
-	  if (!good_trt) return kFALSE;
+	  if (analysis_version()      ==   "rel_17")
+	    { 
+	      Bool_t good_trt = (eta < 0.1 && ((n < 6 || mu->nTRTOutliers() < 0.9 * (Double_t)n)));
+	      if (!good_trt) return kFALSE;
+	    }
+	  else if (analysis_version() == "rel_17_2")
+	    {
+	      Bool_t good_trt = kTRUE; // (eta < 0.1 && ((n < 6 || mu->nTRTOutliers() < 0.9 * (Double_t)n))); //November 2013, changed it.
+	      if (!good_trt) return kFALSE;
+	    }
 	}
     }
   
