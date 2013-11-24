@@ -276,6 +276,7 @@ typedef struct
   int   istagged;
   int   channel;
   int   isqcdevent;
+  int   issystematicevent;
   int   low_event;
   int   n_jets;
   int   n_b_jets;
@@ -1086,6 +1087,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Int_t   m_cut;
   Int_t   m_channel;
   Int_t   m_qcdevent;
+  Int_t   m_SystematicEvent;
   Int_t   m_NPV;
   Int_t   m_Entries;
   Int_t   m_HFOR;
