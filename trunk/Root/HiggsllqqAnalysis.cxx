@@ -7,7 +7,8 @@
 //#define NEWTRIGSF
 
 
-/*  when introducing changes depending on
+/*  
+    When introducing changes depending on
     - 2011 vs 2012
     - 7 vs 8 TeV
     - rel. 17 vs rel. 17.2
@@ -53,10 +54,14 @@ Bool_t MuonSmearing          = kTRUE,
   
 // New systematic's variables in the trees:   higgs ->m_SystematicEvent;   tree->issystematicevent;   // November 2013
   
-//Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
+// Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
   ExtendedJetRegion          = kTRUE,
   
-//Calculating the DPhi weight
+// Electron quality in 2013
+  Multilepton                = kFALSE,
+  EL_LH_ID                   = kTRUE,
+  
+// Calculating the DPhi weight
   DoDPhiWeight               = kFALSE,
   DoMV1c                     = kFALSE;
 
@@ -68,7 +73,7 @@ float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
 
 int Print_low_OR_high = 1; // 0 for LowSelection ; 1 for HighSelection
 // Print Just High Selection CutFlows
-Bool_t PrintJustHighSelectionCutFlows =kTRUE;
+Bool_t PrintJustHighSelectionCutFlows = kTRUE;
 
 
 Int_t    count_events(0), eventNow(-1),   overElectron(0), overMuon(0),  overJet(0); 
@@ -444,6 +449,12 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   jvfTool = new JVFUncertaintyTool(jetAlgo);
   
   
+  // Initialization likelihood e-ID  //November 2013
+  El_IDtool = new Root::TElectronLikelihoodTool();
+  El_IDtool->setPDFFileName("ElectronPhotonSelectorTools/data/ElectronLikelihoodPdfs.root"); // use this root file!
+  El_IDtool->setOperatingPoint(LikeEnum::Loose);
+  El_IDtool->initialize(); 
+  
   
   return kTRUE;
 }
@@ -469,8 +480,10 @@ Bool_t HiggsllqqAnalysis::execute_tools(Long64_t entry)
 	    }
 	  
 	  //Printing the Cutflow for signal mass value!
-	  if(ntuple->eventinfo.mc_channel_number() < 160420 || PrintJustHighSelectionCutFlows)
-	    Print_low_OR_high=0;
+	  if(ntuple->eventinfo.mc_channel_number() < 160420 && !PrintJustHighSelectionCutFlows)
+            Print_low_OR_high=0;
+	  else if(PrintJustHighSelectionCutFlows)
+            Print_low_OR_high=1;
 	}
     }
   
@@ -974,7 +987,7 @@ Int_t HiggsllqqAnalysis::getNumberOfGoodVertices()
   
   for (Int_t i = 0; i < ntuple->vxp.n(); i++)
     {
-      if (ntuple->vxp[i].trk_n() >= 3) result++;
+      if (ntuple->vxp[i].trk_n() >= 2) result++;   // Changed from 3 to 2 due to Electrons LH-ID // November 2013
     }
   
   return result;
@@ -2253,27 +2266,75 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
 	      
 	      else return kFALSE;
 	    }
-	  else if(!dolowmass)
+	  else if (!dolowmass)
 	    {
-	      if (isLoosePlusPlus(el->etas2(),el->cl_E() / TMath::CosH(el->etas2()),el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
-				  el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
-				  el->reta(),
-				  el->weta2(),
-				  el->f1(),
-				  el->wstot(),
-				  el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
-				  el->deltaeta1(),
-				  el->nSiHits(),
-				  el->nSCTOutliers() + el->nPixelOutliers(),
-				  el->nPixHits(),
-				  el->nPixelOutliers(),
-				  egammaMenu::eg2012,
-				  false,
-				  false)) lep->set_lastcut(HllqqElectronQuality::quality);
-	      
-	      else return kFALSE;
-	    }
-	} // rel. 17.2
+	      if (Multilepton)
+		{
+		  if (isLoosePlusPlus(el->etas2(),
+				      el->cl_E() / TMath::CosH(el->etas2()),
+				      el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
+				      el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
+				      el->reta(),
+				      el->weta2(),
+				      el->f1(),
+				      el->wstot(),
+				      el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
+				      el->deltaeta1(),
+				      el->nSiHits(),
+				      el->nSCTOutliers() + el->nPixelOutliers(),
+				      el->nPixHits(),
+				      el->nPixelOutliers(),
+				      egammaMenu::eg2012,
+				      false,
+				      false)) lep->set_lastcut(HllqqElectronQuality::quality);
+		  else return kFALSE;
+		}
+	      else if (EL_LH_ID) ///////// November 2013
+		{
+		  // El_IDtool
+		  double dpOverp = 0.;
+		  for (unsigned int i = 0; i < el->refittedTrack_LMqoverp().size(); ++i)
+		    {
+		      if((el->refittedTrack_author()).at(i)== 4) dpOverp= 1.-(el->trackqoverp()/(el->refittedTrack_LMqoverp().at(i)));
+		    }
+		  
+		  Double_t discriminant = El_IDtool->calculate(el->etas2(),
+							       el->cl_E() / TMath::CosH(el->etas2()),
+							       el->f3(),
+							       el->Ethad() / (el->cl_E() / TMath::CosH(el->etas2())),
+							       el->Ethad1() / (el->cl_E() / TMath::CosH(el->etas2())),
+							       el->reta(),
+							       el->weta2(),
+							       el->f1(),
+							       el->emaxs1() + el->Emax2() > 0 ?(el->emaxs1() - el->Emax2()) / (el->emaxs1() + el->Emax2()):0.,
+							       el->deltaeta1(),
+							       el->trackd0pvunbiased(),
+							       el->TRTHighTOutliersRatio(),
+							       el->tracksigd0pvunbiased(),
+							       el->rphi(),
+							       dpOverp, // See above
+							       el->deltaphiRescaled(),
+							       double(getNumberOfGoodVertices()));
+		  
+		  bool passLH        = (bool)El_IDtool->accept(discriminant,
+							       el->etas2(),
+							       el->cl_E() / TMath::CosH(el->etas2()),
+							       el->nSiHits(),
+							       el->nPixelDeadSensors() + el->nSCTDeadSensors(),
+							       el->nPixHits(),
+							       el->nPixelDeadSensors(),
+							       el->nBLHits(),
+							       el->nBLayerOutliers(),
+							       el->expectBLayerHit(),
+							       el->isEM() & (1 << 1),
+							       double(getNumberOfGoodVertices()));
+		  
+		  if (passLH) lep->set_lastcut(HllqqElectronQuality::quality);
+		  else return kFALSE;
+	
+		} // End El_IDtool!
+	    } // End High Mass
+	} // End rel. 17.2
       
       
       if (TMath::Abs(el->cl_eta()) < 2.47) lep->set_lastcut(HllqqElectronQuality::eta);
