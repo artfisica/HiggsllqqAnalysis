@@ -46,6 +46,7 @@
 
 // HiggsqqllAnalysis needs
 #include "egammaAnalysisUtils/IsEMPlusPlusDefs.h"
+#include "ElectronPhotonSelectorTools/TElectronLikelihoodTool.h"
 #include "JetTagAlgorithms/MV1.h"
 #include "JetTagAlgorithms/MV1c.h"
 #include "ApplyJetCalibration/ApplyJetCalibration.h"
@@ -654,6 +655,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   TriggerNavigationVariables      m_trigNavVar;
   MuonTriggerMatching            *m_MuonTriggerMatchTool;
   ElectronTriggerMatching        *m_ElectronTriggerMatchTool;
+  Root::TElectronLikelihoodTool  *El_IDtool;   // November 2013
+  
   TH2F      *m_smearD0[3];
   TRandom3   m_smearD0_rand;
   TAxis     *m_smearD0_x;
