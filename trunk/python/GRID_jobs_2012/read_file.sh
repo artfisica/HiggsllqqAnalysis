@@ -6,7 +6,7 @@
 FILE=$1
 SYST=$6
 PRODUCTION=$3.$6
-GbperJob="6"
+GbperJob="4"
 if [ $4 = "yes" ]
 then
    echo "        ## Tar File Creation ON... in progress now!! ##  "
