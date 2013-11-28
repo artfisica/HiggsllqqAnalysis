@@ -1,7 +1,7 @@
 #!/bin/bash
 ## author: arturos@cern.ch
 ## Ceation: September 30th 2013
-## Update:  November  18th 2013
+## Update:  November  28th 2013
 
 ## User Options to Setup:
 FILE="samples.txt"         ## The name of the text file where the list of files are saved.
@@ -10,7 +10,7 @@ PRODUCTION=$1              ## "16.0"                  ## Tag of the production v
 TAR="yes"                  ## To create the tar file.               Possible answer: "yes" or "not"
 LAUNCH="not"               ## To really execute the production now. Possible answer: "yes" or "not"
 EXCLUDE="ANALY_SARA"       ## Site to exclude due to known problems. (In case of any, just write "")  Ex = ANALY_INFN-NAPOLI,ANALY_SARA
-SYST=$2                    ## Systematic to evaluate. the number '3' is for Nominal. Please, check the dictionary
+SYST=$2                    ## NOW: 28thNov2013 => this will corespond to a subtag of the prod.
 ## End of User Options, please do not chance the lines bellow if you are not sure of the procedures.
 
 
