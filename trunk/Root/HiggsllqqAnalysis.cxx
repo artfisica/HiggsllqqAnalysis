@@ -58,7 +58,7 @@ Bool_t MuonSmearing          = kTRUE,
   ExtendedJetRegion          = kTRUE,
   
 // Electron quality in 2013
-  Multilepton                = kFALSE,
+  Multilepton                = kFALSE, // this two variables HAVE TO BE Opuestas!!!
   EL_LH_ID                   = kTRUE,
   
 // Calculating the DPhi weight
@@ -117,8 +117,8 @@ Float_t EtaWindow     = 4.5;   // 2.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 3;
-
+int NumSystematicsToDo = 0; //time-test //3;
+int LowMassONorOFF     = 1;  // 1== Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -452,7 +452,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   // Initialization likelihood e-ID  //November 2013
   El_IDtool = new Root::TElectronLikelihoodTool();
   El_IDtool->setPDFFileName("ElectronPhotonSelectorTools/data/ElectronLikelihoodPdfs.root"); // use this root file!
-  El_IDtool->setOperatingPoint(LikeEnum::Loose);
+  El_IDtool->setOperatingPoint(LikeEnum::VeryLoose);
   El_IDtool->initialize(); 
   
   
@@ -2529,13 +2529,13 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
       UInt_t chan = m_Channels.at(i);      
       setChannel(chan);
       
-      for(int sel = 0; sel < 2; sel++) //Looping on the Low/High Mass selections 
+      for(int sel = LowMassONorOFF; sel < 2; sel++) //Looping on the Low/High Mass selections 
 	{	  
 	  if(sel==0)
 	    {  //Set the Low or High Mass Analysis
 	      SetDoLowMass(kTRUE);
 	    }
-	  else
+	  else if(sel==1)
 	    {  //Set the Low or High Mass Analysis
 	      SetDoLowMass(kFALSE);
 	    }
@@ -2577,10 +2577,10 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		      tmpMCWeight      = getEventWeight();
 		      tmpPileupWeight  = getPileupWeight();
 		      tmpSFWeight      = getSFWeight();
-		      tmpggFWeight     = getggFWeight();
+		      tmpggFWeight     = 1.; // getggFWeight(); //Out for comparison // November 2013
 		      tmpVertexZWeight = getVertexZWeight();
 		      tmpTriggerSF     = getCandidateTriggerSF();
-		      tmpDPhijjZWeight = getDPhijjZWeight();
+		      tmpDPhijjZWeight = 1.; // getDPhijjZWeight(); //Out for comparison // November 2013
 		      
 		      if(tmpMCWeight>=0)
 			tmpWeight       *= tmpMCWeight;
@@ -2639,10 +2639,10 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		  tMCWeight       = getEventWeight();
 		  tPileupWeight   = getPileupWeight();
 		  tSFWeight       = getSFWeight();
-		  tggFWeight      = getggFWeight();
+		  tggFWeight      = 1.; // getggFWeight(); //Out for comparison // November 2013
 		  tVertexZWeight  = getVertexZWeight();
 		  tTriggerSF      = getCandidateTriggerSF();
-		  tDPhijjZWeight  = getDPhijjZWeight();
+		  tDPhijjZWeight  = 1.; // getDPhijjZWeight(); //Out for comparison // November 2013
 		  
 		  if(tMCWeight>=0)      tWeight *= tMCWeight;
 		  if(tPileupWeight>=0)  tWeight *= tPileupWeight;
@@ -6122,8 +6122,9 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   //Getting the jet Object
   D3PDReader::JetD3PDObjectElement *Jet_ = m_GoodJets.at(jetindex)->GetJet();
   
-  ajet.jetPt  = m_GoodJets.at(jetindex)->rightpt();
-  ajet.jetEta = m_GoodJets.at(jetindex)->righteta();
+  ajet.jetPt        = m_GoodJets.at(jetindex)->rightpt();
+  ajet.jetEta       = m_GoodJets.at(jetindex)->righteta();
+  ajet.jetTagWeight = GetMV1value(m_GoodJets.at(jetindex));  
   
   Analysis::CalibResult res;
   
@@ -6136,15 +6137,15 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
     {       
       // jet flavor truth values checked on lxr
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
-      else                                                                            res = calib->getScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, Analysis::None); //uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, Analysis::None); //uncertainty);
+      else                                                                            res = calib->getScaleFactor(ajet,"Light", OP_MV1x, Analysis::None); //uncertainty);
     } 
   else
     {
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty,2);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty,2);
-      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", OP_MV1x, uncertainty,2);
+      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , OP_MV1x, Analysis::None); //uncertainty);
+      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , OP_MV1x, Analysis::None); //uncertainty);
+      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", OP_MV1x, Analysis::None); //uncertainty);
     }
   
   pair <double,double> result;
@@ -6936,59 +6937,61 @@ Bool_t HiggsllqqAnalysis::Pair_Quality()
     }  
   
   
-  ////////////////// /// ELECTRON: //////////////////////
+  
+  ////////////////// /// ELECTRON: //////////////////////  //Note: Removing the Multilepton quality //November 2013
+  
   if (getChannel() == HiggsllqqAnalysis::E2 && m_GoodElectrons.size() == 2 &&       
-      ((el_1->pt()>25000. && isMediumPlusPlus(el_1->etas2(),
-					      el_1->cl_E() / TMath::CosH(el_1->etas2()),
-					      el_1->f3(),
-					      el_1->Ethad() / (el_1->cl_E() / TMath::CosH(el_1->etas2())),
-					      el_1->Ethad1() / (el_1->cl_E() / TMath::CosH(el_1->etas2())),
-					      el_1->reta(),
-					      el_1->weta2(),
-					      el_1->f1(),
-					      el_1->wstot(),
-					      el_1->emaxs1() + el_1->Emax2() > 0 ?(el_1->emaxs1() - el_1->Emax2()) / (el_1->emaxs1() + el_1->Emax2()):0.,
-					      el_1->deltaeta1(),
-					      el_1->trackd0_physics(),
-					      el_1->TRTHighTOutliersRatio(),
-					      el_1->nTRTHits(),
-					      el_1->nTRTOutliers(),
-					      el_1->nSiHits(),
-					      el_1->nSCTOutliers() + el_1->nPixelOutliers(),
-					      el_1->nPixHits(),
-					      el_1->nPixelOutliers(),
-					      el_1->nBLHits(),
-					      el_1->nBLayerOutliers(),
-					      el_1->expectBLayerHit(),
-					      egammaMenu::eg2012,
-					      false,
-					      false)) 
+      ((el_1->pt()>25000. /*&& TMath::Abs(el_1->eta())<2.47*/ && (isMediumPlusPlus(el_1->etas2(),
+										   el_1->cl_E() / TMath::CosH(el_1->etas2()),
+										   el_1->f3(),
+										   el_1->Ethad() / (el_1->cl_E() / TMath::CosH(el_1->etas2())),
+										   el_1->Ethad1() / (el_1->cl_E() / TMath::CosH(el_1->etas2())),
+										   el_1->reta(),
+										   el_1->weta2(),
+										   el_1->f1(),
+										   el_1->wstot(),
+										   el_1->emaxs1() + el_1->Emax2() > 0 ?(el_1->emaxs1() - el_1->Emax2()) / (el_1->emaxs1() + el_1->Emax2()):0.,
+										   el_1->deltaeta1(),
+										   el_1->trackd0_physics(),
+										   el_1->TRTHighTOutliersRatio(),
+										   el_1->nTRTHits(),
+										   el_1->nTRTOutliers(),
+										   el_1->nSiHits(),
+										   el_1->nSCTOutliers() + el_1->nPixelOutliers(),
+										   el_1->nPixHits(),
+										   el_1->nPixelOutliers(),
+										   el_1->nBLHits(),
+										   el_1->nBLayerOutliers(),
+										   el_1->expectBLayerHit(),
+										   egammaMenu::eg2012,
+										   false,
+										   false) || !Multilepton)) 
        ||
-       (el_2->pt()>25000. && isMediumPlusPlus(el_2->etas2(),
-					      el_2->cl_E() / TMath::CosH(el_2->etas2()),
-					      el_2->f3(),
-					      el_2->Ethad() / (el_2->cl_E() / TMath::CosH(el_2->etas2())),
-					      el_2->Ethad1() / (el_2->cl_E() / TMath::CosH(el_2->etas2())),
-					      el_2->reta(),
-					      el_2->weta2(),
-					      el_2->f1(),
-					      el_2->wstot(),
-					      el_2->emaxs1() + el_2->Emax2() > 0 ?(el_2->emaxs1() - el_2->Emax2()) / (el_2->emaxs1() + el_2->Emax2()):0.,
-					      el_2->deltaeta1(),
-					      el_2->trackd0_physics(),
-					      el_2->TRTHighTOutliersRatio(),
-					      el_2->nTRTHits(),
-					      el_2->nTRTOutliers(),
-					      el_2->nSiHits(),
-					      el_2->nSCTOutliers() + el_2->nPixelOutliers(),
-					      el_2->nPixHits(),
-					      el_2->nPixelOutliers(),
-					      el_2->nBLHits(),
-					      el_2->nBLayerOutliers(),
-					      el_2->expectBLayerHit(),
-					      egammaMenu::eg2012,
-					      false,
-					      false))))
+       (el_2->pt()>25000. /*&& TMath::Abs(el_1->eta())<2.47*/ && (isMediumPlusPlus(el_2->etas2(),
+										   el_2->cl_E() / TMath::CosH(el_2->etas2()),
+										   el_2->f3(),
+										   el_2->Ethad() / (el_2->cl_E() / TMath::CosH(el_2->etas2())),
+										   el_2->Ethad1() / (el_2->cl_E() / TMath::CosH(el_2->etas2())),
+										   el_2->reta(),
+										   el_2->weta2(),
+										   el_2->f1(),
+										   el_2->wstot(),
+										   el_2->emaxs1() + el_2->Emax2() > 0 ?(el_2->emaxs1() - el_2->Emax2()) / (el_2->emaxs1() + el_2->Emax2()):0.,
+										   el_2->deltaeta1(),
+										   el_2->trackd0_physics(),
+										   el_2->TRTHighTOutliersRatio(),
+										   el_2->nTRTHits(),
+										   el_2->nTRTOutliers(),
+										   el_2->nSiHits(),
+										   el_2->nSCTOutliers() + el_2->nPixelOutliers(),
+										   el_2->nPixHits(),
+										   el_2->nPixelOutliers(),
+										   el_2->nBLHits(),
+										   el_2->nBLayerOutliers(),
+										   el_2->expectBLayerHit(),
+										   egammaMenu::eg2012,
+										   false,
+										   false) || !Multilepton))))
     {
       mediumElectrons++;
       GoodQ = true;
