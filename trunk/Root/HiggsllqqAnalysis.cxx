@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: November 29th, 2013
+    Update: December 3rd, 2013
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -6238,26 +6238,22 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   
   Analysis::CalibResult res;
   
-  std::string  OP_tagger = "0_8119";                 // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
-  if(DoMV1c)   OP_tagger = "continuous";// "0_7028"; // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
+  std::string  OP_tagger    = "0_8119";                 // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
+  if(DoMV1c)   OP_tagger    = "continuous";// "0_7028"; // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
   const std::string OP_MV1x = OP_tagger;
   
+  Int_t newJetFlav          = GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
   
-  
-  if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
-    {       
-      // jet flavor truth values checked on lxr
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
-      else                                                                            res = calib->getScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
-    } 
-  else
-    {
-      if       (Jet_->flavor_truth_label() == 5)                                      res = calib->getInefficiencyScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
-      else if  (Jet_->flavor_truth_label() == 4 || Jet_->flavor_truth_label() == 15)  res = calib->getInefficiencyScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
-      else                                                                            res = calib->getInefficiencyScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
-    }
-  
+  //if (GetMV1value(m_GoodJets.at(jetindex)) <= MV1_OP70) // NEW= 0_8119; OLD= 0_795;
+  //{    
+  // jet flavor truth values checked on lxr
+  if       (TMath::Abs(newJetFlav) == 5) res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
+  else if  (TMath::Abs(newJetFlav) == 4) res = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
+  else                                   res = calib->getScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
+  // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingNewVHRunIPrescriptions
+  // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/VHbbBaseLine2012bTagging
+  //}
+ 
   pair <double,double> result;
   
   result.first=res.first;
@@ -7440,3 +7436,81 @@ std::vector<TLorentzVector> HiggsllqqAnalysis::getTruthJets()
   return vector;
 }
 
+
+// Recalculate the flavour of the jet
+// Pass the jet eta, phi and ORIGINAL jet flavour
+// Returns the new jet flavour, 5 = b, 4 = c, 15 = tau, 0 = light
+Int_t HiggsllqqAnalysis::GetJetFlavour(Float_t jet_eta, Float_t jet_phi, Int_t jet_flav)
+{
+  float dRmin = 0.4;
+  
+  // Use a cut of 5 GeV for LHCP approval
+  float ptmin = 5000;
+  // float ptmin = 0;
+  
+  if      (GetDeltaRNearest(jet_eta, jet_phi, 5, ptmin) < dRmin)  return 5;
+  else if (GetDeltaRNearest(jet_eta, jet_phi, 4, ptmin) < dRmin)  return 4;
+  else if (jet_flav == 15)                                        return 15;
+  else                                                            return 0;
+  
+}
+
+// Check the closest hadron to a jet
+// Pass 4 to check for c-hardons and 5 to check for b-hadrons
+Float_t HiggsllqqAnalysis::GetDeltaRNearest(Float_t eta, Float_t phi, Int_t flav, Float_t minpt)
+{
+  float dR(99.);
+  
+  for (Int_t i = 0; i < ntuple->mc.n(); i++) 
+    {
+      D3PDReader::TruthParticleD3PDObjectElement *p = &(ntuple->mc[i]);
+      Int_t pdg = p->pdgId();
+      
+      if(flav == 4)
+	{
+	  if(!IsCHadron(pdg)) continue; 
+	}
+      
+      if(flav == 5)
+	{
+	  if(!IsBHadron(pdg)) continue;
+	}
+      
+      if (p->pt() < minpt) continue;
+      
+      float etaTruth = p->eta();
+      float phiTruth = p->phi();
+      float deta     = eta-etaTruth;
+      float dphi     = TMath::ACos(cos(phi-phiTruth));
+      float tmpdR    = TMath::Sqrt( deta*deta+dphi*dphi);
+      
+      if(tmpdR<dR)
+	{
+	  dR=tmpdR;
+	}
+    }
+  
+  return dR;
+}
+
+// Function to check whether particle is a c-hadron
+Bool_t  HiggsllqqAnalysis::IsCHadron(Int_t pdg)
+{
+  pdg=TMath::Abs(pdg);
+  
+  if((pdg>=400&&pdg<500&&pdg !=443)|| (pdg>=4000 && pdg<5000)
+     || (pdg>=10411 && pdg<=10445) || (pdg>=20411 && pdg<=20445)
+     )  return true;
+  else return false;
+}
+
+// Function to check whether particle is a b-hadron
+Bool_t HiggsllqqAnalysis::IsBHadron(Int_t pdg)
+{
+  pdg=TMath::Abs(pdg);
+  
+  if((pdg>=511 && pdg<=545) || (pdg>=10511 && pdg<=10545) || (pdg>=20511 && pdg<=20545) || (pdg>=5112 && pdg<=5554))
+    return true; 
+  else
+    return false;
+}
