@@ -6,7 +6,7 @@
     Code to perform SM H -> ZZ(*) -> qqll analysis.
 
     @start  date 08/15/2012 
-    @update date 09/09/2013
+    @update date 12/02/2013
 */
 
 #include <TEfficiency.h>
@@ -278,6 +278,7 @@ typedef struct
   int   channel;
   int   isqcdevent;
   int   issystematicevent;
+  int   ismergeregime;
   int   low_event;
   int   n_jets;
   int   n_b_jets;
@@ -354,6 +355,7 @@ typedef struct
   float realZ_KF_eta;
   float realZ_KF_phi;
   float realH_KF_m;
+  float realH_KF_m_notScale;
   float realH_KF_pt;
   float realH_KF_eta;
   float realH_KF_phi;
@@ -421,9 +423,19 @@ typedef struct
   float realZ_LJ_eta;
   float realZ_LJ_phi;
   float realH_LJ_m;
+  float realH_LJ_m_notScale;
   float realH_LJ_pt;
   float realH_LJ_eta;
   float realH_LJ_phi; 
+  ////////////////////// Including 8 merged variables for plots and analysis // November 2013
+  float mergedZ_LJ_m;
+  float mergedZ_LJ_pt;
+  float mergedZ_LJ_eta;
+  float mergedZ_LJ_phi;
+  float mergedH_LJ_m;
+  float mergedH_LJ_pt;
+  float mergedH_LJ_eta;
+  float mergedH_LJ_phi; 
   //////////////////////
   float realJ1_BP_m;
   float realJ1_BP_pt;
@@ -463,6 +475,7 @@ typedef struct
   float realZ_BP_eta;
   float realZ_BP_phi;
   float realH_BP_m;
+  float realH_BP_m_notScale;
   float realH_BP_pt;
   float realH_BP_eta;
   float realH_BP_phi; 
@@ -910,9 +923,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Bool_t JetBestPairResult();
   
   // Method to calculate the DiJet invariant mass for the tagged Jets!
-  Bool_t JetDimassTagged();
+  Bool_t JetDimassTagged(Bool_t tocutflow);
   
-  Bool_t JetDimassOneTagged();
+  Bool_t JetDimassOneTagged(Bool_t tocutflow);
   
   
   // Method to flag/control the QCD selection  
@@ -1038,8 +1051,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
  protected:
   
   // JES AND JER TOOLS
-  JetCalibrationTool *myJES;
+  JetAnalysisCalib::JetCalibrationTool *myJES;
   JetSmearingTool    *myJER;
+
   // MET TOOL
   METUtility         *m_systUtil;
   
