@@ -887,9 +887,13 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
   
   // Flavor Jet Methods
-  Bool_t isHeavyJet(Int_t pdg);
-  Bool_t isLightJet(Int_t pdg);
-  Bool_t isGluonJet(Int_t pdg);
+  Bool_t  isHeavyJet(Int_t pdg);
+  Bool_t  isLightJet(Int_t pdg);
+  Bool_t  isGluonJet(Int_t pdg);
+  Int_t   GetJetFlavour(Float_t jet_eta, Float_t jet_phi, Int_t jet_flav);
+  Float_t GetDeltaRNearest(Float_t eta, Float_t phi, Int_t flav, Float_t minpt);
+  Bool_t  IsCHadron(Int_t pdg);
+  Bool_t  IsBHadron(Int_t pdg);
   
   // Higgs MC (weight) Methods
   void    InitMasses();
