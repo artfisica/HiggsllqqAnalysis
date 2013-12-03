@@ -1,4 +1,4 @@
-data12_8TeV.periodA.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
+data12_8TeV.periodA.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v04_p1320_p1419_p1420/
 data12_8TeV.periodB.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
 data12_8TeV.periodC.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
 data12_8TeV.periodD.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
@@ -8,7 +8,7 @@ data12_8TeV.periodH.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1
 data12_8TeV.periodI.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
 data12_8TeV.periodJ.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
 data12_8TeV.periodL.physics_Egamma.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
-data12_8TeV.periodA.physics_Muons.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
+data12_8TeV.periodA.physics_Muons.PhysCont.NTUP_2LHSG2.grp14_v04_p1320_p1419_p1420/
 data12_8TeV.periodB.physics_Muons.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
 data12_8TeV.periodC.physics_Muons.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
 data12_8TeV.periodD.physics_Muons.PhysCont.NTUP_2LHSG2.grp14_v01_p1315_p1344_p1345/
