@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: December 3rd, 2013
+    Update: December 4th, 2013
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -40,7 +40,6 @@ Bool_t MuonSmearing          = kTRUE,
 // Type of Missing Et
   METtype_RefFinal           = kTRUE,
   
-  DoLowMass                  = kTRUE, 
   DoCaloMuons                = kTRUE,
   DoggFWeight                = kTRUE,
   Print_weights              = kFALSE,
@@ -52,29 +51,28 @@ Bool_t MuonSmearing          = kTRUE,
   FillGluon                  = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up
   FillFlavour                = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up
   
-// New systematic's variables in the trees:   higgs ->m_SystematicEvent;   tree->issystematicevent;   // November 2013
-  
 // Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
   ExtendedJetRegion          = kFALSE,
   
 // Electron quality in 2013
   Multilepton                = kFALSE, // this two variables HAVE TO BE Opposites!!!
-  EL_LH_ID                   = kTRUE,
+  EL_LH_ID                   = kTRUE,  // November 2013
   
 // Calculating the DPhi weight
-  DoDPhiWeight               = kFALSE,
-  DoMV1c                     = kFALSE;
+  DoDPhiWeight               = kTRUE,  // Problems with th Grid, to produce the tar should be OFF
+  DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
+  DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
+  
+  FillTreeHiggs              = kFALSE, // December 2013
+  FillTreeTree               = kTRUE,  // December 2013
+  
+// Print Just High Selection CutFlows
+  PrintJustHighSelectionCutFlows = kTRUE;
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0), JetTag1(-1), JetTag2(-1), JetSemiTag1(-1), JetSemiTag2(-1);
 
 float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
-
-
-int Print_low_OR_high = 1; // 0 for LowSelection ; 1 for HighSelection
-// Print Just High Selection CutFlows
-Bool_t PrintJustHighSelectionCutFlows = kTRUE;
-
 
 Int_t    count_events(0), eventNow(-1),   overElectron(0), overMuon(0),  overJet(0); 
 Int_t    badevent(0),     prebadevent(0), ptchange(0),     ptelecChange(0);
@@ -122,8 +120,11 @@ Float_t EtaWindow     = 4.5;   // 2.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 3; //time-test //3;
+int NumSystematicsToDo = 3;  // 3;
 int LowMassONorOFF     = 1;  // 1== Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
+int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
+int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -193,16 +194,19 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   // initiate the calibration tool
   TString jetAlgo="";
-  if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEM";
-  else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLC";
+  if      (getJetFamily() == 0) jetAlgo = "AntiKt4TopoEM";
+  else if (getJetFamily() == 1) jetAlgo = "AntiKt4TopoLC";
   
   
   TString JES_config_file;
   TString JER_config_file;
   
-  if (analysis_version() == "rel_17_2")
+  if (getJetCalibration() == 1) DoGSC = kTRUE;  // December 2013
+  
+  if      (analysis_version() == "rel_17_2")
     {
-      JES_config_file = "ApplyJetCalibration/data/CalibrationConfigs/JES_Full2012dataset_Preliminary_Jan13.config";
+      if(DoGSC) JES_config_file = "ApplyJetCalibration/data/CalibrationConfigs/GSC_March2013.config";
+      else      JES_config_file = "ApplyJetCalibration/data/CalibrationConfigs/JES_Full2012dataset_Preliminary_Jan13.config";
       JER_config_file = "JetResolution/share/JERProviderPlots_2012.root";
     } 
   else if (analysis_version() == "rel_17")
@@ -233,7 +237,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   //m_systUtil->setIsMuid(false); 
   
   
- // Initialize the kinematic fitter
+  // Initialize the kinematic fitter
   Info("doAnalysis", "Initializing JetKinematicFitter");
   
   int maxjet_KF = 7;
@@ -1515,26 +1519,38 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
     {    
       //inside the event loop
       
-      if (analysis_version() == "rel_17_2")
+      if (analysis_version() == "rel_17_2")  // REFERENCE ==>  https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/ApplyJetCalibration2012
 	{      
 	  double Eraw    = this_jet->emscale_E();
-	  double eta     = this_jet->emscale_eta(); //EtaOrigin();
+	  double eta     = this_jet->emscale_eta();
 	  double phi     = this_jet->emscale_phi();
-	  double m       = this_jet->emscale_m();   //MOrigin();
+	  double m       = this_jet->emscale_m();
 	  double Ax      = this_jet->ActiveAreaPx();
 	  double Ay      = this_jet->ActiveAreaPy();
 	  double Az      = this_jet->ActiveAreaPz();
 	  double Ae      = this_jet->ActiveAreaE();
 	  double rho     = ntuple->Eventshape.rhoKt4EM();
 	  
+	  // New Variables for GSC, even in the D3PD reader package, TAKE CARE! December 2013
+	  double fEM3       = (this_jet->e_EMB3()+this_jet->e_EME3())/this_jet->emscale_E();
+	  double fTile0     = (this_jet->e_TileBar0()+this_jet->e_TileExt0())/this_jet->emscale_E();
+	  double nTrk       = this_jet->nTrk_pv0_500MeV(); 
+	  double trackWIDTH = this_jet->trackWIDTH_pv0_1GeV();
+	  
+	  
 	  for (Int_t i = 0; i < ntuple->vxp.n(); i++)
 	    {
 	      if (ntuple->vxp[i].trk_n() >= 2) NPV++;
 	    }
 	  
+	  
 	  // Calibrate the jet!
 	  // Pile-up, origin, EtaJES correction applied, i.e. to OFFSET_ORIGIN_ETAJES scale
-	  TLorentzVector jet4v = myJES->ApplyJetAreaOffsetEtaJES(Eraw,eta,phi,m,Ax,Ay,Az,Ae,rho,mu,NPV);
+	  TLorentzVector jet4v;	 
+	  if(DoGSC)
+	    jet4v = myJES->ApplyJetAreaOffsetEtaJESGSC(Eraw,eta,phi,m,Ax,Ay,Az,Ae,rho,trackWIDTH,nTrk,fTile0,fEM3,mu,NPV);
+	  else
+	    jet4v = myJES->ApplyJetAreaOffsetEtaJES(Eraw,eta,phi,m,Ax,Ay,Az,Ae,rho,mu,NPV);
 	  
 	  
 	  // The below is systematic evaluation, and ONLY for MC
@@ -2589,10 +2605,10 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		      tmpMCWeight      = getEventWeight();
 		      tmpPileupWeight  = getPileupWeight();
 		      tmpSFWeight      = getSFWeight();
-		      tmpggFWeight     = 1.; // getggFWeight(); //Out for comparison // November 2013
+		      tmpggFWeight     = 1.; // getggFWeight(); // OUT for comparison // November 2013
 		      tmpVertexZWeight = getVertexZWeight();
 		      tmpTriggerSF     = getCandidateTriggerSF();
-		      tmpDPhijjZWeight = 1.; // getDPhijjZWeight(); //Out for comparison // November 2013
+		      tmpDPhijjZWeight = getDPhijjZWeight(0);   // OFF for comparison // November 2013
 		      
 		      if(tmpMCWeight>=0)
 			tmpWeight       *= tmpMCWeight;
@@ -2644,17 +2660,17 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		    }	    
 		  
 		  // Filling the jet binning tag cutflows
-		  FillHllqqCutFlowXtag(last_event,chan);
+		  if(getSystematicToDo()==-1) FillHllqqCutFlowXtag(last_event,chan);
 		  
 		  
 		  float tMCWeight(1.),tPileupWeight(1.),tSFWeight(1.),tggFWeight(1.),tVertexZWeight(1.),tWeight(1.),tTriggerSF(1.),tDPhijjZWeight(1.);
 		  tMCWeight       = getEventWeight();
 		  tPileupWeight   = getPileupWeight();
 		  tSFWeight       = getSFWeight();
-		  tggFWeight      = 1.; // getggFWeight(); //Out for comparison // November 2013
+		  tggFWeight      = 1.; // getggFWeight(); // OUT for comparison // November 2013
 		  tVertexZWeight  = getVertexZWeight();
 		  tTriggerSF      = getCandidateTriggerSF();
-		  tDPhijjZWeight  = 1.; // getDPhijjZWeight(); //Out for comparison // November 2013
+		  tDPhijjZWeight  = getDPhijjZWeight(0);   // OFF for comparison // November 2013
 		  
 		  if(tMCWeight>=0)      tWeight *= tMCWeight;
 		  if(tPileupWeight>=0)  tWeight *= tPileupWeight;
@@ -2717,11 +2733,11 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      if(chan!=1)// error: repare the mixing MUE channel
 		{
 		  //Filling of the equivalent qqll tree (2011)
-		  FillReducedNtuple(last_event,chan);    
+		  if(FillTreeHiggs) FillReducedNtuple(last_event,chan);    
 		  
 		  
 		  // TestSelection Filling candidate struct
-		  FillAnalysisOutputTree(&m_outevent,last_event,chan);
+		  if(FillTreeTree) FillAnalysisOutputTree(&m_outevent,last_event,chan);
 		}	
 	      
 	      last_event = -1;
@@ -2750,10 +2766,10 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		  if(chan!=1)// error: repare the mixing MUE channel. Agosto2013
 		    {
 		      // Filling of the equivalent qqll tree (2011)
-		      FillReducedNtuple(last_event,chan);       
+		      if(FillTreeHiggs) FillReducedNtuple(last_event,chan);       
 		      
 		      // TestSelection Filling candidate struct
-		      FillAnalysisOutputTree(&m_outevent,last_event,chan);
+		      if(FillTreeTree) FillAnalysisOutputTree(&m_outevent,last_event,chan);
 		    }	
 		  
 		  last_event = -1;
@@ -4280,7 +4296,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	  m_EventWeight     *= getEventWeight();        // YES in weight
 	  m_PileupWeight    *= getPileupWeight();       // YES in weight
 	  m_VertexZWeight   *= getVertexZWeight();      // YES in weight
-	  m_DPhijjZWeight   *= getDPhijjZWeight();      // NOT in weight
+	  m_DPhijjZWeight   *= getDPhijjZWeight(0);     // NOT in weight    // OFF for comparison. December 2013
 	  m_TriggerSFWeight *= getCandidateTriggerSF(); // YES in weight
 	  m_weight          *= m_SFWeight * m_EventWeight * m_PileupWeight * m_VertexZWeight * m_TriggerSFWeight;
 	  m_mu               = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
@@ -4463,6 +4479,66 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->TriggerSFWeight       = 1.00; //Careful, these are weights, initialization = 1.00
   str->truthH_pt             =   -1;
   str->btagSF                = 1.00; //Careful, these are weights, initialization = 1.00
+  str->SysBTagB0EfficUp      = 1.00;
+  str->SysBTagB0EfficDo      = 1.00;
+  str->SysBTagB1EfficUp      = 1.00;
+  str->SysBTagB1EfficDo      = 1.00;
+  str->SysBTagB2EfficUp      = 1.00;
+  str->SysBTagB2EfficDo      = 1.00;
+  str->SysBTagB3EfficUp      = 1.00;
+  str->SysBTagB3EfficDo      = 1.00;
+  str->SysBTagB4EfficUp      = 1.00;
+  str->SysBTagB4EfficDo      = 1.00;
+  str->SysBTagB5EfficUp      = 1.00;
+  str->SysBTagB5EfficDo      = 1.00;
+  str->SysBTagB6EfficUp      = 1.00;
+  str->SysBTagB6EfficDo      = 1.00;
+  str->SysBTagB7EfficUp      = 1.00;
+  str->SysBTagB7EfficDo      = 1.00;
+  str->SysBTagB8EfficUp      = 1.00;
+  str->SysBTagB8EfficDo      = 1.00;
+  str->SysBTagB9EfficUp      = 1.00;
+  str->SysBTagB9EfficDo      = 1.00;
+  str->SysBTagC0EfficUp      = 1.00;
+  str->SysBTagC0EfficDo      = 1.00;
+  str->SysBTagC1EfficUp      = 1.00;
+  str->SysBTagC1EfficDo      = 1.00;
+  str->SysBTagC2EfficUp      = 1.00;
+  str->SysBTagC2EfficDo      = 1.00;
+  str->SysBTagC3EfficUp      = 1.00;
+  str->SysBTagC3EfficDo      = 1.00;
+  str->SysBTagC4EfficUp      = 1.00;
+  str->SysBTagC4EfficDo      = 1.00;
+  str->SysBTagC5EfficUp      = 1.00;
+  str->SysBTagC5EfficDo      = 1.00;
+  str->SysBTagC6EfficUp      = 1.00;
+  str->SysBTagC6EfficDo      = 1.00;
+  str->SysBTagC7EfficUp      = 1.00;
+  str->SysBTagC7EfficDo      = 1.00;
+  str->SysBTagC8EfficUp      = 1.00;
+  str->SysBTagC8EfficDo      = 1.00;
+  str->SysBTagC9EfficUp      = 1.00;
+  str->SysBTagC9EfficDo      = 1.00;
+  str->SysBTagL0EfficUp      = 1.00;
+  str->SysBTagL0EfficDo      = 1.00;
+  str->SysBTagL1EfficUp      = 1.00;
+  str->SysBTagL1EfficDo      = 1.00;
+  str->SysBTagL2EfficUp      = 1.00;
+  str->SysBTagL2EfficDo      = 1.00;
+  str->SysBTagL3EfficUp      = 1.00;
+  str->SysBTagL3EfficDo      = 1.00;
+  str->SysBTagL4EfficUp      = 1.00;
+  str->SysBTagL4EfficDo      = 1.00;
+  str->SysBTagL5EfficUp      = 1.00;
+  str->SysBTagL5EfficDo      = 1.00;
+  str->SysBTagL6EfficUp      = 1.00;
+  str->SysBTagL6EfficDo      = 1.00;
+  str->SysBTagL7EfficUp      = 1.00;
+  str->SysBTagL7EfficDo      = 1.00;
+  str->SysBTagL8EfficUp      = 1.00;
+  str->SysBTagL8EfficDo      = 1.00;
+  str->SysBTagL9EfficUp      = 1.00;
+  str->SysBTagL9EfficDo      = 1.00;
   str->trig_SF               = 1.00; //Careful, these are weights, initialization = 1.00
   str->trig_SF2              = 1.00; //Careful, these are weights, initialization = 1.00
   str->trig_SFC              = 1.00; //Careful, these are weights, initialization = 1.00
@@ -4946,7 +5022,69 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   //////////////
   analysistree->Branch("met",                   &(str->met));
   analysistree->Branch("sumet",                 &(str->sumet));
+  ////////////////////////////////////////////////////////////////////////
   analysistree->Branch("btagSF",                &(str->btagSF));
+  analysistree->Branch("SysBTagB0EfficUp",      &(str->SysBTagB0EfficUp));
+  analysistree->Branch("SysBTagB0EfficDo",      &(str->SysBTagB0EfficDo));
+  analysistree->Branch("SysBTagB1EfficUp",      &(str->SysBTagB1EfficUp));
+  analysistree->Branch("SysBTagB1EfficDo",      &(str->SysBTagB1EfficDo));
+  analysistree->Branch("SysBTagB2EfficUp",      &(str->SysBTagB2EfficUp));
+  analysistree->Branch("SysBTagB2EfficDo",      &(str->SysBTagB2EfficDo));
+  analysistree->Branch("SysBTagB3EfficUp",      &(str->SysBTagB3EfficUp));
+  analysistree->Branch("SysBTagB3EfficDo",      &(str->SysBTagB3EfficDo));
+  analysistree->Branch("SysBTagB4EfficUp",      &(str->SysBTagB4EfficUp));
+  analysistree->Branch("SysBTagB4EfficDo",      &(str->SysBTagB4EfficDo));
+  analysistree->Branch("SysBTagB5EfficUp",      &(str->SysBTagB5EfficUp));
+  analysistree->Branch("SysBTagB5EfficDo",      &(str->SysBTagB5EfficDo));
+  analysistree->Branch("SysBTagB6EfficUp",      &(str->SysBTagB6EfficUp));
+  analysistree->Branch("SysBTagB6EfficDo",      &(str->SysBTagB6EfficDo));
+  analysistree->Branch("SysBTagB7EfficUp",      &(str->SysBTagB7EfficUp));
+  analysistree->Branch("SysBTagB7EfficDo",      &(str->SysBTagB7EfficDo));
+  analysistree->Branch("SysBTagB8EfficUp",      &(str->SysBTagB8EfficUp));
+  analysistree->Branch("SysBTagB8EfficDo",      &(str->SysBTagB8EfficDo));
+  analysistree->Branch("SysBTagB9EfficUp",      &(str->SysBTagB9EfficUp));
+  analysistree->Branch("SysBTagB9EfficDo",      &(str->SysBTagB9EfficDo));
+  analysistree->Branch("SysBTagC0EfficUp",      &(str->SysBTagC0EfficUp));
+  analysistree->Branch("SysBTagC0EfficDo",      &(str->SysBTagC0EfficDo));
+  analysistree->Branch("SysBTagC1EfficUp",      &(str->SysBTagC1EfficUp));
+  analysistree->Branch("SysBTagC1EfficDo",      &(str->SysBTagC1EfficDo));
+  analysistree->Branch("SysBTagC2EfficUp",      &(str->SysBTagC2EfficUp));
+  analysistree->Branch("SysBTagC2EfficDo",      &(str->SysBTagC2EfficDo));
+  analysistree->Branch("SysBTagC3EfficUp",      &(str->SysBTagC3EfficUp));
+  analysistree->Branch("SysBTagC3EfficDo",      &(str->SysBTagC3EfficDo));
+  analysistree->Branch("SysBTagC4EfficUp",      &(str->SysBTagC4EfficUp));
+  analysistree->Branch("SysBTagC4EfficDo",      &(str->SysBTagC4EfficDo));
+  analysistree->Branch("SysBTagC5EfficUp",      &(str->SysBTagC5EfficUp));
+  analysistree->Branch("SysBTagC5EfficDo",      &(str->SysBTagC5EfficDo));
+  analysistree->Branch("SysBTagC6EfficUp",      &(str->SysBTagC6EfficUp));
+  analysistree->Branch("SysBTagC6EfficDo",      &(str->SysBTagC6EfficDo));
+  analysistree->Branch("SysBTagC7EfficUp",      &(str->SysBTagC7EfficUp));
+  analysistree->Branch("SysBTagC7EfficDo",      &(str->SysBTagC7EfficDo));
+  analysistree->Branch("SysBTagC8EfficUp",      &(str->SysBTagC8EfficUp));
+  analysistree->Branch("SysBTagC8EfficDo",      &(str->SysBTagC8EfficDo));
+  analysistree->Branch("SysBTagC9EfficUp",      &(str->SysBTagC9EfficUp));
+  analysistree->Branch("SysBTagC9EfficDo",      &(str->SysBTagC9EfficDo));
+  analysistree->Branch("SysBTagL0EfficUp",      &(str->SysBTagL0EfficUp));
+  analysistree->Branch("SysBTagL0EfficDo",      &(str->SysBTagL0EfficDo));
+  analysistree->Branch("SysBTagL1EfficUp",      &(str->SysBTagL1EfficUp));
+  analysistree->Branch("SysBTagL1EfficDo",      &(str->SysBTagL1EfficDo));
+  analysistree->Branch("SysBTagL2EfficUp",      &(str->SysBTagL2EfficUp));
+  analysistree->Branch("SysBTagL2EfficDo",      &(str->SysBTagL2EfficDo));
+  analysistree->Branch("SysBTagL3EfficUp",      &(str->SysBTagL3EfficUp));
+  analysistree->Branch("SysBTagL3EfficDo",      &(str->SysBTagL3EfficDo));
+  analysistree->Branch("SysBTagL4EfficUp",      &(str->SysBTagL4EfficUp));
+  analysistree->Branch("SysBTagL4EfficDo",      &(str->SysBTagL4EfficDo));
+  analysistree->Branch("SysBTagL5EfficUp",      &(str->SysBTagL5EfficUp));
+  analysistree->Branch("SysBTagL5EfficDo",      &(str->SysBTagL5EfficDo));
+  analysistree->Branch("SysBTagL6EfficUp",      &(str->SysBTagL6EfficUp));
+  analysistree->Branch("SysBTagL6EfficDo",      &(str->SysBTagL6EfficDo));
+  analysistree->Branch("SysBTagL7EfficUp",      &(str->SysBTagL7EfficUp));
+  analysistree->Branch("SysBTagL7EfficDo",      &(str->SysBTagL7EfficDo));
+  analysistree->Branch("SysBTagL8EfficUp",      &(str->SysBTagL8EfficUp));
+  analysistree->Branch("SysBTagL8EfficDo",      &(str->SysBTagL8EfficDo));
+  analysistree->Branch("SysBTagL9EfficUp",      &(str->SysBTagL9EfficUp));
+  analysistree->Branch("SysBTagL9EfficDo",      &(str->SysBTagL9EfficDo));
+  ////////////////////////////////////////////////////////////////////////
   analysistree->Branch("NPV",                   &(str->NPV));
   //
   analysistree->Branch("dPhi_ll",               &(str->dPhi_ll));
@@ -5057,9 +5195,17 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
     }
   
   static const float Mz =  91188.;
-  Float_t tmpbtagsf     =  1.;
   Int_t   howmanytags   = -1;
+  Float_t tmpbtagsf     =  1.;
+  Float_t tmpSysbtagsf[NumBTagSystWeights];
+  Float_t Sysbtagsf[NumBTagSystWeights];
   
+  for (int tmp=0; tmp<NumBTagSystWeights; tmp++) 
+    {
+      tmpSysbtagsf[tmp] = 1.;
+      Sysbtagsf[tmp]    = 1.;
+}
+
   if(cut >= minimum_cut)
     {
       str->n_jets    = m_GoodJets.size();
@@ -5104,8 +5250,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  str->EventWeight         *= getEventWeight();        // YES in weight
 	  str->PileupWeight        *= getPileupWeight();       // YES in weight
 	  str->VertexZWeight       *= getVertexZWeight();      // YES in weight
-	  str->DPhijjZWeight       *= getDPhijjZWeight();      // YES in weight
-	  str->TriggerSFWeight     *= getCandidateTriggerSF(); // YES in weight
+	  str->TriggerSFWeight     *= getCandidateTriggerSF(); // YES in weight  
+	  str->DPhijjZWeight       *= getDPhijjZWeight(cut);   // NOT in weight
 	  str->weight              *= str->SFWeight * str->EventWeight * str->PileupWeight * str->VertexZWeight * str->TriggerSFWeight;
 	}      
       
@@ -5305,6 +5451,48 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
       if (m_GoodJets.size() == 1)  // Merge Regime Part A: Monojet // November 2013
 	{
+	  // Looping to find the btagging SFs into the GoodJet selected into the event
+	  if (isMC()) 
+	    {
+	      pair<double,double> thisjetSF = GetJetSFsvalue(0,tmpSysbtagsf);
+	      tmpbtagsf *= thisjetSF.first;
+	    }
+	  
+	  
+	  // btagging SF filling
+	  str->btagSF                = tmpbtagsf;
+	  str->SysBTagB0EfficUp      = tmpSysbtagsf[0];   str->SysBTagB0EfficDo     = tmpSysbtagsf[1];
+	  str->SysBTagB1EfficUp      = tmpSysbtagsf[2];   str->SysBTagB1EfficDo     = tmpSysbtagsf[3];
+	  str->SysBTagB2EfficUp      = tmpSysbtagsf[4];   str->SysBTagB2EfficDo     = tmpSysbtagsf[5];
+	  str->SysBTagB3EfficUp      = tmpSysbtagsf[6];   str->SysBTagB3EfficDo     = tmpSysbtagsf[7];
+	  str->SysBTagB4EfficUp      = tmpSysbtagsf[8];   str->SysBTagB4EfficDo     = tmpSysbtagsf[9];
+	  str->SysBTagB5EfficUp      = tmpSysbtagsf[10];  str->SysBTagB5EfficDo     = tmpSysbtagsf[11];
+	  str->SysBTagB6EfficUp      = tmpSysbtagsf[12];  str->SysBTagB6EfficDo     = tmpSysbtagsf[13];
+	  str->SysBTagB7EfficUp      = tmpSysbtagsf[14];  str->SysBTagB7EfficDo     = tmpSysbtagsf[15];
+	  str->SysBTagB8EfficUp      = tmpSysbtagsf[16];  str->SysBTagB8EfficDo     = tmpSysbtagsf[17];
+	  str->SysBTagB9EfficUp      = tmpSysbtagsf[18];  str->SysBTagB9EfficDo     = tmpSysbtagsf[19];
+	  str->SysBTagC0EfficUp      = tmpSysbtagsf[20];  str->SysBTagC0EfficDo     = tmpSysbtagsf[21];
+	  str->SysBTagC1EfficUp      = tmpSysbtagsf[22];  str->SysBTagC1EfficDo     = tmpSysbtagsf[23];
+	  str->SysBTagC2EfficUp      = tmpSysbtagsf[24];  str->SysBTagC2EfficDo     = tmpSysbtagsf[25];
+	  str->SysBTagC3EfficUp      = tmpSysbtagsf[26];  str->SysBTagC3EfficDo     = tmpSysbtagsf[27];
+	  str->SysBTagC4EfficUp      = tmpSysbtagsf[28];  str->SysBTagC4EfficDo     = tmpSysbtagsf[29];
+	  str->SysBTagC5EfficUp      = tmpSysbtagsf[30];  str->SysBTagC5EfficDo     = tmpSysbtagsf[31];
+	  str->SysBTagC6EfficUp      = tmpSysbtagsf[32];  str->SysBTagC6EfficDo     = tmpSysbtagsf[33];
+	  str->SysBTagC7EfficUp      = tmpSysbtagsf[34];  str->SysBTagC7EfficDo     = tmpSysbtagsf[35];
+	  str->SysBTagC8EfficUp      = tmpSysbtagsf[36];  str->SysBTagC8EfficDo     = tmpSysbtagsf[37];
+	  str->SysBTagC9EfficUp      = tmpSysbtagsf[38];  str->SysBTagC9EfficDo     = tmpSysbtagsf[39];
+	  str->SysBTagL0EfficUp      = tmpSysbtagsf[40];  str->SysBTagL0EfficDo     = tmpSysbtagsf[41];
+	  str->SysBTagL1EfficUp      = tmpSysbtagsf[42];  str->SysBTagL1EfficDo     = tmpSysbtagsf[43];
+	  str->SysBTagL2EfficUp      = tmpSysbtagsf[44];  str->SysBTagL2EfficDo     = tmpSysbtagsf[45];
+	  str->SysBTagL3EfficUp      = tmpSysbtagsf[46];  str->SysBTagL3EfficDo     = tmpSysbtagsf[47];
+	  str->SysBTagL4EfficUp      = tmpSysbtagsf[48];  str->SysBTagL4EfficDo     = tmpSysbtagsf[49];
+	  str->SysBTagL5EfficUp      = tmpSysbtagsf[50];  str->SysBTagL5EfficDo     = tmpSysbtagsf[51];
+	  str->SysBTagL6EfficUp      = tmpSysbtagsf[52];  str->SysBTagL6EfficDo     = tmpSysbtagsf[53];
+	  str->SysBTagL7EfficUp      = tmpSysbtagsf[54];  str->SysBTagL7EfficDo     = tmpSysbtagsf[55];
+	  str->SysBTagL8EfficUp      = tmpSysbtagsf[56];  str->SysBTagL8EfficDo     = tmpSysbtagsf[57];
+	  str->SysBTagL9EfficUp      = tmpSysbtagsf[58];  str->SysBTagL9EfficDo     = tmpSysbtagsf[59];
+	  ///////////////////////////////////
+	  
 	  D3PDReader::JetD3PDObjectElement *Jet0         = m_GoodJets.at(0)->GetJet();
 	  std::pair<Float_t, Float_t> InfoNtracksWidthJ0 = InfoTracks(0);
 	  
@@ -5359,8 +5547,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	    {
 	      if (isMC()) 
 		{
-		  pair<double,double> thisjetSF = GetJetSFsvalue(w);
+		  pair<double,double> thisjetSF = GetJetSFsvalue(w,tmpSysbtagsf);
 		  tmpbtagsf *= thisjetSF.first;
+		  for(int tmpB =0; tmpB<NumBTagSystWeights; tmpB++) Sysbtagsf[tmpB] *= tmpSysbtagsf[tmpB];
 		}
 	      
 	      if(w==0)
@@ -5385,6 +5574,41 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 		  str->AllJet_MV1_3     = GetMV1value(m_GoodJets.at(2));
 		}
 	    }
+	  
+	  
+	  // btagging SF filling
+	  str->btagSF                = tmpbtagsf;
+	  str->SysBTagB0EfficUp      = Sysbtagsf[0];   str->SysBTagB0EfficDo     = Sysbtagsf[1];
+	  str->SysBTagB1EfficUp      = Sysbtagsf[2];   str->SysBTagB1EfficDo     = Sysbtagsf[3];
+	  str->SysBTagB2EfficUp      = Sysbtagsf[4];   str->SysBTagB2EfficDo     = Sysbtagsf[5];
+	  str->SysBTagB3EfficUp      = Sysbtagsf[6];   str->SysBTagB3EfficDo     = Sysbtagsf[7];
+	  str->SysBTagB4EfficUp      = Sysbtagsf[8];   str->SysBTagB4EfficDo     = Sysbtagsf[9];
+	  str->SysBTagB5EfficUp      = Sysbtagsf[10];  str->SysBTagB5EfficDo     = Sysbtagsf[11];
+	  str->SysBTagB6EfficUp      = Sysbtagsf[12];  str->SysBTagB6EfficDo     = Sysbtagsf[13];
+	  str->SysBTagB7EfficUp      = Sysbtagsf[14];  str->SysBTagB7EfficDo     = Sysbtagsf[15];
+	  str->SysBTagB8EfficUp      = Sysbtagsf[16];  str->SysBTagB8EfficDo     = Sysbtagsf[17];
+	  str->SysBTagB9EfficUp      = Sysbtagsf[18];  str->SysBTagB9EfficDo     = Sysbtagsf[19];
+	  str->SysBTagC0EfficUp      = Sysbtagsf[20];  str->SysBTagC0EfficDo     = Sysbtagsf[21];
+	  str->SysBTagC1EfficUp      = Sysbtagsf[22];  str->SysBTagC1EfficDo     = Sysbtagsf[23];
+	  str->SysBTagC2EfficUp      = Sysbtagsf[24];  str->SysBTagC2EfficDo     = Sysbtagsf[25];
+	  str->SysBTagC3EfficUp      = Sysbtagsf[26];  str->SysBTagC3EfficDo     = Sysbtagsf[27];
+	  str->SysBTagC4EfficUp      = Sysbtagsf[28];  str->SysBTagC4EfficDo     = Sysbtagsf[29];
+	  str->SysBTagC5EfficUp      = Sysbtagsf[30];  str->SysBTagC5EfficDo     = Sysbtagsf[31];
+	  str->SysBTagC6EfficUp      = Sysbtagsf[32];  str->SysBTagC6EfficDo     = Sysbtagsf[33];
+	  str->SysBTagC7EfficUp      = Sysbtagsf[34];  str->SysBTagC7EfficDo     = Sysbtagsf[35];
+	  str->SysBTagC8EfficUp      = Sysbtagsf[36];  str->SysBTagC8EfficDo     = Sysbtagsf[37];
+	  str->SysBTagC9EfficUp      = Sysbtagsf[38];  str->SysBTagC9EfficDo     = Sysbtagsf[39];
+	  str->SysBTagL0EfficUp      = Sysbtagsf[40];  str->SysBTagL0EfficDo     = Sysbtagsf[41];
+	  str->SysBTagL1EfficUp      = Sysbtagsf[42];  str->SysBTagL1EfficDo     = Sysbtagsf[43];
+	  str->SysBTagL2EfficUp      = Sysbtagsf[44];  str->SysBTagL2EfficDo     = Sysbtagsf[45];
+	  str->SysBTagL3EfficUp      = Sysbtagsf[46];  str->SysBTagL3EfficDo     = Sysbtagsf[47];
+	  str->SysBTagL4EfficUp      = Sysbtagsf[48];  str->SysBTagL4EfficDo     = Sysbtagsf[49];
+	  str->SysBTagL5EfficUp      = Sysbtagsf[50];  str->SysBTagL5EfficDo     = Sysbtagsf[51];
+	  str->SysBTagL6EfficUp      = Sysbtagsf[52];  str->SysBTagL6EfficDo     = Sysbtagsf[53];
+	  str->SysBTagL7EfficUp      = Sysbtagsf[54];  str->SysBTagL7EfficDo     = Sysbtagsf[55];
+	  str->SysBTagL8EfficUp      = Sysbtagsf[56];  str->SysBTagL8EfficDo     = Sysbtagsf[57];
+	  str->SysBTagL9EfficUp      = Sysbtagsf[58];  str->SysBTagL9EfficDo     = Sysbtagsf[59];
+	  ///////////////////////////////////
 	  
 	  
 	  if( howmanytags == 0 )
@@ -5475,8 +5699,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realH_KF_phi        = H.Phi();
 	      str->realH_KF_m_notScale = H.M();
 	      
-	      float  mjj            = (j1 + j2).M();
-	      float  scale          = Mz/mjj;
+	      float  mjj               = (j1 + j2).M();
+	      float  scale             = Mz/mjj;
 	      j1  *= scale;
 	      j2  *= scale;
 	      hadZ = j1 + j2;
@@ -5865,28 +6089,52 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
 	      TLorentzVector j2_BP;
 	      j2_BP.SetPtEtaPhiM(str->realJ2_BP_pt,str->realJ2_BP_eta,str->realJ2_BP_phi,str->realJ2_BP_m);
-	      TLorentzVector hadZ_BP = j1_BP  +    j2_BP;
-	      TLorentzVector H_BP    = lepZ   +  hadZ_BP;
+	      TLorentzVector hadZ_BP   = j1_BP  +    j2_BP;
+	      TLorentzVector H_BP      = lepZ   +  hadZ_BP;
 	      
-	      str->realZ_BP_m     = hadZ_BP.M();
-	      str->realZ_BP_pt    = hadZ_BP.Pt();
-	      str->realZ_BP_eta   = hadZ_BP.Eta();
-	      str->realZ_BP_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_BP_pt    = H_BP.Pt();
-	      str->realH_BP_eta   = H_BP.Eta();
-	      str->realH_BP_phi   = H_BP.Phi();	  
+	      // PLEASE, take care ,very delicate operation!!
+	      if(hadZ_BP.M()<MergedMin || hadZ_BP.M()>MergedMax)// Merge Regime Part C: 
+		{                                               // The LJ pair has mjj < 50 GeV OR mjj > 150 GeV (i.e. not in dijet SR / not in dijet SB) // November 2013
+		  str->ismergeregime         = 3;               // will be 1 for the Part A and 2 for Part B
+		  str->mergedZ_LJ_m          = m_GoodJets.at(Jone)->Get4Momentum()->M();
+		  str->mergedZ_LJ_pt         = m_GoodJets.at(Jone)->rightpt();
+		  str->mergedZ_LJ_eta        = m_GoodJets.at(Jone)->righteta();
+		  str->mergedZ_LJ_phi        = m_GoodJets.at(Jone)->rightphi();
+		  
+		  H_BP = lepZ + j1_BP;
+		  
+		  str->mergedH_LJ_m          = H_BP.M();
+		  str->mergedH_LJ_pt         = H_BP.Pt();
+		  str->mergedH_LJ_eta        = H_BP.Eta();
+		  str->mergedH_LJ_phi        = H_BP.Phi();
+		}
+	      else // Standard Selection // REFERNECE =>  https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HiggsllqqWinter2013
+		{
+		  str->ismergeregime         = 0;
+		}
 	      
-	      // Leading jets: Filling with the same values.
-	      str->realZ_LJ_m     = hadZ_BP.M();
-	      str->realZ_LJ_pt    = hadZ_BP.Pt();
-	      str->realZ_LJ_eta   = hadZ_BP.Eta();
-	      str->realZ_LJ_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_LJ_pt    = H_BP.Pt();
-	      str->realH_LJ_eta   = H_BP.Eta();
-	      str->realH_LJ_phi   = H_BP.Phi();	  
+	      str->realZ_BP_m          = hadZ_BP.M();
+	      str->realZ_BP_pt         = hadZ_BP.Pt();
+	      str->realZ_BP_eta        = hadZ_BP.Eta();
+	      str->realZ_BP_phi        = hadZ_BP.Phi();
 	      
+	      str->realH_BP_pt         = H_BP.Pt();
+	      str->realH_BP_eta        = H_BP.Eta();
+	      str->realH_BP_phi        = H_BP.Phi();
+	      str->realH_BP_m_notScale = H_BP.M();	  
+	      
+	      // Leading jets: Filling with the same values. // PLEASE, take care ,very delicate operation!!
+	      str->realZ_LJ_m          = hadZ_BP.M();
+	      str->realZ_LJ_pt         = hadZ_BP.Pt();
+	      str->realZ_LJ_eta        = hadZ_BP.Eta();
+	      str->realZ_LJ_phi        = hadZ_BP.Phi();
+	      
+	      str->realH_LJ_pt         = H_BP.Pt();
+	      str->realH_LJ_eta        = H_BP.Eta();
+	      str->realH_LJ_phi        = H_BP.Phi();	  
+	      str->realH_LJ_m_notScale = H_BP.M();
 	      
 	      
               float mjj_BP    = (j1_BP + j2_BP).M();
@@ -5895,9 +6143,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
               j2_BP *= scale_BP;
               hadZ_BP = j1_BP   +   j2_BP;
               H_BP    = lepZ    + hadZ_BP;
-              str->realH_BP_m     = H_BP.M();
-	      // Leading jets: Filling with the same values.
-	      str->realH_LJ_m     = H_BP.M();
+              str->realH_BP_m          = H_BP.M();
+	      // Leading jets: Filling with the same values. // PLEASE, take care ,very delicate operation!!
+	      str->realH_LJ_m          = H_BP.M();
 	      
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
@@ -6076,28 +6324,52 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
 	      TLorentzVector j2_BP;
 	      j2_BP.SetPtEtaPhiM(str->realJ2_BP_pt,str->realJ2_BP_eta,str->realJ2_BP_phi,str->realJ2_BP_m);
-	      TLorentzVector hadZ_BP = j1_BP  +    j2_BP;
-	      TLorentzVector H_BP    = lepZ   +  hadZ_BP;
+	      TLorentzVector hadZ_BP   = j1_BP  +    j2_BP;
+	      TLorentzVector H_BP      = lepZ   +  hadZ_BP;
 	      
-	      str->realZ_BP_m     = hadZ_BP.M();
-	      str->realZ_BP_pt    = hadZ_BP.Pt();
-	      str->realZ_BP_eta   = hadZ_BP.Eta();
-	      str->realZ_BP_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_BP_pt    = H_BP.Pt();
-	      str->realH_BP_eta   = H_BP.Eta();
-	      str->realH_BP_phi   = H_BP.Phi();	  
+	      // PLEASE, take care ,very delicate operation!!
+	      if(hadZ_BP.M()<MergedMin || hadZ_BP.M()>MergedMax)// Merge Regime Part D: 
+		{                                               // The LJ pair has mjj < 50 GeV OR mjj > 150 GeV (i.e. not in dijet SR / not in dijet SB) // November 2013
+		  str->ismergeregime         = 4;               // will be 1 for the Part A, 2 for Part B and 3 for Part C
+		  str->mergedZ_LJ_m          = m_GoodJets.at(Jone)->Get4Momentum()->M();
+		  str->mergedZ_LJ_pt         = m_GoodJets.at(Jone)->rightpt();
+		  str->mergedZ_LJ_eta        = m_GoodJets.at(Jone)->righteta();
+		  str->mergedZ_LJ_phi        = m_GoodJets.at(Jone)->rightphi();
+		  
+		  H_BP = lepZ + j1_BP;
+		  
+		  str->mergedH_LJ_m          = H_BP.M();
+		  str->mergedH_LJ_pt         = H_BP.Pt();
+		  str->mergedH_LJ_eta        = H_BP.Eta();
+		  str->mergedH_LJ_phi        = H_BP.Phi();
+		}
+	      else // Standard Selection // REFERNECE =>  https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HiggsllqqWinter2013
+		{
+		  str->ismergeregime         = 0;
+		}
 	      
-	      // Leading jets: Filling with the same values.
-	      str->realZ_LJ_m     = hadZ_BP.M();
-	      str->realZ_LJ_pt    = hadZ_BP.Pt();
-	      str->realZ_LJ_eta   = hadZ_BP.Eta();
-	      str->realZ_LJ_phi   = hadZ_BP.Phi();
 	      
-	      str->realH_LJ_pt    = H_BP.Pt();
-	      str->realH_LJ_eta   = H_BP.Eta();
-	      str->realH_LJ_phi   = H_BP.Phi();	  
+	      str->realZ_BP_m          = hadZ_BP.M();
+	      str->realZ_BP_pt         = hadZ_BP.Pt();
+	      str->realZ_BP_eta        = hadZ_BP.Eta();
+	      str->realZ_BP_phi        = hadZ_BP.Phi();
 	      
+	      str->realH_BP_pt         = H_BP.Pt();
+	      str->realH_BP_eta        = H_BP.Eta();
+	      str->realH_BP_phi        = H_BP.Phi();	  
+	      str->realH_BP_m_notScale = H_BP.M();
+	      
+	      // Leading jets: Filling with the same values. // PLEASE, take care ,very delicate operation!!
+	      str->realZ_LJ_m          = hadZ_BP.M();
+	      str->realZ_LJ_pt         = hadZ_BP.Pt();
+	      str->realZ_LJ_eta        = hadZ_BP.Eta();
+	      str->realZ_LJ_phi        = hadZ_BP.Phi();
+	      
+	      str->realH_LJ_pt         = H_BP.Pt();
+	      str->realH_LJ_eta        = H_BP.Eta();
+	      str->realH_LJ_phi        = H_BP.Phi();	  
+	      str->realH_LJ_m_notScale = H_BP.M();
 	      
               float mjj_BP    = (j1_BP + j2_BP).M();
               float scale_BP  = Mz/mjj_BP;
@@ -6105,8 +6377,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
               j2_BP *= scale_BP;
               hadZ_BP = j1_BP   +   j2_BP;
               H_BP    = lepZ    + hadZ_BP;
-              str->realH_BP_m     = H_BP.M();
-	      str->realH_LJ_m     = H_BP.M();
+              str->realH_BP_m          = H_BP.M();
+	      // Leading jets: Filling with the same values. // PLEASE, take care ,very delicate operation!!
+	      str->realH_LJ_m          = H_BP.M();
 	      
 	      //ANGULAR JET VARIABLES
 	      str->dPhi_BP_jj = TMath::Abs(j1_BP.DeltaPhi(j2_BP));
@@ -6217,9 +6490,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	    } //End Two tagged Jets
 	} //End of minimum number of Jets
       
-      // btagging SF filling
-      str->btagSF = tmpbtagsf;
-      
       // Fill the Tree    
       analysistree->Fill();
     } // End of the If cut minimum!!!!  
@@ -6227,9 +6497,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 
 
 ///////////////////////////////////////////////////////////////////////////
-pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
+pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmpbtagsys[60])
 {  
-  //Getting the jet Object
+  // Getting the jet Object
   D3PDReader::JetD3PDObjectElement *Jet_ = m_GoodJets.at(jetindex)->GetJet();
   
   ajet.jetPt        = m_GoodJets.at(jetindex)->rightpt();
@@ -6237,23 +6507,67 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex)
   ajet.jetTagWeight = GetMV1value(m_GoodJets.at(jetindex));  
   
   Analysis::CalibResult res;
+  Analysis::CalibResult res_sys;
+  
   
   std::string  OP_tagger    = "0_8119";                 // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
   if(DoMV1c)   OP_tagger    = "continuous";// "0_7028"; // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
   const std::string OP_MV1x = OP_tagger;
   
-  Int_t newJetFlav          = GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
   
-  //if (GetMV1value(m_GoodJets.at(jetindex)) <= MV1_OP70) // NEW= 0_8119; OLD= 0_795;
-  //{    
+  int newJetFlav          = GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
+  int NumBTagEigenVar     = -1;     
+  
   // jet flavor truth values checked on lxr
-  if       (TMath::Abs(newJetFlav) == 5) res = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, uncertainty);
-  else if  (TMath::Abs(newJetFlav) == 4) res = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, uncertainty);
-  else                                   res = calib->getScaleFactor(ajet,"Light", OP_MV1x, uncertainty);
+  if       (TMath::Abs(newJetFlav) == 5)
+    {
+      res             = calib->getScaleFactor(ajet,             "B", OP_MV1x, Analysis::None); //uncertainty);
+      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "B", OP_MV1x, Analysis::SFEigen);
+    }
+  else if  (TMath::Abs(newJetFlav) == 4) 
+    {
+      res             = calib->getScaleFactor(ajet,             "C", OP_MV1x, Analysis::None); //uncertainty);
+      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "C", OP_MV1x, Analysis::SFEigen);
+    }
+  else
+    {
+      res             = calib->getScaleFactor(ajet,             "Light", OP_MV1x, Analysis::None); //uncertainty);
+      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "Light", OP_MV1x, Analysis::SFEigen);
+    }
+  
   // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingNewVHRunIPrescriptions
   // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/VHbbBaseLine2012bTagging
-  //}
- 
+  
+  for(int tmp=0; tmp<10; tmp++)
+    {
+      if       (TMath::Abs(newJetFlav) == 5)
+	{
+	  res_sys                = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, Analysis::SFEigen, tmp);
+	  tmpbtagsys[tmp+tmp+0]  = res_sys.first;
+	  tmpbtagsys[tmp+tmp+1]  = res_sys.second;
+	}
+      else if  (TMath::Abs(newJetFlav) == 4) 
+	{
+	  res_sys                = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, Analysis::SFEigen, tmp);
+	  tmpbtagsys[tmp+tmp+20] = res_sys.first;
+	  tmpbtagsys[tmp+tmp+21] = res_sys.second;
+	}
+      else
+	{
+	  res_sys                = calib->getScaleFactor(ajet,"Light", OP_MV1x, Analysis::SFEigen, tmp);
+	  tmpbtagsys[tmp+tmp+40] = res_sys.first;
+	  tmpbtagsys[tmp+tmp+41] = res_sys.second;
+	}
+      /*
+      cout<<tmp<<" -> SF for B     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	  <<tmpbtagsys[tmp+tmp+0]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+1]<<endl;
+      cout<<tmp<<" -> SF for C     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	  <<tmpbtagsys[tmp+tmp+20]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+21]<<endl;
+      cout<<tmp<<" -> SF for Light = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	  <<tmpbtagsys[tmp+tmp+40]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+41]<<endl;
+      */
+    }
+  
   pair <double,double> result;
   
   result.first=res.first;
@@ -7367,15 +7681,13 @@ Float_t HiggsllqqAnalysis::getDiLeptonMass()
 }
 
 
-Float_t HiggsllqqAnalysis::getDPhijjZWeight()
+Float_t HiggsllqqAnalysis::getDPhijjZWeight(Int_t cut)
 {
   Float_t result = 1.;
   
   if(DoDPhiWeight)
-    {
-      Int_t   last_event = getLastCutPassed();
-      
-      if (isMC() && last_event >= HllqqCutFlow::MET && m_GoodJets.size()>=2)
+    {      
+      if (isMC() && cut >= HllqqCutFlow::TwoJets)
 	{
 	  TF1* f = new TF1("DPhiRatio", "pol1", 0, 3.14);
 	  f->SetParameter(0, 0.900369 * 0.9905); 
@@ -7387,16 +7699,13 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight()
 	  
 	  Float_t dphi2jets = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
 	  Float_t val       = f->Eval(dphi2jets);
-	  //cout<<"    F(x)   = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
+	  //cout<<"  F(x)   = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
 	  result           *= val;
 	}
+      else 
+	return result;
     }
-  /*
-    else
-    {
-      cout<<"Calling DPhi weight... for the moment is OFF"<<endl;
-    }
-  */
+
   return result;
 }
 
