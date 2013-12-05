@@ -503,7 +503,69 @@ typedef struct
   int   NPV;
   int   HFOR;
   float sumet;
+  //////////////////////
   float btagSF;
+  float SysBTagB0EfficUp;
+  float SysBTagB0EfficDo;
+  float SysBTagB1EfficUp;
+  float SysBTagB1EfficDo;
+  float SysBTagB2EfficUp;
+  float SysBTagB2EfficDo;
+  float SysBTagB3EfficUp;
+  float SysBTagB3EfficDo;
+  float SysBTagB4EfficUp;
+  float SysBTagB4EfficDo;
+  float SysBTagB5EfficUp;
+  float SysBTagB5EfficDo;
+  float SysBTagB6EfficUp;
+  float SysBTagB6EfficDo;
+  float SysBTagB7EfficUp;
+  float SysBTagB7EfficDo;
+  float SysBTagB8EfficUp;
+  float SysBTagB8EfficDo;
+  float SysBTagB9EfficUp;
+  float SysBTagB9EfficDo;
+  float SysBTagC0EfficUp;
+  float SysBTagC0EfficDo;
+  float SysBTagC1EfficUp;
+  float SysBTagC1EfficDo;
+  float SysBTagC2EfficUp;
+  float SysBTagC2EfficDo;
+  float SysBTagC3EfficUp;
+  float SysBTagC3EfficDo;
+  float SysBTagC4EfficUp;
+  float SysBTagC4EfficDo;
+  float SysBTagC5EfficUp;
+  float SysBTagC5EfficDo;
+  float SysBTagC6EfficUp;
+  float SysBTagC6EfficDo;
+  float SysBTagC7EfficUp;
+  float SysBTagC7EfficDo;
+  float SysBTagC8EfficUp;
+  float SysBTagC8EfficDo;
+  float SysBTagC9EfficUp;
+  float SysBTagC9EfficDo;
+  float SysBTagL0EfficUp;
+  float SysBTagL0EfficDo;
+  float SysBTagL1EfficUp;
+  float SysBTagL1EfficDo;
+  float SysBTagL2EfficUp;
+  float SysBTagL2EfficDo;
+  float SysBTagL3EfficUp;
+  float SysBTagL3EfficDo;
+  float SysBTagL4EfficUp;
+  float SysBTagL4EfficDo;
+  float SysBTagL5EfficUp;
+  float SysBTagL5EfficDo;
+  float SysBTagL6EfficUp;
+  float SysBTagL6EfficDo;
+  float SysBTagL7EfficUp;
+  float SysBTagL7EfficDo;
+  float SysBTagL8EfficUp;
+  float SysBTagL8EfficDo;
+  float SysBTagL9EfficUp;
+  float SysBTagL9EfficDo;
+  //////////////////////
   int   Entries;
   float truthH_pt;
   float weight;
@@ -628,6 +690,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual void setJetbTagger(Int_t val)
   {
     m_JetbTagger = val;
+  }
+
+  virtual void setJetCalibration(Int_t val)
+  {
+    m_JetCalibration = val;
   }
 
   virtual void setSystematicToDo(Int_t val)
@@ -806,6 +873,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     return m_JetbTagger;
   }
+
+
+  virtual Int_t getJetCalibration()
+  {
+    return m_JetCalibration;
+  }
   
   
   virtual Int_t getSystematicToDo()
@@ -834,7 +907,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual Float_t getLeptonWeight(Analysis::ChargedLepton *lep);
   virtual Float_t getSFWeight();
   virtual Float_t getggFWeight();
-  virtual Float_t getDPhijjZWeight();
+  virtual Float_t getDPhijjZWeight(Int_t cut);
   
   
   // Trigger SF 
@@ -860,6 +933,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     Info("printAllOptions", "electronFamily    = %d", m_electronFamily);
     Info("printAllOptions", "jetFamily         = %d", m_jetFamily);
     Info("printAllOptions", "jet MV1c Tagger   = %d", m_JetbTagger);
+    Info("printAllOptions", "jet GSC execution = %d", m_JetCalibration);
     Info("printAllOptions", "running Syst #    = %d", m_SystematicToDo);
     Info("printAllOptions", "outputFileName    = %s", m_outputFileName.Data());
     Info("printAllOptions", "========================");
@@ -965,7 +1039,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   void SetAnalysisOutputBranches(analysis_output_struct *str);
   void ResetAnalysisOutputBranches(analysis_output_struct *str);
   void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
-  pair <double,double> GetJetSFsvalue(int jetindex);
+  pair <double,double> GetJetSFsvalue(int jetindex, Float_t tmpbtagsys[60]);
   
   // MVA methods (June 2013)
   void    SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36]);
@@ -1024,6 +1098,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Int_t   m_electronFamily;
   Int_t   m_jetFamily;
   Int_t   m_JetbTagger;
+  Int_t   m_JetCalibration;
   Int_t   m_SystematicToDo;
   Int_t   m_thisChannel;
   
@@ -1166,7 +1241,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   float Mean_jets;
   float good_events;
   
- public:
+ public:  
   ClassDef(HiggsllqqAnalysis, 0);
 };
 
