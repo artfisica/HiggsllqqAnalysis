@@ -1758,6 +1758,7 @@ void HiggsllqqAnalysis::getGoodMuons()
 	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
 		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
+		/*
 		cout<<"   Removing low pt muon "
 		    <<i
 		    <<" overlaping the good jet "
@@ -1767,7 +1768,8 @@ void HiggsllqqAnalysis::getGoodMuons()
 		    <<"  and mu-pt = "
 		    <<i_mu->pt()
 		    <<endl;
-		
+		*/    
+
 		// found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
 	      } // overlapping muon/jet
