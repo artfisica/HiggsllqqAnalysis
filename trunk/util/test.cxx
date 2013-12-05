@@ -7,7 +7,7 @@
 void print_usage(char *app_name)
 {
   std::cout << "Usage:" << std::endl;
-  std::cout << app_name << " [--MUID] [--GSF] [--JET] [--noSmearing] [--useTopoIso] [--analysis <rel_17|rel_17_2>] [--input <filename.txt>] [--output <filename.root>] [--MV1c] [--DoSystematic X]" << std::endl;
+  std::cout << app_name << " [--MUID] [--GSF] [--JET] [--noSmearing] [--useTopoIso] [--analysis <rel_17|rel_17_2>] [--input <filename.txt>] [--output <filename.root>] [--MV1c] [--GSC] [--DoSystematic X]" << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -19,6 +19,7 @@ int main(int argc, char **argv)
   Bool_t  doGSF(kFALSE);
   Bool_t  doJET(kFALSE);
   Bool_t  doMV1c(kFALSE);
+  Bool_t  doGSC(kFALSE);
   Bool_t  doSmearing(kTRUE);
   Bool_t  useTopoIso(kFALSE);
   TString output_filename("output_test.root");
@@ -33,6 +34,7 @@ int main(int argc, char **argv)
       else if (TString(argv[i]) == "--MUID")       doSTACO    = kFALSE;
       else if (TString(argv[i]) == "--JET")        doJET      = kTRUE;
       else if (TString(argv[i]) == "--MV1c")       doMV1c     = kTRUE;
+      else if (TString(argv[i]) == "--GSC")        doGSC      = kTRUE;
       else if (TString(argv[i]) == "--noSmearing") doSmearing = kFALSE;
       else if (TString(argv[i]) == "--useTopoIso") useTopoIso = kTRUE;
       else if (TString(argv[i]) == "--analysis")
@@ -96,6 +98,7 @@ int main(int argc, char **argv)
       std::cout << "              doGSF = " << doGSF             << std::endl;
       std::cout << "              doJET = " << doJET             << std::endl;
       std::cout << "             doMV1c = " << doMV1c            << std::endl;
+      std::cout << "              doGSC = " << doGSC             << std::endl;
       std::cout << "         doSmearing = " << doSmearing        << std::endl;
       std::cout << "         useTopoIso = " << useTopoIso        << std::endl;
       std::cout << "     input_filename = " << input_filename    << std::endl;
@@ -130,6 +133,7 @@ int main(int argc, char **argv)
   analysis->setElectronFamily((doGSF) ? Electron::GSF : Electron::noGSF);
   analysis->setJetFamily((doJET)      ? 1 : 0);
   analysis->setJetbTagger((doMV1c)    ? 1 : 0);
+  analysis->setJetCalibration((doGSC) ? 1 : 0);
   analysis->setSmearing(doSmearing);
   analysis->setTopoIso(useTopoIso);
   analysis->setOutputFile(output_filename);
