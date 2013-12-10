@@ -5791,9 +5791,10 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      
 	      
-	      if(hadZ_LJ.M()<MergedMin || hadZ_LJ.M()>MergedMax)// Merge Regime Part B: 
-		{                                               // The LJ pair has mjj < 50 GeV OR mjj > 150 GeV (i.e. not in dijet SR / not in dijet SB) // November 2013
-		  str->ismergeregime         = 2;               // will be 1 for the Part A
+	      if(hadZ_LJ.M()<MergedMin || hadZ_LJ.M()>MergedMax) // Merge Regime Part B: 
+		{                                                // The LJ pair has mjj < 50 GeV OR mjj > 150 GeV (i.e. not in dijet SR / not in dijet SB) // November 2013
+		  if( howmanytags == 0) str->ismergeregime =  2; // will be 1 for the Part A. 2 == 0 b-tagged  jets in the event!
+		  else                  str->ismergeregime = -2; //                          -2 == >2 b-tagged jets in the event!
 		  str->mergedZ_LJ_m          = m_GoodJets.at(0)->Get4Momentum()->M();
 		  str->mergedZ_LJ_pt         = m_GoodJets.at(0)->rightpt();
 		  str->mergedZ_LJ_eta        = m_GoodJets.at(0)->righteta();
