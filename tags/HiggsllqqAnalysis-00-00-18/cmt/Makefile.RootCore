@@ -8,7 +8,7 @@ PACKAGE_CXXFLAGS = -Wall -I$(SITEROOT)/sw/lcg/external/clhep/1.9.4.7/$(CMTCONFIG
 PACKAGE_OBJFLAGS = 
 PACKAGE_LDFLAGS  = -L$(SITEROOT)/sw/lcg/external/clhep/1.9.4.7/$(CMTCONFIG)/lib -lCLHEP-Matrix-1.9.4.7 $(ROOTSYS)/lib/libTMVA.so $(shell root-config --libs) -lEG
 PACKAGE_BINFLAGS = 
-PACKAGE_DEP      = TrigRootAnalysis PileupReweighting egammaAnalysisUtils MuonEfficiencyCorrections GoodRunsLists MuonMomentumCorrections TrigMuonEfficiency HiggsAnalysis HiggsZZ4lUtils egammaEvent egammaFourMomentumError JetTagAlgorithms JetResolution ApplyJetCalibration ApplyJetResolutionSmearing CalibrationDataInterface JVFUncertaintyTool MissingETUtility ElectronPhotonSelectorTools
+PACKAGE_DEP      = ApplyJetCalibration HiggsAnalysis JetTagAlgorithms MuonMomentumCorrections TrigRootAnalysis egammaEvent ApplyJetResolutionSmearing HiggsZZ4lUtils egammaFourMomentumError CalibrationDataInterface JetUncertainties PATCore ggFReweighting JVFUncertaintyTool PileupReweighting MissingETUtility ElectronEfficiencyCorrection ElectronPhotonSelectorTools JetResolution MuonEfficiencyCorrections  TileTripReader egParticleConditions GoodRunsLists JetSelectorTools MuonIsolationCorrection TrigMuonEfficiency egammaAnalysisUtils
 PACKAGE_TRYDEP   = 
 PACKAGE_CLEAN    = 
 PACKAGE_NOOPT    = 0
@@ -16,5 +16,3 @@ PACKAGE_NOCC     = 0
 LOCALLIBS       += -L ./TMVA/lib -lTMVA.1
 
 include $(ROOTCOREDIR)/Makefile-common
-                                                                                    
-
