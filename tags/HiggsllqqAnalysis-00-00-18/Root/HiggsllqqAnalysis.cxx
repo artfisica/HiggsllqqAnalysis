@@ -63,8 +63,8 @@ Bool_t MuonSmearing          = kTRUE,
   DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
   DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
   
-  FillTreeHiggs              = kFALSE, // December 2013
-  FillTreeTree               = kTRUE,  // December 2013
+  FillTreeHiggs              = kTRUE, // December 2013
+  FillTreeTree               = kTRUE, // December 2013
   
 // Print Just High Selection CutFlows
   PrintJustHighSelectionCutFlows = kTRUE;
@@ -105,7 +105,7 @@ Float_t MergedMax     = 150000.;
 int HFOR_value        = -999;
 
 // MV1 (MV1c in use) operating point 70%    (November 2013)
-Float_t    MV1_OP70   = 0.8119; // 0.795; // 0.601713;    
+Float_t    MV1_OP70   = 0.7028;   
 
 // Actual Jet Cone Size in used
 Float_t Cone_size     = 0.4;
@@ -114,14 +114,14 @@ Float_t Cone_size     = 0.4;
 Float_t JVF_CUT       = 0.5;   // 0.75;
 
 // Eta window for jets
-Float_t EtaWindow     = 4.5;   // 2.5;
+Float_t EtaWindow     = 2.5;   // 4.5;
 
 // Sherpa OR pt cut
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 3;  // 3;
-int LowMassONorOFF     = 1;  // 1== Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
+int NumSystematicsToDo = 0;  // 3; // 10th December 2013 ---> under construction!
+int LowMassONorOFF     = 1;  // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
 
@@ -428,8 +428,8 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   // Initiate the bTag SFs tool
   
   // Setting the MV1 selector tagger as a input from the comand line! 
-  if (getJetbTagger() == 1)   DoMV1c    = kTRUE;
-  if(DoMV1c)                MV1_OP70    = 0.7028;
+  if (getJetbTagger() == 1)  DoMV1c     = kTRUE;
+  if(!DoMV1c)                MV1_OP70   = 0.8119;
   
   const std::string pathbtagger         ="./HiggsllqqAnalysis/util/btagSF/";
   std::string tagger                    = "MV1";
@@ -1417,7 +1417,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
     {
       D3PDReader::MuonD3PDObjectElement *mu = lep->GetMuon();
       
-      if (/*isMC() && */doSmearing() && MuonSmearing) 
+      if (isMC() && doSmearing() && MuonSmearing) 
 	{
 	  double eta  = lep->Get4Momentum()->Eta();
 	  double ptcb = lep->Get4Momentum()->Pt();
@@ -1457,7 +1457,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
       
       // first of all one must rescale energy in the crack! (both data and MC but only for 2011 so far)
       Float_t tmp_calibration(1.);
-      if (analysis_version() == "rel_17") // rel. 17
+      if (analysis_version() == "rel_17" && isMC()) // rel. 17
 	tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
       
       
@@ -1467,7 +1467,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
       
       
       // then, apply the other corrections
-      if (/*isMC() && */doSmearing() && ElectronSmearing)
+      if (isMC() && doSmearing() && ElectronSmearing)
 	{
 	  m_ElectronEnergyRescaler->SetRandomSeed(ntuple->eventinfo.EventNumber() + 100 * (Int_t)el->GetIndex());
 	  
@@ -1511,7 +1511,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
   
   // For the pile-up correction, we need mu and NPV(2+ tracks)    
   double mu = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
-  int NPV=0;
+  int   NPV = getNumberOfGoodVertices();
   
   D3PDReader::JetD3PDObjectElement *this_jet = jet->GetJet();
   
@@ -1537,13 +1537,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 	  double nTrk       = this_jet->nTrk_pv0_500MeV(); 
 	  double trackWIDTH = this_jet->trackWIDTH_pv0_1GeV();
 	  
-	  
-	  for (Int_t i = 0; i < ntuple->vxp.n(); i++)
-	    {
-	      if (ntuple->vxp[i].trk_n() >= 2) NPV++;
-	    }
-	  
-	  
+	  	  
 	  // Calibrate the jet!
 	  // Pile-up, origin, EtaJES correction applied, i.e. to OFFSET_ORIGIN_ETAJES scale
 	  TLorentzVector jet4v;	 
@@ -1758,7 +1752,7 @@ void HiggsllqqAnalysis::getGoodMuons()
 	    if ((mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.3 &&  GetDoLowMass() && i_mu->pt()<20000.) ||   // Overlap Muon-jet just for Muon with Pt <20GeV. November 2013
 		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
-		/*
+		
 		cout<<"   Removing low pt muon "
 		    <<i
 		    <<" overlaping the good jet "
@@ -1768,7 +1762,7 @@ void HiggsllqqAnalysis::getGoodMuons()
 		    <<"  and mu-pt = "
 		    <<i_mu->pt()
 		    <<endl;
-		*/    
+		    
 
 		// found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
@@ -2170,15 +2164,15 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
       else return kFALSE;
       
       
-      if ((lep->family() == Muon::MUID  && mu->tight()   == 1) ||
+      if ((lep->family() == Muon::MUID  &&  mu->tight()  == 1) ||
 	  (lep->family() == Muon::STACO && (mu->author() == 6  || mu->author() == 7) && mu->isStandAloneMuon()==0) ||
-	  (lep->family() == Muon::STACO &&  mu->author() == 6  && mu->isStandAloneMuon()==1) ||
-	  (lep->family() == Muon::CALO  && DoCaloMuons && mu->author() == 16 && (mu->caloMuonIdTag() > 10 || mu->caloLRLikelihood() > 0.9))) lep->set_lastcut(HllqqMuonQuality::quality);
+	  (lep->family() == Muon::STACO &&  mu->author() == 6                        && mu->isStandAloneMuon()==1) ||
+	  (lep->family() == Muon::CALO  &&  mu->author() == 16 && DoCaloMuons && (mu->caloMuonIdTag() > 10 || mu->caloLRLikelihood() > 0.9))) lep->set_lastcut(HllqqMuonQuality::quality);
       else return kFALSE;
       
-      if ((lep->family() != Muon::CALO && mu->isStandAloneMuon()==0 && TMath::Abs(mu->eta()) < 2.7) || 
-	  (lep->family() == Muon::CALO && DoCaloMuons               && TMath::Abs(mu->eta()) < 0.1) || 
-	  (lep->family() != Muon::CALO && mu->isStandAloneMuon()==1 && TMath::Abs(mu->eta()) >2.5 && TMath::Abs(mu->eta()) < 2.7)) lep->set_lastcut(HllqqMuonQuality::eta);
+      if ((lep->family() != Muon::CALO && (mu->isCombinedMuon()==1 || mu->isSegmentTaggedMuon()==1) && TMath::Abs(mu->eta()) < 2.7) || 
+	  (lep->family() == Muon::CALO && DoCaloMuons                                               && TMath::Abs(mu->eta()) < 0.1) || 
+	  (lep->family() != Muon::CALO && mu->isStandAloneMuon()==1 && TMath::Abs(mu->eta()) >2.5   && TMath::Abs(mu->eta()) < 2.7)) lep->set_lastcut(HllqqMuonQuality::eta);
       else return kFALSE;
       
       
@@ -2190,8 +2184,8 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
 	}
       else if (!dolowmass)
 	{
-	  if ((lep->family() != Muon::CALO                && lep->Get4Momentum()->Pt() > 10000.) ||
-	      (lep->family() == Muon::CALO && DoCaloMuons && lep->Get4Momentum()->Pt() > 20000.))   lep->set_lastcut(HllqqMuonQuality::pt);
+	  if ((lep->family() != Muon::CALO                && mu->pt()/*lep->Get4Momentum()->Pt()*/ > 10000.) ||
+	      (lep->family() == Muon::CALO && DoCaloMuons && mu->pt()/*lep->Get4Momentum()->Pt()*/ > 20000.))   lep->set_lastcut(HllqqMuonQuality::pt);
 	  else return kFALSE;
 	}
       
@@ -2200,11 +2194,11 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
       else return kFALSE;
       
       
-      if (TMath::Abs(mu->d0_exPV()) < 1.  || mu->isStandAloneMuon()==1) lep->set_lastcut(HllqqMuonQuality::cosmic);
+      if (TMath::Abs(mu->trackd0pvunbiased()) < 1.  || mu->isStandAloneMuon()==1) lep->set_lastcut(HllqqMuonQuality::cosmic);
       else return kFALSE;
       
       
-      if (TMath::Abs(mu->z0_exPV()) < 10. || mu->isStandAloneMuon()==1) lep->set_lastcut(HllqqMuonQuality::z0);
+      if (TMath::Abs(mu->trackz0pvunbiased()) < 10. || mu->isStandAloneMuon()==1) lep->set_lastcut(HllqqMuonQuality::z0);
       else return kFALSE;
       
       
@@ -2218,7 +2212,7 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
 	    }
 	  else lep->set_lastcut(HllqqMuonQuality::d0Sig);
 	  
-	  if ((mu->ptcone20()/mu->pt())<.1) lep->set_lastcut(HllqqMuonQuality::Isolation);
+	  if ( ((mu->ptcone20()/mu->pt())<.1) || (mu->isStandAloneMuon()==1) ) lep->set_lastcut(HllqqMuonQuality::Isolation);
 	  else return kFALSE;
 	}
       else if(doqcd)
@@ -2486,7 +2480,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
     }  
   else if (!dolowmass)
     {
-      if ((jet->rightpt()>20000. && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) < 2.5 && jet->rightE()>0)
+      if ((jet->rightpt()>20000. && TMath::Abs(/*Jet->emscale_eta()*/jet->righteta()) < 2.5 && jet->rightE()>0)
 	  ||
 	  (jet->rightpt()>30000. && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) > 2.5 && jet->rightE()>0 && TMath::Abs(Jet->emscale_eta()/*jet->righteta()*/) < 4.5 && ExtendedJetRegion)) 
 	jet->set_lastcut(HllqqJetQuality::kinematics);
@@ -3849,8 +3843,8 @@ Float_t HiggsllqqAnalysis::GetMV1value(Analysis::Jet *jet)
   //      w_pb    = b-jet     prob. from JetFitterCOMBNN
   //      jet_pt  = pt  of the jet [in MeV]
   //      jet_eta = eta of the jet
-
-  // if (MV1d3pd!=MV1c && MV1c>MV1_OP70) cout<<"MV1! = MV1c   ---> "<<MV1<<" != "<<MV1c<<" != "<<MV1d3pd<<endl;
+  
+  // if (MV1d3pd!=MV1c && MV1c>MV1_OP70) cout<<"  MV1 = "<<MV1<<" , MV1c = "<<MV1c<<" , MV1d3pd = "<<MV1d3pd<<endl;
   
   if (analysis_version() == "rel_17_2") 
     {
@@ -5364,13 +5358,13 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  else if  (passesDiElectronTrigger())                                  str->trig_flag = 2;
 	  else if  (passesSingleElectronTrigger())                              str->trig_flag = 1;
 	  
-	  if(m_GoodElectrons.at(0)->Get4Momentum()->Pt() >= m_GoodElectrons.at(1)->Get4Momentum()->Pt())
+	  if(m_GoodElectrons.at(0)->Get4Momentum()->Et() >= m_GoodElectrons.at(1)->Get4Momentum()->Et())
 	    {    
 	      //Filling leading Electron
 	      str->lep1_m         = el_pdg_mass;
-	      str->lep1_pt        = el_1->pt();
-	      str->lep1_eta       = el_1->eta();
-	      str->lep1_phi       = el_1->phi();
+	      str->lep1_pt        = m_GoodElectrons.at(0)->Get4Momentum()->Et();
+	      str->lep1_eta       = el_1->cl_eta();
+	      str->lep1_phi       = el_1->cl_phi();
 	      str->lep1_charge    = el_1->charge();
 	      str->lep1_caloiso   = el_1->Etcone20()/el_1->pt();
 	      str->lep1_trackiso  = el_1->ptcone20()/el_1->pt();
@@ -5384,9 +5378,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      //Filling the Second Electron
 	      str->lep2_m         = el_pdg_mass;
-	      str->lep2_pt        = el_2->pt();
-	      str->lep2_eta       = el_2->eta();
-	      str->lep2_phi       = el_2->phi();
+	      str->lep2_pt        = m_GoodElectrons.at(1)->Get4Momentum()->Et();
+	      str->lep2_eta       = el_2->cl_eta();
+	      str->lep2_phi       = el_2->cl_phi();
 	      str->lep2_charge    = el_2->charge();
 	      str->lep2_caloiso   = el_2->Etcone20()/el_2->pt();
 	      str->lep2_trackiso  = el_2->ptcone20()/el_2->pt();
@@ -5401,9 +5395,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	    {	    
 	      //Filling leading Electron
 	      str->lep1_m         = el_pdg_mass;
-	      str->lep1_pt        = el_2->pt();
-	      str->lep1_eta       = el_2->eta();
-	      str->lep1_phi       = el_2->phi();
+	      str->lep1_pt        = m_GoodElectrons.at(1)->Get4Momentum()->Et();
+	      str->lep1_eta       = el_2->cl_eta();
+	      str->lep1_phi       = el_2->cl_phi();
 	      str->lep1_charge    = el_2->charge();
 	      str->lep1_caloiso   = el_2->Etcone20()/el_2->pt();
 	      str->lep1_trackiso  = el_2->ptcone20()/el_2->pt();
@@ -5417,9 +5411,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      //Filling the Second Electron
 	      str->lep2_m         = el_pdg_mass;
-	      str->lep2_pt        = el_1->pt();
-	      str->lep2_eta       = el_1->eta();
-	      str->lep2_phi       = el_1->phi();
+	      str->lep2_pt        = m_GoodElectrons.at(0)->Get4Momentum()->Et();
+	      str->lep2_eta       = el_1->cl_eta();
+	      str->lep2_phi       = el_1->cl_phi();
 	      str->lep2_charge    = el_1->charge();
 	      str->lep2_caloiso   = el_1->Etcone20()/el_1->pt();
 	      str->lep2_trackiso  = el_1->ptcone20()/el_1->pt();
@@ -5613,7 +5607,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  ///////////////////////////////////
 	  
 	  
-	  if( howmanytags == 0 )
+	  if( howmanytags == 0 || howmanytags>2 )
 	    {
 	      std::pair<int,int> SelectedJets;
 	      if(JetKinematicFitterResult())
@@ -6057,7 +6051,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
 	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
 	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
-
+	      
 	      
 	      // Leading jets: Filling with the same values. Plotterino useful.
 	      str->realJ1_LJ_m           = m_GoodJets.at(Jone)->Get4Momentum()->M();
@@ -6512,8 +6506,8 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
   Analysis::CalibResult res_sys;
   
   
-  std::string  OP_tagger    = "0_8119";                 // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
-  if(DoMV1c)   OP_tagger    = "continuous";// "0_7028"; // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
+  std::string  OP_tagger    = "0_8119";     // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1_tagger_antikt4topoemJVF_jets
+  if(DoMV1c)   OP_tagger    = "continuous"; // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
   const std::string OP_MV1x = OP_tagger;
   
   
@@ -6521,20 +6515,64 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
   int NumBTagEigenVar     = -1;     
   
   // jet flavor truth values checked on lxr
-  if       (TMath::Abs(newJetFlav) == 5)
-    {
-      res             = calib->getScaleFactor(ajet,             "B", OP_MV1x, Analysis::None); //uncertainty);
-      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "B", OP_MV1x, Analysis::SFEigen);
-    }
-  else if  (TMath::Abs(newJetFlav) == 4) 
-    {
-      res             = calib->getScaleFactor(ajet,             "C", OP_MV1x, Analysis::None); //uncertainty);
-      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "C", OP_MV1x, Analysis::SFEigen);
+  if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
+    {       
+      if       (TMath::Abs(newJetFlav) == 5)
+	{
+	  res                        = calib->getScaleFactor(ajet,             "B", OP_MV1x, uncertainty);
+	  if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "B", OP_MV1x, Analysis::SFEigen);
+	}
+      else if  (TMath::Abs(newJetFlav) == 4 || TMath::Abs(newJetFlav) == 15) 
+	{
+	  res                        = calib->getScaleFactor(ajet,             "C", OP_MV1x, uncertainty);
+	  if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "C", OP_MV1x, Analysis::SFEigen);
+	}
+      else
+	{
+	  res                        = calib->getScaleFactor(ajet,             "Light", OP_MV1x, uncertainty);
+	  if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "Light", OP_MV1x, Analysis::SFEigen);
+	}
+      //cout<< " This is a YES "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<endl;
     }
   else
     {
-      res             = calib->getScaleFactor(ajet,             "Light", OP_MV1x, Analysis::None); //uncertainty);
-      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "Light", OP_MV1x, Analysis::SFEigen);
+      if       (TMath::Abs(newJetFlav) == 5)
+	{
+	  if(DoMV1c)
+	    {
+	      res             = calib->getScaleFactor(ajet,             "B", OP_MV1x, Analysis::None);
+	      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "B", OP_MV1x, Analysis::SFEigen);
+	    }
+	  else
+	    {
+	      res             = calib->getInefficiencyScaleFactor(ajet, "B", OP_MV1x, Analysis::None);
+	    }
+	}
+      else if  (TMath::Abs(newJetFlav) == 4 || TMath::Abs(newJetFlav) == 15) 
+	{
+	  if(DoMV1c)
+	    {
+	      res             = calib->getScaleFactor(ajet,             "C", OP_MV1x, Analysis::None);
+	      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "C", OP_MV1x, Analysis::SFEigen);
+	    }
+	  else
+	    {
+	      res             = calib->getInefficiencyScaleFactor(ajet, "C", OP_MV1x, Analysis::None);
+	    }
+	}
+      else
+	{
+	  if(DoMV1c)
+	    {
+	      res             = calib->getScaleFactor(ajet,             "Light", OP_MV1x, Analysis::None);
+	      NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "Light", OP_MV1x, Analysis::SFEigen);
+	    }
+	  else
+	    {
+	      res             = calib->getInefficiencyScaleFactor(ajet, "Light", OP_MV1x, Analysis::None);
+	    }
+	}
+      //cout<< " This is a NOT "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<endl;
     }
   
   // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingNewVHRunIPrescriptions
@@ -6544,24 +6582,27 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
     {
       if       (TMath::Abs(newJetFlav) == 5)
 	{
-	  res_sys                = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, Analysis::SFEigen, tmp);
+	  if(DoMV1c) res_sys     = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, Analysis::SFEigen, tmp);
+	  else       res_sys     = calib->getScaleFactor(ajet,  "B"  , OP_MV1x, Analysis::Total,   tmp);
 	  tmpbtagsys[tmp+tmp+0]  = res_sys.first;
 	  tmpbtagsys[tmp+tmp+1]  = res_sys.second;
 	}
-      else if  (TMath::Abs(newJetFlav) == 4) 
+      else if  (TMath::Abs(newJetFlav) == 4 || TMath::Abs(newJetFlav) == 15) 
 	{
-	  res_sys                = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, Analysis::SFEigen, tmp);
+	  if(DoMV1c) res_sys     = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, Analysis::SFEigen, tmp);
+	  else       res_sys     = calib->getScaleFactor(ajet,  "C"  , OP_MV1x, Analysis::Total,   tmp);
 	  tmpbtagsys[tmp+tmp+20] = res_sys.first;
 	  tmpbtagsys[tmp+tmp+21] = res_sys.second;
 	}
       else
 	{
-	  res_sys                = calib->getScaleFactor(ajet,"Light", OP_MV1x, Analysis::SFEigen, tmp);
+	  if(DoMV1c) res_sys     = calib->getScaleFactor(ajet,"Light", OP_MV1x, Analysis::SFEigen, tmp);
+	  else       res_sys     = calib->getScaleFactor(ajet,"Light", OP_MV1x, Analysis::Total,   tmp);
 	  tmpbtagsys[tmp+tmp+40] = res_sys.first;
 	  tmpbtagsys[tmp+tmp+41] = res_sys.second;
 	}
       /*
-      cout<<tmp<<" -> SF for B     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	cout<<tmp<<" -> SF for B     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
 	  <<tmpbtagsys[tmp+tmp+0]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+1]<<endl;
       cout<<tmp<<" -> SF for C     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
 	  <<tmpbtagsys[tmp+tmp+20]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+21]<<endl;
@@ -7329,10 +7370,10 @@ Bool_t HiggsllqqAnalysis::Pair_Quality()
 {
   Bool_t GoodQ = false;
   
-  D3PDReader::MuonD3PDObjectElement     *mu_1;
-  D3PDReader::MuonD3PDObjectElement     *mu_2;
   D3PDReader::ElectronD3PDObjectElement *el_1;
   D3PDReader::ElectronD3PDObjectElement *el_2;
+  D3PDReader::MuonD3PDObjectElement     *mu_1;
+  D3PDReader::MuonD3PDObjectElement     *mu_2;
   
   //Taking the 2 muons/electrons of the "loose"couple already found
   if (getChannel() == HiggsllqqAnalysis::MU2 && m_GoodMuons.size() == 2)
@@ -7809,10 +7850,10 @@ Bool_t  HiggsllqqAnalysis::IsCHadron(Int_t pdg)
 {
   pdg=TMath::Abs(pdg);
   
-  if((pdg>=400&&pdg<500&&pdg !=443)|| (pdg>=4000 && pdg<5000)
-     || (pdg>=10411 && pdg<=10445) || (pdg>=20411 && pdg<=20445)
-     )  return true;
-  else return false;
+  if((pdg>=400 && pdg<500 && pdg !=443)|| (pdg>=4000 && pdg<5000) || (pdg>=10411 && pdg<=10445) || (pdg>=20411 && pdg<=20445)) 
+    return true;
+  else
+    return false;
 }
 
 // Function to check whether particle is a b-hadron
