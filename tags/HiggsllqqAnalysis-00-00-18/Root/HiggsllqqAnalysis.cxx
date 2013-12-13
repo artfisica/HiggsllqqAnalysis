@@ -59,7 +59,7 @@ Bool_t MuonSmearing          = kTRUE,
   EL_LH_ID                   = kTRUE,  // November 2013
   
 // Calculating the DPhi weight
-  DoDPhiWeight               = kTRUE,  // Problems with th Grid, to produce the tar should be OFF
+  DoDPhiWeight               = kFALSE,  // Problems with th Grid, to produce the tar should be OFF
   DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
   DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
   
@@ -120,7 +120,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;  // 3; // 10th December 2013 ---> under construction!
+int NumSystematicsToDo = 3;  // 3; // 10th December 2013 ---> under construction!
 int LowMassONorOFF     = 1;  // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -2547,7 +2547,12 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_generatedEntriesHisto->Fill("raw", 1);
   m_generatedEntriesHisto->Fill("Sherpa_Veto",(!SherpaPt0Veto()) ? 1 : 0);   
   
+
+
+  if(!isMC()) NumSystematicsToDo == 0; // Barrier to Run on Data: Not Systematic on DATA!!! 13th December 2013
   
+  
+
   for (UInt_t i = 0; i < m_Channels.size(); i++)
     {    
       UInt_t chan = m_Channels.at(i);      
@@ -2563,6 +2568,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	    {  //Set the Low or High Mass Analysis
 	      SetDoLowMass(kFALSE);
 	    }
+	  
 	  
 	  //Including the loop over each of the systematic evaluation!! // November 2013
 	  for (int syst = -1; syst < NumSystematicsToDo; syst++)
@@ -5793,7 +5799,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      
 	      if(hadZ_LJ.M()<MergedMin || hadZ_LJ.M()>MergedMax) // Merge Regime Part B: 
 		{                                                // The LJ pair has mjj < 50 GeV OR mjj > 150 GeV (i.e. not in dijet SR / not in dijet SB) // November 2013
-		  if( howmanytags == 0) str->ismergeregime =  2; // will be 1 for the Part A. 2 == 0 b-tagged  jets in the event!
+		  if( howmanytags == 0) str->ismergeregime =  2; // will be 1 for the Part A. 2 == 0  b-tagged jets in the event!
 		  else                  str->ismergeregime = -2; //                          -2 == >2 b-tagged jets in the event!
 		  str->mergedZ_LJ_m          = m_GoodJets.at(0)->Get4Momentum()->M();
 		  str->mergedZ_LJ_pt         = m_GoodJets.at(0)->rightpt();
@@ -6329,10 +6335,10 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      if(hadZ_BP.M()<MergedMin || hadZ_BP.M()>MergedMax)// Merge Regime Part D: 
 		{                                               // The LJ pair has mjj < 50 GeV OR mjj > 150 GeV (i.e. not in dijet SR / not in dijet SB) // November 2013
 		  str->ismergeregime         = 4;               // will be 1 for the Part A, 2 for Part B and 3 for Part C
-		  str->mergedZ_LJ_m          = m_GoodJets.at(Jone)->Get4Momentum()->M();
-		  str->mergedZ_LJ_pt         = m_GoodJets.at(Jone)->rightpt();
-		  str->mergedZ_LJ_eta        = m_GoodJets.at(Jone)->righteta();
-		  str->mergedZ_LJ_phi        = m_GoodJets.at(Jone)->rightphi();
+		  str->mergedZ_LJ_m          = m_GoodJets.at(0/*Jone*/)->Get4Momentum()->M();
+		  str->mergedZ_LJ_pt         = m_GoodJets.at(0/*Jone*/)->rightpt();
+		  str->mergedZ_LJ_eta        = m_GoodJets.at(0/*Jone*/)->righteta();
+		  str->mergedZ_LJ_phi        = m_GoodJets.at(0/*Jone*/)->rightphi();
 		  
 		  H_BP = lepZ + j1_BP;
 		  
