@@ -29,8 +29,8 @@ rm xrootd_HZZllqq_$PRODUCTION.$SYST       outs_HZZllqq_$PRODUCTION.$SYST;       
 rm   Jobs_HZZllqq_$PRODUCTION.$SYST   download_HZZllqq_$PRODUCTION.$SYST;                              ##
 mv               production_HZZllqq_$PRODUCTION.$SYST                 Jobs_HZZllqq_$PRODUCTION.$SYST;  ##
                                                                                                        ##
-./create_outputs.sh   $FILE $USER $PRODUCTION $TAR $EXCLUDE     >     outs_HZZllqq_$PRODUCTION.$SYST;  ##
-./find_xrootd_path.sh $FILE $USER $PRODUCTION $TAR $EXCLUDE     >   xrootd_HZZllqq_$PRODUCTION.$SYST;  ##
+./create_outputs.sh   $FILE $USER $PRODUCTION.$SYST $TAR $EXCLUDE >   outs_HZZllqq_$PRODUCTION.$SYST;  ##
+./find_xrootd_path.sh $FILE $USER $PRODUCTION.$SYST $TAR $EXCLUDE > xrootd_HZZllqq_$PRODUCTION.$SYST;  ##
 chmod 755                                                             outs_HZZllqq_$PRODUCTION.$SYST;  ##
 chmod 755                                                           xrootd_HZZllqq_$PRODUCTION.$SYST;  ##
 sed 's/user\./dq2-get\ user\./g' outs_HZZllqq_$PRODUCTION.$SYST > download_HZZllqq_$PRODUCTION.$SYST;  ##
