@@ -63,7 +63,7 @@ Bool_t MuonSmearing          = kTRUE,
   DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
   DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
   
-  FillTreeHiggs              = kTRUE, // December 2013
+  FillTreeHiggs              = kFALSE, // December 2013
   FillTreeTree               = kTRUE, // December 2013
   
 // Print Just High Selection CutFlows
@@ -191,6 +191,7 @@ Bool_t HiggsllqqAnalysis::change_input()
 Bool_t HiggsllqqAnalysis::initialize_tools()
 {    
   printAllOptions();
+    
   
   // initiate the calibration tool
   TString jetAlgo="";
@@ -214,27 +215,22 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
       JES_config_file = "ApplyJetCalibration/data/CalibrationConfigs/Rel17_JES.config";
       JER_config_file = "JetResolution/share/JERProviderPlots_2011.root";
     }
-  
-  
+    
   
   bool isData(0);
   if (isMC())
-    isData = false;
+    {
+      isData = false;
+    }
   else if (!isMC())
-    isData = true;
-  
+    {
+      cout<<"      ...Just to let you know.... this is DATA!....."<<endl;
+      isData = true;
+    }
   
   myJES = new JetAnalysisCalib::JetCalibrationTool(jetAlgo,JES_config_file, isData);
   myJER = new JetSmearingTool(jetAlgo,JER_config_file);
   myJER->init();
-  
-  
-  // MET intitalization tools
-  m_systUtil = new METUtility;
-  //DefineMissingET(doRefEle, doRefGamma, doRefTau, doRefJet, doSoftJets, doRefMuon, doMuonTotal, doCellOut, doCellOutEflow)
-  //m_systUtil->defineMissingET(true, true, true, true, false, false, true, false, true);
-  //m_systUtil->setVerbosity(false);
-  //m_systUtil->setIsMuid(false); 
   
   
   // Initialize the kinematic fitter
@@ -243,6 +239,16 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   int maxjet_KF = 7;
   m_jetkinematicfitter = new JetKinematicFitter(maxjet_KF,91187.6,2495.2); // mZ | gammaZ
   m_jetkinematicfitter->SetIsMC(isMC());
+  
+  
+  
+  
+  // MET intitalization tools
+  m_systUtil = new METUtility;
+  //DefineMissingET(doRefEle, doRefGamma, doRefTau, doRefJet, doSoftJets, doRefMuon, doMuonTotal, doCellOut, doCellOutEflow)
+  //m_systUtil->defineMissingET(true, true, true, true, false, false, true, false, true);
+  //m_systUtil->setVerbosity(false);
+  //m_systUtil->setIsMuid(false); 
   
   
   // HFOR D3PD TOOL
@@ -1753,7 +1759,7 @@ void HiggsllqqAnalysis::getGoodMuons()
 		(mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))<0.4 && !GetDoLowMass() && i_mu->pt()<20000.))
 	      {
 		
-		cout<<"   Removing low pt muon "
+		/*cout<<"   Removing low pt muon "
 		    <<i
 		    <<" overlaping the good jet "
 		    <<theJetNow
@@ -1762,7 +1768,7 @@ void HiggsllqqAnalysis::getGoodMuons()
 		    <<"  and mu-pt = "
 		    <<i_mu->pt()
 		    <<endl;
-		    
+		  */  
 
 		// found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
@@ -2547,12 +2553,23 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
   m_generatedEntriesHisto->Fill("raw", 1);
   m_generatedEntriesHisto->Fill("Sherpa_Veto",(!SherpaPt0Veto()) ? 1 : 0);   
   
-
-
-  if(!isMC()) NumSystematicsToDo == 0; // Barrier to Run on Data: Not Systematic on DATA!!! 13th December 2013
   
   
-
+  
+  if(!isMC())  // Barrier to Run on Data: Not Systematic on DATA!!! 13th December 2013
+    {
+      //cout<<" This is Data -----> changing the Number of Sytematics to run form "<< NumSystematicsToDo;
+      NumSystematicsToDo = 0;
+      //cout<<" to --> "<< NumSystematicsToDo<<endl;
+    }
+  //else
+  //{
+  //cout<<" This is MC -----> running "<< NumSystematicsToDo <<" Sytematics...."<<endl;
+  //}
+  
+  
+  
+  
   for (UInt_t i = 0; i < m_Channels.size(); i++)
     {    
       UInt_t chan = m_Channels.at(i);      
@@ -3075,8 +3092,8 @@ Float_t HiggsllqqAnalysis::getPileupWeight()
       result      = m_PileupReweighter->GetCombinedWeight(ntuple->eventinfo.RunNumber(), ntuple->eventinfo.mc_channel_number(), mu_i);
     }
   
-  if (result < 0)  Warning("getPileupWeight", "Negative weight from pile-up tool!");
-  if (result == 0) Warning("getPileupWeight", "Zero weight from pile-up tool!");
+  //if (result < 0)  Warning("getPileupWeight", "Negative weight from pile-up tool!");
+  //if (result == 0) Warning("getPileupWeight", "Zero weight from pile-up tool!");
   
   return result;
 }
