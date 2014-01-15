@@ -1,9 +1,0 @@
-## 5th November 2013
-## Please replace your local "JetTagAlgorithms" package (folder) copying the folder /afs/cern.ch/user/a/arturos/public/JetTagAlgorithms
- 
-## so, do (in your working area):
-
-> cp -r /afs/cern.ch/user/a/arturos/public/JetTagAlgorithms . 
-
-## END.
-
