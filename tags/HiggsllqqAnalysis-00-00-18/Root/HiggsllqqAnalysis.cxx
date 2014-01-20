@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: December 4th, 2013
+    Update: January 21th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -59,12 +59,12 @@ Bool_t MuonSmearing          = kTRUE,
   EL_LH_ID                   = kTRUE,  // November 2013
   
 // Calculating the DPhi weight
-  DoDPhiWeight               = kFALSE,  // Problems with th Grid, to produce the tar should be OFF
+  DoDPhiWeight               = kFALSE, // Problems with th Grid, to produce the tar should be OFF
   DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
   DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
   
   FillTreeHiggs              = kFALSE, // December 2013
-  FillTreeTree               = kTRUE, // December 2013
+  FillTreeTree               = kTRUE,  // December 2013
   
 // Print Just High Selection CutFlows
   PrintJustHighSelectionCutFlows = kTRUE;
@@ -120,7 +120,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 3;  // 3; // 10th December 2013 ---> under construction!
+int NumSystematicsToDo = 31; // 20th January 2014 ---> under construction!
 int LowMassONorOFF     = 1;  // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -232,6 +232,17 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   myJER = new JetSmearingTool(jetAlgo,JER_config_file);
   myJER->init();
   
+  // Systematics Jet Uncertainties: January 2014
+  std::cout << "########## JESUncertainty ########" << std::endl;
+  my_JES = new MultijetJESUncertaintyProvider("JES_2012/Moriond2013/MultijetJES_2012.config",
+					      "JES_2012/Moriond2013/InsituJES2012_14NP.config",
+					      jetAlgo,
+					      "Pythia8",
+					      "JetUncertainties/share/");
+  
+  int Ncomp=my_JES->getNUncertaintyComponents();
+  cout<<"    with a number of components = "<<Ncomp<<endl;
+
   
   // Initialize the kinematic fitter
   Info("doAnalysis", "Initializing JetKinematicFitter");
@@ -1559,7 +1570,224 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 	    {
 	      myJER->SetSeed(ntuple->eventinfo.EventNumber());
 	      myJER->SmearJet_Syst(jet4v);
-	    }
+	    } // "SysJetEResol"
+	  
+	  
+	  // JES systematics: January 2014
+	  Bool_t DEBUG = kFALSE; // Print the values for debugging.
+	  Int_t  SYST  = 2;     // Actual sytematics where to start to count the JES.
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 3)
+		    {
+		      jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase1Up"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 4)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase1Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 5)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase2Up"
+	  SYST++; if(getSystematicToDo()==SYST) // 6)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase2Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 7)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);    
+		    } // "SysJetBase3Up"
+	  SYST++; if(getSystematicToDo()==SYST) // 8)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase3Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 9)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase4Up"
+	  SYST++; if(getSystematicToDo()==SYST) // 10)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase4Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 11)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase5Up"
+	  SYST++; if(getSystematicToDo()==SYST) // 12)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase5Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 13)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetBase6Up"
+	  SYST++; if(getSystematicToDo()==SYST) // 14)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES); 
+		    } // "SysJetBase6Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 15)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);
+		    } // "SysJetEtaModelUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 16)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES); 
+		    } // "SysJetEtaModelDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 17)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES);	      
+		    } // "SysJetEtaStatUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 18)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);  
+		    } // "SysJetEtaStatDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 19)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES); 
+		    } // "SysJetHighPtUp"	  
+	  SYST++; if(getSystematicToDo()==SYST) // 20)
+		    {
+		       jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES);     
+		    } // "SysJetHighPtDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 21)
+		    {
+		       jet4v *= GetJESUp(getSystematicToDo(), DEBUG, jet4v, my_JES); 
+		    } // "SysJetNonClosUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 22)
+		    {
+		      jet4v *= GetJESDo(getSystematicToDo(), DEBUG, jet4v, my_JES); 
+		    } // "SysJetNonClosDo"
+	  
+	  ////////////////////////////////////////////////////////
+	  /*
+	    As an example for NPV, one should shift NPV one-sigma up by doing for each jet in the analysis:
+	    
+	    double shift = j->getRelNPVOffsetTerm(jet.Pt(),jet.Eta(),NPV);
+	    jet *= (1.0+shift);
+	    
+	    and repeat the analysis with the downwards shift:
+	    
+	    double shift = j->getRelNPVOffsetTerm(jet.Pt(),jet.Eta(),NPV);
+	    jet *= (1.0-shift);
+	    
+	    this will correctly keep track of the sign of the uncertainty. Note the same should be done also for the other pileup terms. The pileup terms for each version are:
+	    
+	    Moriond 2013 with the 2012 dataset:
+	    j->getRelNPVOffsetTerm(jet.Pt(),jet.Eta(),NPV);
+	    j->getRelMuOffsetTerm(jet.Pt(),jet.Eta(),mu);
+	    j->getRelPileupPtTerm(jet.Pt(),jet.Eta(),NPV,mu);
+	    j->getRelPileupRhoTopology(jet.Pt(),jet.Eta()); 
+	  */
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 23)
+		    {
+		      double JES_unc = my_JES->getRelNPVOffsetTerm(jet4v.Pt(), jet4v.Eta(), NPV);
+		      if(JES_unc!=-1) jet4v *= (1. + JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;
+		    } // "SysJetNPVUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 24)
+		    {
+		      double JES_unc = my_JES->getRelNPVOffsetTerm(jet4v.Pt(), jet4v.Eta(), NPV);
+		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;		      
+		    } // "SysJetNPVDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 25)
+		    {
+		      double JES_unc = my_JES->getRelMuOffsetTerm(jet4v.Pt(), jet4v.Eta(), mu);
+		      if(JES_unc!=-1) jet4v *= (1. + JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;
+		    } // "SysJetMuUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 26)
+		    {
+		      double JES_unc = my_JES->getRelMuOffsetTerm(jet4v.Pt(), jet4v.Eta(), mu);
+		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;
+		    } // "SysJetMuDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 27)
+		    {
+		      double JES_unc = my_JES->getRelPileupPtTerm(jet4v.Pt(), jet4v.Eta(), NPV, mu);
+		      if(JES_unc!=-1) jet4v *= (1. + JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;
+		    } // "SysJetPilePtUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 28)
+		    {
+		      double JES_unc = my_JES->getRelPileupPtTerm(jet4v.Pt(), jet4v.Eta(), NPV, mu);
+		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;
+		    } // "SysJetPilePtDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 29)
+		    {
+		      double JES_unc = my_JES->getRelPileupRhoTopology(jet4v.Pt(),jet4v.Eta());
+		      if(JES_unc!=-1) jet4v *= (1. + JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;   
+		    } // "SysJetPileRhoUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 30)
+		    {
+		      double JES_unc = my_JES->getRelPileupRhoTopology(jet4v.Pt(),jet4v.Eta());
+		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<")"<<endl;
+		    } // "SysJetPileRhoDo"
+	  
+	  /////////////////////////////////////////////////////////////////////////////////////////////////////	  
+	  SYST++; if(getSystematicToDo()==SYST) // 31)
+		    {
+		      
+		    } // "SysJetFlavCompUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 32)
+		    {
+		      
+		    } // "SysJetFlavCompDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 33)
+		    {
+		      
+		    } // "SysJetFlavRespUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 34)
+		    {
+		      
+		    } // "SysJetFlavRespDo"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 35)
+		    {
+		      
+		    } // "SysJetFlavBUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 36)
+		    {
+		      
+		    } // "SysJetFlavBDo"
+	  
+	  //////////////////////////////////////////////////
+	  SYST++; if(getSystematicToDo()==SYST) // 37)
+		    {
+		      // To understand and be implemented 
+		    } // "SysJetMixed1Up"	  
+	  SYST++; if(getSystematicToDo()==SYST) // 38)
+		    {
+		      // To understand and be implemented
+		    } // "SysJetMixed1Do"
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 39)
+		    {
+		      // To understand and be implemented
+		    } // "SysJetMixed2Up"
+	  SYST++; if(getSystematicToDo()==SYST) // 40)
+		    {
+		      // To understand and be implemented
+		    } // "SysJetMixed2Do"
+	  /////////////////////////////////////////////////// End JES uncertainties /////////////////////////////////////////////////// 
 	  
 	  tmp_E=jet4v.E();
 	  tmp_pt=jet4v.Pt();
