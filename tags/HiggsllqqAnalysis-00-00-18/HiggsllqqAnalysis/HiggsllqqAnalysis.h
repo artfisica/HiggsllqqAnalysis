@@ -53,7 +53,8 @@
 #include "ApplyJetResolutionSmearing/ApplyJetSmearing.h"
 #include "HiggsllqqAnalysis/JetKinematicFitter.h"
 #include "HiggsllqqAnalysis/HforToolD3PD.h"
-
+#include "JetUncertainties/JESUncertaintyProvider.h"
+#include "JetUncertainties/MultijetJESUncertaintyProvider.h"
 
 // TestSelection needs (redundancies to be removed)
 #include <fstream>
@@ -1013,6 +1014,30 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
     return kFALSE;
   }  
   
+  
+  // JES obtaining methods Up/Down. January 2014
+  Double_t GetJESUp(int systNow, Bool_t print, TLorentzVector jet,  MultijetJESUncertaintyProvider *my_JES)
+  {
+    int component  = (systNow-3)/2;
+    double JES_unc = my_JES->getRelUncertComponent(component, jet.Pt(), jet.Eta());
+    if(print) cout<<" doing Syst #"<<getSystematicToDo()<<": component #"<<component<<" = "<<1.+JES_unc<<". (Pt,eta) = ("<<jet.Pt()<<","<<jet.Eta()<<")"<<endl;
+    
+    if(JES_unc!=-1) return (1 + JES_unc); 
+    else            return 1;
+  } // "SysJet*Up"
+  
+  Double_t GetJESDo(int systNow, Bool_t print, TLorentzVector jet,  MultijetJESUncertaintyProvider *my_JES)
+  {
+    int component  =   (systNow-4)/2;
+    double JES_unc = my_JES->getRelUncertComponent(component, jet.Pt(), jet.Eta());
+    if(print) cout<<" doing Syst #"<<getSystematicToDo()<<": component #"<<component<<" = "<<1.-JES_unc<<". (Pt,eta) = ("<<jet.Pt()<<","<<jet.Eta()<<")"<<endl;
+    
+    if(JES_unc!=-1) return (1 - JES_unc); 
+    else            return 1;
+  } // "SysJet*Do"
+  
+  
+  
   void SetDoQCDSelection(Bool_t val) { m_doqcdselection = val; }
   
   
@@ -1131,8 +1156,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   // JES AND JER TOOLS
   JetAnalysisCalib::JetCalibrationTool *myJES;
-  JetSmearingTool    *myJER;
-
+  JetSmearingTool                      *myJER;
+  MultijetJESUncertaintyProvider       *my_JES;
+  
   // MET TOOL
   METUtility         *m_systUtil;
   
@@ -1144,7 +1170,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   // JVF uncertainty tool
   JVFUncertaintyTool *jvfTool;
-
+  
   // HFOR TOOL
   HforToolD3PD *hforTool;
   
