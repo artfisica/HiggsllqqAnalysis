@@ -2757,7 +2757,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
       else return kFALSE;
     }
   
-  if(/*jet->rightpt()<50000. &&*/ TMath::Abs(Jet->emscale_eta()) < 2.4)
+  if(1/*jet->rightpt()<50000. && TMath::Abs(Jet->emscale_eta()) < 2.4*/) // 27th January 2014: Coming to apply JVF cut to all Jets
     {
       if (TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
       else return kFALSE;
