@@ -3962,8 +3962,12 @@ Float_t HiggsllqqAnalysis::getCorrectMETValue()
     {
       cout<<"WARNING!!! Retuning MET_Final NOT Topo Implemented yet!!"<<endl;
       return  ntuple->MET_RefFinal.et();
-      
+     
       /*
+      D3PDReader::JetD3PDObject *jet_branch(0);
+      jet_branch = &(ntuple->jet_antikt4truth);
+ 
+      
       m_systUtil->reset();
 	
       vector<float> *RecalibratedJetPtVec = new vector<float>();
@@ -3985,11 +3989,12 @@ Float_t HiggsllqqAnalysis::getCorrectMETValue()
 	{ 
 	  Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
 	  D3PDReader::JetD3PDObjectElement  *Jet = jet->GetJet();
-	  
-	  jet_eta->push_back(jet->emscale_eta());
-	  jet_phi->push_back(jet->emscale_phi());
-	  jet_E->push_back(jet->emscale_E());
-	  jet_MET_wet->push_back();
+	  D3PDReader::MissingETCompositionD3PDObject *MET; // XXXXX
+
+	  jet_eta->push_back(Jet->emscale_eta());
+	  jet_phi->push_back(Jet->emscale_phi());
+	  jet_E->push_back(Jet->emscale_E());
+	  jet_MET_wet->push_back(el_MET_wet.value()); // XXXXX
 	  jet_MET_wpx->push_back();
 	  jet_MET_wpy->push_back();
 	  jet_MET_statusWord->push_back();
@@ -4034,7 +4039,9 @@ Float_t HiggsllqqAnalysis::getCorrectMETValue()
       MET_RefGamma_ety                        = MET_RefGamma_et * TMath::Sin(MET_RefGamma_phi);
       MET_CellOut_Eflow_etx                   = MET_CellOut_Eflow_et * TMath::Cos(MET_CellOut_Eflow_phi);
       MET_CellOut_Eflow_ety                   = MET_CellOut_Eflow_et * TMath::Sin(MET_CellOut_Eflow_phi);
-      
+
+
+            
       ////////
       m_systUtil->setJetParameters(RecalibratedJetPtVec,
 				   jet_eta,
@@ -4109,9 +4116,9 @@ Float_t HiggsllqqAnalysis::GetMV1value(Analysis::Jet *jet)
   Float_t w_IP3D            = Jet->flavor_weight_IP3D();
   Float_t w_SV1             = Jet->flavor_weight_SV1();
   Float_t w_JetFitterCOMBNN = Jet->flavor_weight_JetFitterCOMBNN();
-  Float_t w_pu              = Jet->flavor_component_jfitc_pu();
-  Float_t w_pc              = Jet->flavor_component_jfitc_pc();
-  Float_t w_pb              = Jet->flavor_component_jfitc_pb();
+  Float_t w_pu              = Jet->flavor_component_jfitcomb_pu();
+  Float_t w_pc              = Jet->flavor_component_jfitcomb_pc();
+  Float_t w_pb              = Jet->flavor_component_jfitcomb_pb();
   double jet_pt             = jet->rightpt();
   double jet_eta            = jet->righteta();
   
@@ -6821,7 +6828,7 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
 	}
       //cout<< " This is a YES "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<endl;
     }
-  else
+  else  // It is not a b-tagged jet
     {
       if       (TMath::Abs(newJetFlav) == 5)
 	{
