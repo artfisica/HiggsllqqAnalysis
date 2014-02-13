@@ -95,14 +95,14 @@ namespace D3PDReader {
         emscale_pt( parent.emscale_pt, index, this ),
         eta( parent.eta, index, this ),
         etaconst_default( parent.etaconst_default, index, this ),
-        flavor_component_jfitc_doublePropName( parent.flavor_component_jfitc_doublePropName, index, this ),
-        flavor_component_jfitc_doublePropValue( parent.flavor_component_jfitc_doublePropValue, index, this ),
-        flavor_component_jfitc_intPropName( parent.flavor_component_jfitc_intPropName, index, this ),
-        flavor_component_jfitc_intPropValue( parent.flavor_component_jfitc_intPropValue, index, this ),
-        flavor_component_jfitc_isValid( parent.flavor_component_jfitc_isValid, index, this ),
-        flavor_component_jfitc_pb( parent.flavor_component_jfitc_pb, index, this ),
-        flavor_component_jfitc_pc( parent.flavor_component_jfitc_pc, index, this ),
-        flavor_component_jfitc_pu( parent.flavor_component_jfitc_pu, index, this ),
+        flavor_component_jfitcomb_doublePropName( parent.flavor_component_jfitcomb_doublePropName, index, this ),
+        flavor_component_jfitcomb_doublePropValue( parent.flavor_component_jfitcomb_doublePropValue, index, this ),
+        flavor_component_jfitcomb_intPropName( parent.flavor_component_jfitcomb_intPropName, index, this ),
+        flavor_component_jfitcomb_intPropValue( parent.flavor_component_jfitcomb_intPropValue, index, this ),
+        flavor_component_jfitcomb_isValid( parent.flavor_component_jfitcomb_isValid, index, this ),
+        flavor_component_jfitcomb_pb( parent.flavor_component_jfitcomb_pb, index, this ),
+        flavor_component_jfitcomb_pc( parent.flavor_component_jfitcomb_pc, index, this ),
+        flavor_component_jfitcomb_pu( parent.flavor_component_jfitcomb_pu, index, this ),
         flavor_truth_BHadronpdg( parent.flavor_truth_BHadronpdg, index, this ),
         flavor_truth_dRminToB( parent.flavor_truth_dRminToB, index, this ),
         flavor_truth_dRminToC( parent.flavor_truth_dRminToC, index, this ),
@@ -245,14 +245,14 @@ namespace D3PDReader {
         emscale_pt( parent.emscale_pt ),
         eta( parent.eta ),
         etaconst_default( parent.etaconst_default ),
-        flavor_component_jfitc_doublePropName( parent.flavor_component_jfitc_doublePropName ),
-        flavor_component_jfitc_doublePropValue( parent.flavor_component_jfitc_doublePropValue ),
-        flavor_component_jfitc_intPropName( parent.flavor_component_jfitc_intPropName ),
-        flavor_component_jfitc_intPropValue( parent.flavor_component_jfitc_intPropValue ),
-        flavor_component_jfitc_isValid( parent.flavor_component_jfitc_isValid ),
-        flavor_component_jfitc_pb( parent.flavor_component_jfitc_pb ),
-        flavor_component_jfitc_pc( parent.flavor_component_jfitc_pc ),
-        flavor_component_jfitc_pu( parent.flavor_component_jfitc_pu ),
+        flavor_component_jfitcomb_doublePropName( parent.flavor_component_jfitcomb_doublePropName ),
+        flavor_component_jfitcomb_doublePropValue( parent.flavor_component_jfitcomb_doublePropValue ),
+        flavor_component_jfitcomb_intPropName( parent.flavor_component_jfitcomb_intPropName ),
+        flavor_component_jfitcomb_intPropValue( parent.flavor_component_jfitcomb_intPropValue ),
+        flavor_component_jfitcomb_isValid( parent.flavor_component_jfitcomb_isValid ),
+        flavor_component_jfitcomb_pb( parent.flavor_component_jfitcomb_pb ),
+        flavor_component_jfitcomb_pc( parent.flavor_component_jfitcomb_pc ),
+        flavor_component_jfitcomb_pu( parent.flavor_component_jfitcomb_pu ),
         flavor_truth_BHadronpdg( parent.flavor_truth_BHadronpdg ),
         flavor_truth_dRminToB( parent.flavor_truth_dRminToB ),
         flavor_truth_dRminToC( parent.flavor_truth_dRminToC ),
@@ -422,14 +422,14 @@ namespace D3PDReader {
       fHandles[ "emscale_pt" ] = &emscale_pt;
       fHandles[ "eta" ] = &eta;
       fHandles[ "etaconst_default" ] = &etaconst_default;
-      fHandles[ "flavor_component_jfitc_doublePropName" ] = &flavor_component_jfitc_doublePropName;
-      fHandles[ "flavor_component_jfitc_doublePropValue" ] = &flavor_component_jfitc_doublePropValue;
-      fHandles[ "flavor_component_jfitc_intPropName" ] = &flavor_component_jfitc_intPropName;
-      fHandles[ "flavor_component_jfitc_intPropValue" ] = &flavor_component_jfitc_intPropValue;
-      fHandles[ "flavor_component_jfitc_isValid" ] = &flavor_component_jfitc_isValid;
-      fHandles[ "flavor_component_jfitc_pb" ] = &flavor_component_jfitc_pb;
-      fHandles[ "flavor_component_jfitc_pc" ] = &flavor_component_jfitc_pc;
-      fHandles[ "flavor_component_jfitc_pu" ] = &flavor_component_jfitc_pu;
+      fHandles[ "flavor_component_jfitcomb_doublePropName" ] = &flavor_component_jfitcomb_doublePropName;
+      fHandles[ "flavor_component_jfitcomb_doublePropValue" ] = &flavor_component_jfitcomb_doublePropValue;
+      fHandles[ "flavor_component_jfitcomb_intPropName" ] = &flavor_component_jfitcomb_intPropName;
+      fHandles[ "flavor_component_jfitcomb_intPropValue" ] = &flavor_component_jfitcomb_intPropValue;
+      fHandles[ "flavor_component_jfitcomb_isValid" ] = &flavor_component_jfitcomb_isValid;
+      fHandles[ "flavor_component_jfitcomb_pb" ] = &flavor_component_jfitcomb_pb;
+      fHandles[ "flavor_component_jfitcomb_pc" ] = &flavor_component_jfitcomb_pc;
+      fHandles[ "flavor_component_jfitcomb_pu" ] = &flavor_component_jfitcomb_pu;
       fHandles[ "flavor_truth_BHadronpdg" ] = &flavor_truth_BHadronpdg;
       fHandles[ "flavor_truth_dRminToB" ] = &flavor_truth_dRminToB;
       fHandles[ "flavor_truth_dRminToC" ] = &flavor_truth_dRminToC;
@@ -583,14 +583,14 @@ namespace D3PDReader {
       fHandles[ "emscale_pt" ] = &emscale_pt;
       fHandles[ "eta" ] = &eta;
       fHandles[ "etaconst_default" ] = &etaconst_default;
-      fHandles[ "flavor_component_jfitc_doublePropName" ] = &flavor_component_jfitc_doublePropName;
-      fHandles[ "flavor_component_jfitc_doublePropValue" ] = &flavor_component_jfitc_doublePropValue;
-      fHandles[ "flavor_component_jfitc_intPropName" ] = &flavor_component_jfitc_intPropName;
-      fHandles[ "flavor_component_jfitc_intPropValue" ] = &flavor_component_jfitc_intPropValue;
-      fHandles[ "flavor_component_jfitc_isValid" ] = &flavor_component_jfitc_isValid;
-      fHandles[ "flavor_component_jfitc_pb" ] = &flavor_component_jfitc_pb;
-      fHandles[ "flavor_component_jfitc_pc" ] = &flavor_component_jfitc_pc;
-      fHandles[ "flavor_component_jfitc_pu" ] = &flavor_component_jfitc_pu;
+      fHandles[ "flavor_component_jfitcomb_doublePropName" ] = &flavor_component_jfitcomb_doublePropName;
+      fHandles[ "flavor_component_jfitcomb_doublePropValue" ] = &flavor_component_jfitcomb_doublePropValue;
+      fHandles[ "flavor_component_jfitcomb_intPropName" ] = &flavor_component_jfitcomb_intPropName;
+      fHandles[ "flavor_component_jfitcomb_intPropValue" ] = &flavor_component_jfitcomb_intPropValue;
+      fHandles[ "flavor_component_jfitcomb_isValid" ] = &flavor_component_jfitcomb_isValid;
+      fHandles[ "flavor_component_jfitcomb_pb" ] = &flavor_component_jfitcomb_pb;
+      fHandles[ "flavor_component_jfitcomb_pc" ] = &flavor_component_jfitcomb_pc;
+      fHandles[ "flavor_component_jfitcomb_pu" ] = &flavor_component_jfitcomb_pu;
       fHandles[ "flavor_truth_BHadronpdg" ] = &flavor_truth_BHadronpdg;
       fHandles[ "flavor_truth_dRminToB" ] = &flavor_truth_dRminToB;
       fHandles[ "flavor_truth_dRminToC" ] = &flavor_truth_dRminToC;
@@ -1221,45 +1221,55 @@ namespace D3PDReader {
       } else {
          etaconst_default()->push_back( std::vector<float,std::allocator<float> >() );
       }
-      if( el.flavor_component_jfitc_doublePropName.IsAvailable() ) {
-         flavor_component_jfitc_doublePropName()->push_back( el.flavor_component_jfitc_doublePropName() );
+
+      // vector<float>   *jet_akt4topoem_flavor_component_jfitcomb_pu;
+      // vector<float>   *jet_akt4topoem_flavor_component_jfitcomb_pb;
+      // vector<float>   *jet_akt4topoem_flavor_component_jfitcomb_pc;
+      // vector<int>     *jet_akt4topoem_flavor_component_jfitcomb_isValid;
+      // vector<float>   *jet_AntiKt4LCTopo_flavor_component_jfitcomb_pu;
+      // vector<float>   *jet_AntiKt4LCTopo_flavor_component_jfitcomb_pb;
+      // vector<float>   *jet_AntiKt4LCTopo_flavor_component_jfitcomb_pc;
+      // vector<int>     *jet_AntiKt4LCTopo_flavor_component_jfitcomb_isValid;
+
+      if( el.flavor_component_jfitcomb_doublePropName.IsAvailable() ) {
+         flavor_component_jfitcomb_doublePropName()->push_back( el.flavor_component_jfitcomb_doublePropName() );
       } else {
-         flavor_component_jfitc_doublePropName()->push_back( std::vector<std::string,std::allocator<std::string> >() );
+         flavor_component_jfitcomb_doublePropName()->push_back( std::vector<std::string,std::allocator<std::string> >() );
       }
-      if( el.flavor_component_jfitc_doublePropValue.IsAvailable() ) {
-         flavor_component_jfitc_doublePropValue()->push_back( el.flavor_component_jfitc_doublePropValue() );
+      if( el.flavor_component_jfitcomb_doublePropValue.IsAvailable() ) {
+         flavor_component_jfitcomb_doublePropValue()->push_back( el.flavor_component_jfitcomb_doublePropValue() );
       } else {
-         flavor_component_jfitc_doublePropValue()->push_back( std::vector<double,std::allocator<double> >() );
+         flavor_component_jfitcomb_doublePropValue()->push_back( std::vector<double,std::allocator<double> >() );
       }
-      if( el.flavor_component_jfitc_intPropName.IsAvailable() ) {
-         flavor_component_jfitc_intPropName()->push_back( el.flavor_component_jfitc_intPropName() );
+      if( el.flavor_component_jfitcomb_intPropName.IsAvailable() ) {
+         flavor_component_jfitcomb_intPropName()->push_back( el.flavor_component_jfitcomb_intPropName() );
       } else {
-         flavor_component_jfitc_intPropName()->push_back( std::vector<std::string,std::allocator<std::string> >() );
+         flavor_component_jfitcomb_intPropName()->push_back( std::vector<std::string,std::allocator<std::string> >() );
       }
-      if( el.flavor_component_jfitc_intPropValue.IsAvailable() ) {
-         flavor_component_jfitc_intPropValue()->push_back( el.flavor_component_jfitc_intPropValue() );
+      if( el.flavor_component_jfitcomb_intPropValue.IsAvailable() ) {
+         flavor_component_jfitcomb_intPropValue()->push_back( el.flavor_component_jfitcomb_intPropValue() );
       } else {
-         flavor_component_jfitc_intPropValue()->push_back( std::vector<int,std::allocator<int> >() );
+         flavor_component_jfitcomb_intPropValue()->push_back( std::vector<int,std::allocator<int> >() );
       }
-      if( el.flavor_component_jfitc_isValid.IsAvailable() ) {
-         flavor_component_jfitc_isValid()->push_back( el.flavor_component_jfitc_isValid() );
+      if( el.flavor_component_jfitcomb_isValid.IsAvailable() ) {
+         flavor_component_jfitcomb_isValid()->push_back( el.flavor_component_jfitcomb_isValid() );
       } else {
-         flavor_component_jfitc_isValid()->push_back( std::numeric_limits< int >::min() );
+         flavor_component_jfitcomb_isValid()->push_back( std::numeric_limits< int >::min() );
       }
-      if( el.flavor_component_jfitc_pb.IsAvailable() ) {
-         flavor_component_jfitc_pb()->push_back( el.flavor_component_jfitc_pb() );
+      if( el.flavor_component_jfitcomb_pb.IsAvailable() ) {
+         flavor_component_jfitcomb_pb()->push_back( el.flavor_component_jfitcomb_pb() );
       } else {
-         flavor_component_jfitc_pb()->push_back( std::numeric_limits< float >::min() );
+         flavor_component_jfitcomb_pb()->push_back( std::numeric_limits< float >::min() );
       }
-      if( el.flavor_component_jfitc_pc.IsAvailable() ) {
-         flavor_component_jfitc_pc()->push_back( el.flavor_component_jfitc_pc() );
+      if( el.flavor_component_jfitcomb_pc.IsAvailable() ) {
+         flavor_component_jfitcomb_pc()->push_back( el.flavor_component_jfitcomb_pc() );
       } else {
-         flavor_component_jfitc_pc()->push_back( std::numeric_limits< float >::min() );
+         flavor_component_jfitcomb_pc()->push_back( std::numeric_limits< float >::min() );
       }
-      if( el.flavor_component_jfitc_pu.IsAvailable() ) {
-         flavor_component_jfitc_pu()->push_back( el.flavor_component_jfitc_pu() );
+      if( el.flavor_component_jfitcomb_pu.IsAvailable() ) {
+         flavor_component_jfitcomb_pu()->push_back( el.flavor_component_jfitcomb_pu() );
       } else {
-         flavor_component_jfitc_pu()->push_back( std::numeric_limits< float >::min() );
+         flavor_component_jfitcomb_pu()->push_back( std::numeric_limits< float >::min() );
       }
       if( el.flavor_truth_BHadronpdg.IsAvailable() ) {
          flavor_truth_BHadronpdg()->push_back( el.flavor_truth_BHadronpdg() );

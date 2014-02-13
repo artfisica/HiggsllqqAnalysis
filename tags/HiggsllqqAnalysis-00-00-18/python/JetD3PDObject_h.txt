@@ -129,20 +129,20 @@ namespace D3PDReader {
       VarProxy< float > eta;
       VarProxy< std::vector<float,std::allocator<float> > > etaconst_default;
       /// Names of the properties in JetFitterGenericTagInfo
-      VarProxy< std::vector<std::string,std::allocator<std::string> > > flavor_component_jfitc_doublePropName;
+      VarProxy< std::vector<std::string,std::allocator<std::string> > > flavor_component_jfitcomb_doublePropName;
       /// Values of the properties in JetFitterGenericTagInfo
-      VarProxy< std::vector<double,std::allocator<double> > > flavor_component_jfitc_doublePropValue;
+      VarProxy< std::vector<double,std::allocator<double> > > flavor_component_jfitcomb_doublePropValue;
       /// Names of the properties in JetFitterGenericTagInfo
-      VarProxy< std::vector<std::string,std::allocator<std::string> > > flavor_component_jfitc_intPropName;
+      VarProxy< std::vector<std::string,std::allocator<std::string> > > flavor_component_jfitcomb_intPropName;
       /// Values of the properties in JetFitterGenericTagInfo
-      VarProxy< std::vector<int,std::allocator<int> > > flavor_component_jfitc_intPropValue;
-      VarProxy< int > flavor_component_jfitc_isValid;
+      VarProxy< std::vector<int,std::allocator<int> > > flavor_component_jfitcomb_intPropValue;
+      VarProxy< int > flavor_component_jfitcomb_isValid;
       /// UNDOCUMENTED
-      VarProxy< float > flavor_component_jfitc_pb;
+      VarProxy< float > flavor_component_jfitcomb_pb;
       /// UNDOCUMENTED
-      VarProxy< float > flavor_component_jfitc_pc;
+      VarProxy< float > flavor_component_jfitcomb_pc;
       /// UNDOCUMENTED
-      VarProxy< float > flavor_component_jfitc_pu;
+      VarProxy< float > flavor_component_jfitcomb_pu;
       VarProxy< int > flavor_truth_BHadronpdg;
       VarProxy< float > flavor_truth_dRminToB;
       VarProxy< float > flavor_truth_dRminToC;
@@ -334,20 +334,20 @@ namespace D3PDReader {
       VarHandle< std::vector<float,std::allocator<float> >* > eta;
       VarHandle< std::vector<std::vector<float,std::allocator<float> >,std::allocator<std::vector<float,std::allocator<float> > > >* > etaconst_default;
       /// Names of the properties in JetFitterGenericTagInfo
-      VarHandle< std::vector<std::vector<std::string,std::allocator<std::string> >,std::allocator<std::vector<std::string,std::allocator<std::string> > > >* > flavor_component_jfitc_doublePropName;
+      VarHandle< std::vector<std::vector<std::string,std::allocator<std::string> >,std::allocator<std::vector<std::string,std::allocator<std::string> > > >* > flavor_component_jfitcomb_doublePropName;
       /// Values of the properties in JetFitterGenericTagInfo
-      VarHandle< std::vector<std::vector<double,std::allocator<double> >,std::allocator<std::vector<double,std::allocator<double> > > >* > flavor_component_jfitc_doublePropValue;
+      VarHandle< std::vector<std::vector<double,std::allocator<double> >,std::allocator<std::vector<double,std::allocator<double> > > >* > flavor_component_jfitcomb_doublePropValue;
       /// Names of the properties in JetFitterGenericTagInfo
-      VarHandle< std::vector<std::vector<std::string,std::allocator<std::string> >,std::allocator<std::vector<std::string,std::allocator<std::string> > > >* > flavor_component_jfitc_intPropName;
+      VarHandle< std::vector<std::vector<std::string,std::allocator<std::string> >,std::allocator<std::vector<std::string,std::allocator<std::string> > > >* > flavor_component_jfitcomb_intPropName;
       /// Values of the properties in JetFitterGenericTagInfo
-      VarHandle< std::vector<std::vector<int,std::allocator<int> >,std::allocator<std::vector<int,std::allocator<int> > > >* > flavor_component_jfitc_intPropValue;
-      VarHandle< std::vector<int,std::allocator<int> >* > flavor_component_jfitc_isValid;
+      VarHandle< std::vector<std::vector<int,std::allocator<int> >,std::allocator<std::vector<int,std::allocator<int> > > >* > flavor_component_jfitcomb_intPropValue;
+      VarHandle< std::vector<int,std::allocator<int> >* > flavor_component_jfitcomb_isValid;
       /// UNDOCUMENTED
-      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitc_pb;
+      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitcomb_pb;
       /// UNDOCUMENTED
-      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitc_pc;
+      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitcomb_pc;
       /// UNDOCUMENTED
-      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitc_pu;
+      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitcomb_pu;
       VarHandle< std::vector<int,std::allocator<int> >* > flavor_truth_BHadronpdg;
       VarHandle< std::vector<float,std::allocator<float> >* > flavor_truth_dRminToB;
       VarHandle< std::vector<float,std::allocator<float> >* > flavor_truth_dRminToC;
