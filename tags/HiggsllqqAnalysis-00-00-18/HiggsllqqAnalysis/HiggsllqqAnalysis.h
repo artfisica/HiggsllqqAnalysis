@@ -1160,7 +1160,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   MultijetJESUncertaintyProvider       *my_JES;
   
   // MET TOOL
-  METUtility         *m_systUtil;
+  METUtility         *m_testUtil;
   
   // ggF reweighting tool
   ggFReweighting *fggFReweighter;
