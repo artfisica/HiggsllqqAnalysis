@@ -25,7 +25,7 @@
 #pragma link C++ class vector<bool>+;
 #pragma link C++ class set<string>+;
 #pragma link C++ class vector<unsigned char>+;
-#pragma link C++ class HepMatrix+;
+//#pragma link C++ class HepMatrix+;
 #pragma link C++ class HiggsllqqAnalysis+;
 #pragma link C++ class Analysis::CutFlowTool+;
 #pragma link C++ class Analysis::ChargedLepton+;

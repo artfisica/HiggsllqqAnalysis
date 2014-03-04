@@ -79,7 +79,8 @@ Float_t CommonTools::getEnergyUncertainty(eg2011::EnergyRescaler *rescaler, Anal
    */
 }
 
-HepMatrix CommonTools::getCovarianceMatrixMuon(Analysis::ChargedLepton *lep) {
+/*
+CLHEP::HepMatrix CommonTools::getCovarianceMatrixMuon(Analysis::ChargedLepton *lep) {
    D3PDReader::MuonD3PDObjectElement *mu = lep->GetMuon();
    double P     = lep->Get4Momentum()->P();
 
@@ -113,7 +114,7 @@ HepMatrix CommonTools::getCovarianceMatrixMuon(Analysis::ChargedLepton *lep) {
    return HepMatrix(Jacobian0.T() * covmatrix * Jacobian0);
 }
 
-HepMatrix CommonTools::getCovarianceMatrixElectron(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep) {
+CLHEP::HepMatrix CommonTools::getCovarianceMatrixElectron(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep) {
    D3PDReader::ElectronD3PDObjectElement *el = lep->GetElectron();
 
    // let's assume zero correlation among CALO and ID measurement
@@ -143,7 +144,7 @@ HepMatrix CommonTools::getCovarianceMatrixElectron(eg2011::EnergyRescaler *resca
    return covmatrix;
 }
 
-HepMatrix CommonTools::getCovarianceMatrix(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep) {
+CLHEP::HepMatrix CommonTools::getCovarianceMatrix(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep) {
   if (lep->flavor() == Analysis::ChargedLepton::MUON) {
     return getCovarianceMatrixMuon(lep);
   }
@@ -155,3 +156,4 @@ HepMatrix CommonTools::getCovarianceMatrix(eg2011::EnergyRescaler *rescaler, Ana
     return covmatrix;
   }
 }
+*/
