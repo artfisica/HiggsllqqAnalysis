@@ -66,6 +66,7 @@ Bool_t MuonSmearing          = kTRUE,
   FillTreeHiggs              = kFALSE, // December 2013
   FillTreeTree               = kTRUE,  // December 2013
   
+  New_D3PD                   = kFALSE, // February 2014: Test the old D3PD
 // Print Just High Selection CutFlows
   PrintJustHighSelectionCutFlows = kTRUE;
 
@@ -120,7 +121,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;  // 20th January 2014 ---> under construction!
+int NumSystematicsToDo = 20; // 20th January 2014 ---> under construction!
 int LowMassONorOFF     = 1;  // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -4357,9 +4358,9 @@ Float_t HiggsllqqAnalysis::GetMV1value(Analysis::Jet *jet)
   Float_t w_IP3D            = Jet->flavor_weight_IP3D();
   Float_t w_SV1             = Jet->flavor_weight_SV1();
   Float_t w_JetFitterCOMBNN = Jet->flavor_weight_JetFitterCOMBNN();
-  Float_t w_pu              = Jet->flavor_component_jfitcomb_pu();
-  Float_t w_pc              = Jet->flavor_component_jfitcomb_pc();
-  Float_t w_pb              = Jet->flavor_component_jfitcomb_pb();
+  Float_t w_pu              = (New_D3PD) ? Jet->flavor_component_jfitcomb_pu():Jet->flavor_component_jfitc_pu();
+  Float_t w_pc              = (New_D3PD) ? Jet->flavor_component_jfitcomb_pc():Jet->flavor_component_jfitc_pc();
+  Float_t w_pb              = (New_D3PD) ? Jet->flavor_component_jfitcomb_pb():Jet->flavor_component_jfitc_pb();
   double jet_pt             = jet->rightpt();
   double jet_eta            = jet->righteta();
   
