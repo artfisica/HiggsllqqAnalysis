@@ -11,7 +11,7 @@
 #include "HiggsAnalysis/HSG2EventReader.h"
 #include "HiggsllqqAnalysis/ChargedLepton.h"
 #include <TLorentzVector.h>
-#include "CLHEP/Matrix/Matrix.h"
+//#include "CLHEP/Matrix/Matrix.h"
 #include <iostream>
 
 class Matrix;
@@ -35,9 +35,9 @@ namespace CommonTools {
    TLorentzVector getVector(D3PDReader::TruthParticleD3PDObjectElement *p);
    Float_t getBremFitDp(D3PDReader::ElectronD3PDObjectElement *el);
    Float_t getEnergyUncertainty(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep);
-   HepMatrix getCovarianceMatrixMuon(Analysis::ChargedLepton *lep);
-   HepMatrix getCovarianceMatrixElectron(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep);
-   HepMatrix getCovarianceMatrix(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep);
+   //CLHEP::HepMatrix getCovarianceMatrixMuon(Analysis::ChargedLepton *lep);
+   //CLHEP::HepMatrix getCovarianceMatrixElectron(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep);
+   //CLHEP::HepMatrix getCovarianceMatrix(eg2011::EnergyRescaler *rescaler, Analysis::ChargedLepton *lep);
 };
 
 #endif
