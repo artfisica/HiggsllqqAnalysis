@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: February 7th, 2014
+    Update: May 8th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -121,7 +121,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 20; // 20th January 2014 ---> under construction!
+int NumSystematicsToDo = 41; // 31th March 2014 ---> under construction!
 int LowMassONorOFF     = 1;  // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -197,7 +197,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   // initiate the calibration tool
   TString jetAlgo="";
   if      (getJetFamily() == 0) jetAlgo = "AntiKt4TopoEM";
-  else if (getJetFamily() == 1) jetAlgo = "AntiKt4TopoLC";
+  else if (getJetFamily() == 1) jetAlgo = "AntiKt4LCTopo";
   
   
   TString JES_config_file;
@@ -294,8 +294,11 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_PileupReweighter = new Root::TPileupReweighting("m_PileupReweighter");
   m_PileupReweighter->SetUnrepresentedDataAction(2);
   
+
+  // Reference: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/InDetTrackingPerformanceGuidelines#Pile_up_rescaling
   if (analysis_version() == "rel_17")        // mc11c, 2011
     {
+      m_PileupReweighter->SetDataScaleFactors(1./1.14); 
       m_PileupReweighter->AddConfigFile("./HiggsllqqAnalysis/packages/files/pileup/MC11c.prw.root");
       m_PileupReweighter->AddLumiCalcFile("./HiggsllqqAnalysis/packages/files/pileup/ilumicalc_2011_AllYear_All_Good.root");
       m_PileupReweighter->SetDefaultChannel(109292);
@@ -462,14 +465,14 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,MV1_env_tagger_file,pathbtagger);
   
-  if (getJetFamily()      == 0) jetAlgo="AntiKt4TopoEMJVF0_5";
-  else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLCJVF0_5";
+  if (getJetFamily()      == 0) jetAlgo= "AntiKt4TopoEMJVF0_5";
+  else if (getJetFamily() == 1) jetAlgo= "AntiKt4LCTopoJVF0_5";
   
   ajet.jetAuthor = jetAlgo;
   uncertainty = Analysis::Total;
   
-  if (getJetFamily() == 0)      jetAlgo="AntiKt4TopoEM";
-  else if (getJetFamily() == 1) jetAlgo="AntiKt4TopoLC";
+  if (getJetFamily() == 0)      jetAlgo= "AntiKt4TopoEM";
+  else if (getJetFamily() == 1) jetAlgo= "AntiKt4LCTopo";
   
   SetTmvaReaders(reader,var1,var2);
   
@@ -1770,7 +1773,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 		      double JES_unc = my_JES->getRelFlavorCompUncert(jet4v.Pt(), jet4v.Eta(), kTRUE);
 		      if(tmpMV1c > MV1_OP70) JES_unc = 0.;
 		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
-		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;
 		    } // "SysJetFlavCompDo"
 	  
 	  SYST++; if(getSystematicToDo()==SYST) // 33)
@@ -1787,7 +1790,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 		      double JES_unc = my_JES->getRelFlavorResponseUncert(jet4v.Pt(), jet4v.Eta());
 		      if(tmpMV1c > MV1_OP70) JES_unc = 0.;
 		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
-		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;
 		    } // "SysJetFlavRespDo"
 	  
 	  SYST++; if(getSystematicToDo()==SYST) // 35)
@@ -1804,24 +1807,73 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 		      double JES_unc = 0.;
 		      if(tmpMV1c > MV1_OP70) JES_unc = my_JES->getRelBJESUncert(jet4v.Pt(), jet4v.Eta());
 		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
-		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;  
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;  
 		    } // "SysJetFlavBDo"
 	  
+	  
+	  
+	  
+	  // Information from th TWIKI: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/JetUncertainties
+	  // April 24th, 2014
+	  // For fcloseby; all jets within ΔR<1.1 with pT > 12 GeV at fully calibrated scale are considered.
+	  // For each such close-by jet, the fractional projection along the jet axis is calculated and added up.
+	  // The resulting sum is the closeby fraction.
+	  // To calculate this in C++ code, assuming myJet is a TLorentzVector of the jet in question 
+	  // and caloJets is a vector<TLorentzVector> of all jets, you can do:
+	  
+	  double fCloseby=0.;
+	  if(getSystematicToDo()==37 || getSystematicToDo()==38)
+	    {
+	      std::vector<Analysis::Jet*>::iterator jet_itr;
+	      for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr)
+		{
+		  Analysis::Jet *jet = (*jet_itr);
+		  TLorentzVector TLjet;
+		  TLjet.SetPtEtaPhiM(jet->rightpt(),jet->righteta(),jet->rightphi(),jet->Get4Momentum()->M());
+		  
+		  if (TLjet==jet4v)              continue; // ignore probe jet
+		  if (jet->rightpt()<12000.)     continue; // ignore jets with pT<12 GeV
+		  if (jet4v.DeltaR(TLjet) > 1.1) continue; // only consider jets with DR<1.1
+		  
+		  // "fractional projection" of momentum along jet axis: p_jet*p_closeby / |p_jet|^2
+		  fCloseby += (jet4v.Vect().Dot(TLjet.Vect())) / (pow(jet4v.Pt(),2));  // close-by fraction
+		} // jet loop
+	    }
+	  
+	  SYST++; if(getSystematicToDo()==SYST) // 37)
+		    {
+		      double tmpMV1c = GetMV1value(jet);
+		      double JES_unc = my_JES->getRelClosebyUncert(jet4v.Pt(), fCloseby);
+		      if(tmpMV1c > MV1_OP70) JES_unc = 0.;
+		      if(JES_unc!=-1) jet4v *= (1. + JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.+JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;
+		    } // "SysJetCloseByUp"
+	  SYST++; if(getSystematicToDo()==SYST) // 38)
+		    {
+		      double tmpMV1c = GetMV1value(jet);
+		      double JES_unc = my_JES->getRelClosebyUncert(jet4v.Pt(), fCloseby);
+		      if(tmpMV1c > MV1_OP70) JES_unc = 0.;
+		      if(JES_unc!=-1) jet4v *= (1. - JES_unc); 
+		      if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" = "<<1.-JES_unc<<". (Pt,eta,MV1) = ("<<jet4v.Pt()<<","<<jet4v.Eta()<<","<<tmpMV1c<<")"<<endl;
+		    } // "SysJetCloseByDo"
+	  
+	  
+	  
 	  //////////////////////////////////////////////////   Not to be included, this correspond to old 20NP configuration!
-	  // SYST++; if(getSystematicToDo()==SYST) // 37)
+	  // SYST++; if(getSystematicToDo()==SYST) // 39)
 	  // 	    {
 	  // 	      // To understand and be implemented 
 	  // 	    } // "SysJetMixed1Up"	  
-	  // SYST++; if(getSystematicToDo()==SYST) // 38)
+	  // SYST++; if(getSystematicToDo()==SYST) // 40)
 	  // 	    {
 	  // 	      // To understand and be implemented
 	  // 	    } // "SysJetMixed1Do"
 	  
-	  // SYST++; if(getSystematicToDo()==SYST) // 39)
+	  // SYST++; if(getSystematicToDo()==SYST) // 41)
 	  // 	    {
 	  // 	      // To understand and be implemented
 	  // 	    } // "SysJetMixed2Up"
-	  // SYST++; if(getSystematicToDo()==SYST) // 40)
+	  // SYST++; if(getSystematicToDo()==SYST) // 42)
 	  // 	    {
 	  // 	      // To understand and be implemented
 	  // 	    } // "SysJetMixed2Do"
@@ -2303,7 +2355,7 @@ void HiggsllqqAnalysis::getGoodLeptons()
   
   D3PDReader::JetD3PDObject *jet_branch(0);
   if (getJetFamily() == 0)      jet_branch = &(ntuple->jet_akt4topoem); // AntiKt4TopoEM
-  else if (getJetFamily() == 1) jet_branch = &(ntuple->jet_AntiKt4LCTopo);
+  else if (getJetFamily() == 1) jet_branch = &(ntuple->jet_AntiKt4LCTopo); // jet_AntiKt10LCTopo);
   else Abort("Unknown jet family requested");
   
   getJets(jet_branch);
@@ -2466,7 +2518,7 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
       else return kFALSE;
       
       
-      if (TMath::Abs(mu->trackd0pvunbiased()) < 1.  || mu->isStandAloneMuon()==1) lep->set_lastcut(HllqqMuonQuality::cosmic);
+      if (TMath::Abs(mu->trackd0pvunbiased()) < .1  || mu->isStandAloneMuon()==1) lep->set_lastcut(HllqqMuonQuality::cosmic);
       else return kFALSE;
       
       
@@ -2856,6 +2908,7 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  //Including the loop over each of the systematic evaluation!! // November 2013
 	  for (int syst = -1; syst < NumSystematicsToDo; syst++)
 	    {
+	      
 	      // Assigning systematic to run in this lap! // November 2013
 	      setSystematicToDo(syst);
 	      
@@ -2865,6 +2918,27 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		else if(getSystematicToDo()==-1)
 		cout<<"     +++++ PLEASE! Take Care, All Systematic are OFF, running NOMINAL!.   Check the dictionary for details!!"<<endl;
 	      */
+	      
+	      
+	      // April 2014: Including mu systematics Up/Down just for rel 17.2 (2012 data) 
+	      if (analysis_version() == "rel_17_2" && isMC() && getSystematicToDo()==39)
+		{ 
+		  m_PileupReweighter->SetDataScaleFactors(1./1.13);
+		  cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.13<<" !"<<endl;
+		}
+	      else if (analysis_version() == "rel_17_2" && isMC() && getSystematicToDo()==40)
+		{
+		  m_PileupReweighter->SetDataScaleFactors(1./1.05);
+		  cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.05<<" !"<<endl;
+		  
+		}
+	      else if(analysis_version() == "rel_17_2" && isMC() && getSystematicToDo()==-1)
+		{
+		  m_PileupReweighter->SetDataScaleFactors(1./1.09);
+		  cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.09<<" !"<<endl;
+		}
+	      
+	      
 	      
 	      // JER systematic activation
 	      SetSysStudy(getSystematicToDo()==2);
@@ -3278,7 +3352,7 @@ Int_t HiggsllqqAnalysis::getPeriod()
       // MC
       if (analysis_version() == "rel_17_2")
 	{ // mc12a
-	  if (ntuple->eventinfo.RunNumber() == 195847)
+	  if (ntuple->eventinfo.RunNumber() == 195847 || ntuple->eventinfo.RunNumber() == 195848)
 	    {	    
 	      return DataPeriod::y2012_AllYear;
 	    }
@@ -3333,7 +3407,7 @@ Int_t HiggsllqqAnalysis::getPeriod()
     }
   
   
-  Warning("GetPeriod", "Unable to retrieve data period number for RunNumber %ud", ntuple->eventinfo.RunNumber());
+  Warning("GetPeriod", "Unable to retrieve data period number for RunNumber %u", ntuple->eventinfo.RunNumber());
   return -1;
 }
 
@@ -3762,39 +3836,46 @@ Bool_t HiggsllqqAnalysis::JetInHole()
 Bool_t HiggsllqqAnalysis::JetKinematicFitterResult()
 {  
   Bool_t dolowmass = GetDoLowMass();
-  
-  CandidatePair *m_bestdijet;
-  std::vector<int > m_jetindex;
-  
-  m_bestdijet = new CandidatePair(-1,-1,-9999.,-9999.,-9999.);
+  int idx1 = 0;
+  int idx2 = 1;
   
   std::vector<TLorentzVector > jetvector;
   jetvector.clear();
   
   std::vector<Analysis::Jet *>::iterator jet_itr;
   
-  for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr)
-    {   
-      TLorentzVector thisJet;
-      thisJet.SetPtEtaPhiM((*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
-      jetvector.push_back(thisJet);
-    }
-  
-  m_jetkinematicfitter->clearParticles();
-  m_bestdijet->Reset();
-  
-  m_jetkinematicfitter->addParticles(jetvector);
-  *m_bestdijet = m_jetkinematicfitter->findBestPair();
-  
-  
-  int idx1 = 0;
-  int idx2 = 1;
-  
   if (DoKinematicFitter)
     {
-      //cout<<".... Take care: Doing KF..."<<endl;
+      cout<<".... Take care: Doing KF..."<<endl;
+      
+      CandidatePair *m_bestdijet;
+      std::vector<int > m_jetindex;
+      
+      m_bestdijet = new CandidatePair(-1,-1,-9999.,-9999.,-9999.);
+      
+      for (jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr)
+	{   
+	  TLorentzVector thisJet;
+	  thisJet.SetPtEtaPhiM((*jet_itr)->rightpt(),(*jet_itr)->righteta(),(*jet_itr)->rightphi(),(*jet_itr)->Get4Momentum()->M());
+	  jetvector.push_back(thisJet);
+	}
+      
+      m_jetkinematicfitter->clearParticles();
+      m_bestdijet->Reset();
+      
+      m_jetkinematicfitter->addParticles(jetvector);
+      *m_bestdijet = m_jetkinematicfitter->findBestPair();
+      
       idx1 = m_bestdijet->index1!=-1 ? m_bestdijet->index1 : 0;
       idx2 = m_bestdijet->index2!=-1 ? m_bestdijet->index2 : 1;
+      
+      
+      if(m_bestdijet->index1!=-1)
+	{
+	  corr_jet_pt1 = m_bestdijet->refittedPt1;
+	  corr_jet_pt2 = m_bestdijet->refittedPt2;
+	  ChiSq        = m_bestdijet->chiSq;;
+	}
     }
   else
     {
@@ -3807,13 +3888,6 @@ Bool_t HiggsllqqAnalysis::JetKinematicFitterResult()
   //Filling Global variables with the index of the selected jets into the event to fill the TestSelection tree
   Pair_jet1 = idx1;
   Pair_jet2 = idx2;
-  
-  if(m_bestdijet->index1!=-1)
-    {
-      corr_jet_pt1 = m_bestdijet->refittedPt1;
-      corr_jet_pt2 = m_bestdijet->refittedPt2;
-      ChiSq        = m_bestdijet->chiSq;;
-    }
   
   
   TLorentzVector j1;
@@ -3878,7 +3952,7 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
   
   D3PDReader::JetD3PDObject    *jet_branch(0);
   if      (getJetFamily() == 0) jet_branch = &(ntuple->jet_akt4topoem);
-  else if (getJetFamily() == 1) jet_branch = &(ntuple->jet_AntiKt4LCTopo);
+  else if (getJetFamily() == 1) jet_branch = &(ntuple->jet_AntiKt4LCTopo); // jet_AntiKt10LCTopo);
   
   D3PDReader::ElectronD3PDObject                  *el_branch(0);
   if (     getElectronFamily() == Electron::GSF)   el_branch = &(ntuple->el_GSF);
@@ -6239,7 +6313,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realH_KF_m          = H.M();		  
 	      
 	      
-	      //ANGULAR JET VARIABLES
+	      //AULAR JET VARIABLES
 	      str->dPhi_KF_jj = TMath::Abs(j1.DeltaPhi(j2));
 	      str->dR_KF_jj   = j1.DeltaR(j2);
 	      str->dPhi_KF_ZZ = TMath::Abs(lepZ.DeltaPhi(hadZ));
