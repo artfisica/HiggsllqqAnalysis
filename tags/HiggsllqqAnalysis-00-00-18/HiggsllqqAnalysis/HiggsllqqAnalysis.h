@@ -55,6 +55,8 @@
 #include "HiggsllqqAnalysis/HforToolD3PD.h"
 #include "JetUncertainties/JESUncertaintyProvider.h"
 #include "JetUncertainties/MultijetJESUncertaintyProvider.h"
+#include "TileTripReader/TTileTripReader.h"
+#include "BCHCleaningTool/BCHCleaningToolRoot.h"
 
 // TestSelection needs (redundancies to be removed)
 #include <fstream>
@@ -722,6 +724,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Root::TPileupReweighting           *m_PileupReweighter;
   D3PD::TrigDecisionToolD3PD         *m_TrigDecisionToolD3PD;
   egRescaler::EnergyRescalerUpgrade  *m_ElectronEnergyRescaler;
+  Root::TTileTripReader              *m_treader;
+  BCHTool::BCHCleaningToolRoot       *m_thebchTool;
   
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSF;
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFCalo;
