@@ -1,7 +1,0 @@
-grep $1 Top.txt
-grep $1 Diboson.txt
-grep $1 Z_jets.txt
-grep $1 W_jets.txt
-grep $1 Signal_low_mass.txt
-grep $1 Signal_high_mass.txt
-
