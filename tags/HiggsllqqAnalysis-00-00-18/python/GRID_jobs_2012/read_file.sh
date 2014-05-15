@@ -7,7 +7,7 @@ FILE=$1
 SYST=$6
 PRODUCTION=$3.$6
 FilesperJob="1" ## Reempacing the option: --nGBPerJob=$GbperJob
-SitesToSave="INFN-ROMA1_LOCALGROUPDISK,INFN-NAPOLI-ATLAS_PHYS-HIGGS"
+SitesToSave="INFN-ROMA1_LOCALGROUPDISK,INFN-NAPOLI-ATLAS_LOCALGROUPDISK"
 
 if [ $4 = "yes" ]
 then
