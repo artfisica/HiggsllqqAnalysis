@@ -121,7 +121,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;      // 8th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
+int NumSystematicsToDo = 0;      // 15th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
 int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
