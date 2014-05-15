@@ -201,6 +201,8 @@ namespace D3PDReader {
       MissingETCompositionD3PDObject el_MET;
       MissingETCompositionD3PDObject el_MET_STVF;
       JetD3PDObject jet_AntiKt4LCTopo;
+      JetD3PDObject jet_AntiKt10LCTopo;
+      JetD3PDObject jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30;
       MissingETCompositionD3PDObject jet_AntiKt4LCTopo_MET;
       MissingETCompositionD3PDObject jet_AntiKt4LCTopo_MET_STVF;
       JetD3PDObject jet_akt4topoem;

@@ -110,6 +110,8 @@ namespace D3PDReader {
         el_MET( fEntry, "el_MET_" ),
         el_MET_STVF( fEntry, "el_MET_STVF_" ),
         jet_AntiKt4LCTopo( fEntry, "jet_AntiKt4LCTopo_" ),
+	jet_AntiKt10LCTopo( fEntry, "jet_AntiKt10LCTopo_" ),
+	jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30( fEntry, "jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30_" ),
         jet_AntiKt4LCTopo_MET( fEntry, "jet_AntiKt4LCTopo_MET_" ),
         jet_AntiKt4LCTopo_MET_STVF( fEntry, "jet_AntiKt4LCTopo_MET_STVF_" ),
         jet_AntiKt4TopoEM_MET_HSG5( fEntry, "jet_AntiKt4TopoEM_MET_HSG5_" ),
@@ -297,6 +299,8 @@ namespace D3PDReader {
         el_MET( "el_MET_" ),
         el_MET_STVF( "el_MET_STVF_" ),
         jet_AntiKt4LCTopo( "jet_AntiKt4LCTopo_" ),
+	jet_AntiKt10LCTopo( "jet_AntiKt10LCTopo_" ),
+	jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30( "jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30_" ),
         jet_AntiKt4LCTopo_MET( "jet_AntiKt4LCTopo_MET_" ),
         jet_AntiKt4LCTopo_MET_STVF( "jet_AntiKt4LCTopo_MET_STVF_" ),
         jet_AntiKt4TopoEM_MET_HSG5( "jet_AntiKt4TopoEM_MET_HSG5_" ),
@@ -501,6 +505,8 @@ namespace D3PDReader {
       el_MET.ReadFrom( tree );
       el_MET_STVF.ReadFrom( tree );
       jet_AntiKt4LCTopo.ReadFrom( tree );
+      jet_AntiKt10LCTopo.ReadFrom( tree );
+      jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30.ReadFrom( tree );
       jet_AntiKt4LCTopo_MET.ReadFrom( tree );
       jet_AntiKt4LCTopo_MET_STVF.ReadFrom( tree );
       jet_AntiKt4TopoEM_MET_HSG5.ReadFrom( tree );
@@ -687,6 +693,8 @@ namespace D3PDReader {
       el_MET.WriteTo( tree );
       el_MET_STVF.WriteTo( tree );
       jet_AntiKt4LCTopo.WriteTo( tree );
+      jet_AntiKt10LCTopo.WriteTo( tree );
+      jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30.WriteTo( tree );
       jet_AntiKt4LCTopo_MET.WriteTo( tree );
       jet_AntiKt4LCTopo_MET_STVF.WriteTo( tree );
       jet_AntiKt4TopoEM_MET_HSG5.WriteTo( tree );
@@ -873,6 +881,8 @@ namespace D3PDReader {
       el_MET.SetActive( active, pattern );
       el_MET_STVF.SetActive( active, pattern );
       jet_AntiKt4LCTopo.SetActive( active, pattern );
+      jet_AntiKt10LCTopo.SetActive( active, pattern );
+      jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30.SetActive( active, pattern );
       jet_AntiKt4LCTopo_MET.SetActive( active, pattern );
       jet_AntiKt4LCTopo_MET_STVF.SetActive( active, pattern );
       jet_AntiKt4TopoEM_MET_HSG5.SetActive( active, pattern );
@@ -1059,6 +1069,8 @@ namespace D3PDReader {
       el_MET.ReadAllActive();
       el_MET_STVF.ReadAllActive();
       jet_AntiKt4LCTopo.ReadAllActive();
+      jet_AntiKt10LCTopo.ReadAllActive();
+      jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30.ReadAllActive();
       jet_AntiKt4LCTopo_MET.ReadAllActive();
       jet_AntiKt4LCTopo_MET_STVF.ReadAllActive();
       jet_AntiKt4TopoEM_MET_HSG5.ReadAllActive();
@@ -1249,6 +1261,8 @@ namespace D3PDReader {
       result += el_MET.GetStatistics();
       result += el_MET_STVF.GetStatistics();
       result += jet_AntiKt4LCTopo.GetStatistics();
+      result += jet_AntiKt10LCTopo.GetStatistics();
+      result += jet_AntiKt10LCTopoTrimmedPtFrac5SmallR30.GetStatistics();
       result += jet_AntiKt4LCTopo_MET.GetStatistics();
       result += jet_AntiKt4LCTopo_MET_STVF.GetStatistics();
       result += jet_AntiKt4TopoEM_MET_HSG5.GetStatistics();

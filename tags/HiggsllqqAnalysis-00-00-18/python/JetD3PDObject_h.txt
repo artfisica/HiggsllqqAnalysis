@@ -143,6 +143,14 @@ namespace D3PDReader {
       VarProxy< float > flavor_component_jfitcomb_pc;
       /// UNDOCUMENTED
       VarProxy< float > flavor_component_jfitcomb_pu;
+      /// UNDOCUMENTED
+      VarProxy< int > flavor_component_jfitc_isValid;
+      /// UNDOCUMENTED
+      VarProxy< float > flavor_component_jfitc_pb;
+      /// UNDOCUMENTED
+      VarProxy< float > flavor_component_jfitc_pc;
+      /// UNDOCUMENTED
+      VarProxy< float > flavor_component_jfitc_pu;
       VarProxy< int > flavor_truth_BHadronpdg;
       VarProxy< float > flavor_truth_dRminToB;
       VarProxy< float > flavor_truth_dRminToC;
@@ -348,6 +356,14 @@ namespace D3PDReader {
       VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitcomb_pc;
       /// UNDOCUMENTED
       VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitcomb_pu;
+      /// UNDOCUMENTED
+      VarHandle< std::vector<int,std::allocator<int> >* > flavor_component_jfitc_isValid;
+      /// UNDOCUMENTED
+      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitc_pb;
+      /// UNDOCUMENTED
+      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitc_pc;
+      /// UNDOCUMENTED
+      VarHandle< std::vector<float,std::allocator<float> >* > flavor_component_jfitc_pu;
       VarHandle< std::vector<int,std::allocator<int> >* > flavor_truth_BHadronpdg;
       VarHandle< std::vector<float,std::allocator<float> >* > flavor_truth_dRminToB;
       VarHandle< std::vector<float,std::allocator<float> >* > flavor_truth_dRminToC;
