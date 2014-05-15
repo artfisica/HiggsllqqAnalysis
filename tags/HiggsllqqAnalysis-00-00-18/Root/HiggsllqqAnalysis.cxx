@@ -63,7 +63,7 @@ Bool_t MuonSmearing          = kTRUE,
   DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
   DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
   
-  FillTreeHiggs              = kFALSE, // December 2013
+  FillTreeHiggs              = kTRUE,  // 12th May 2014
   FillTreeTree               = kTRUE,  // December 2013
   
   New_D3PD                   = kFALSE, // February 2014: Test the old D3PD
@@ -121,11 +121,11 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 41; // 31th March 2014 ---> under construction!
-int LowMassONorOFF     = 1;  // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
-int Print_low_OR_high  = 1;  // 0 for LowSelection ; 1 for HighSelection
-int NumBTagSystWeights = 60; // The number of systematics, see llqq Winter 2013 twiki for details!
-
+int NumSystematicsToDo = 0;      // 8th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
+int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
+int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
+int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
+Bool_t           DEBUG = kFALSE; // Print the values for debugging of the Systematics (Now, 8th May: JES + mu. Please, see bellow)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -486,6 +486,23 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   El_IDtool->setPDFFileName("ElectronPhotonSelectorTools/data/ElectronLikelihoodPdfs.root"); // use this root file!
   El_IDtool->setOperatingPoint(LikeEnum::VeryLoose);
   El_IDtool->initialize(); 
+  
+  
+  /*************************************************************************************************************/
+  // Initialization BCH tool. 12th May 2014.
+  // Ref: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BCHCleaningTool
+  
+  m_treader=new Root::TTileTripReader("myTripReader"); // Initialize/retrieve the TileTripReader as usual: use setTripFile to specify the location of the data file,
+                                                       // found in TileTripReader/data/CompleteTripList_2011-2012.root
+  m_treader->setTripFile("TileTripReader/data/CompleteTripList_2011-2012.root"); //This doesn't need to be set if you're only calling checkEvent()
+  
+  bool esData;  // whether this is data (true) or MC (false)
+  
+  // Initialize the tool, giving the path to the file to emulate masked modules (used in MC only) 
+  m_thebchTool = new BCHTool::BCHCleaningToolRoot();    
+  m_thebchTool->InitializeTool(esData, m_treader, "BCHCleaningTool/share/FractionsRejectedJetsMC.root");
+  
+  /*************************************************************************************************************/
   
   
   return kTRUE;
@@ -917,6 +934,8 @@ Int_t HiggsllqqAnalysis::getLastCutPassed()
     }
   else
     {
+      // /*quitar*/ cout<<"Tile look: the event is = "<<m_treader->checkEvent(run,lbn,event)<<endl;
+      // if( !m_treader->checkEvent(run,lbn,event) ){ /*reject event when checkEvent returns 0*/}//This is all most analysts need to check
       if (passesGRL()) last = HllqqCutFlow::GRL;
       else return last;
     }
@@ -1591,7 +1610,6 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 	  
 	  
 	  // JES systematics: January 2014
-	  Bool_t DEBUG = kFALSE; // Print the values for debugging.
 	  Int_t  SYST  = 2;     // Actual sytematics where to start to count the JES.
 	  
 	  SYST++; if(getSystematicToDo()==SYST) // 3)
@@ -2924,18 +2942,18 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	      if (analysis_version() == "rel_17_2" && isMC() && getSystematicToDo()==39)
 		{ 
 		  m_PileupReweighter->SetDataScaleFactors(1./1.13);
-		  cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.13<<" !"<<endl;
+		  if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.13<<" !"<<endl;
 		}
 	      else if (analysis_version() == "rel_17_2" && isMC() && getSystematicToDo()==40)
 		{
 		  m_PileupReweighter->SetDataScaleFactors(1./1.05);
-		  cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.05<<" !"<<endl;
+		  if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.05<<" !"<<endl;
 		  
 		}
 	      else if(analysis_version() == "rel_17_2" && isMC() && getSystematicToDo()==-1)
 		{
 		  m_PileupReweighter->SetDataScaleFactors(1./1.09);
-		  cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.09<<" !"<<endl;
+		  if(DEBUG) cout<<" doing Syst #"<<getSystematicToDo()<<" where the mu scale is = "<<1./1.09<<" !"<<endl;
 		}
 	      
 	      
