@@ -1,0 +1,46 @@
+####### November 2013 #######
+TO OBTAIN ALL THE CONFIGURATION FILES
+ 
+./launch_jobs.sh <ProductionVersion.VersionProduction> <SystematicNumber>
+
+## Where: Systematic has to correspond with dictionary. SystematicNumber==3 means Nominal selection!
+
+ORDER TO USE THE FILES:
+
+####### October 2013 #######
+
+## to obtain the xrootd path do:
+./xrootd_HZZllqq_<production> >paths_xrootd_production_<production>
+
+grep \.output\.root paths_xrootd_production_<production> >path_xrootd_PoD_<production>.txt
+
+rm paths_xrootd_production_<production> 
+
+
+## to Download the production samples, do:
+cd /tmp/<user>
+
+./download_HZZllqq_<production>
+
+nohup ./download_HZZllqq_<production>&
+
+
+
+## To create the folders and files inside
+./change_names
+
+
+## To put out the root files
+cp */*.root .
+
+
+## To change the names of the files adiding the channel: E2 or MU2.
+./Changes_names_channels
+
+
+
+######## Please use the new file after production 14 #########
+## To download the datasets
+./down <CERN_USER, i.e. arturos> <production version, i.e. 01> <D3PD tag version, i.e. 1344>
+
+ 
