@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: May 8th, 2014
+    Update: May 18th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -121,7 +121,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;      // 15th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
+int NumSystematicsToDo = 0;      // 18th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
 int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -4586,55 +4586,59 @@ Bool_t HiggsllqqAnalysis::JetDimassOneTagged(Bool_t tocutflow)
 void HiggsllqqAnalysis::InitReducedNtuple() 
 {
   // FLS tree
-  m_jets_m           = new std::vector<Float_t>;
-  m_jets_pt          = new std::vector<Float_t>;
-  m_jets_eta         = new std::vector<Float_t>;
-  m_jets_eta_det     = new std::vector<Float_t>;
-  m_jets_phi         = new std::vector<Float_t>;
-  m_jets_MV1         = new std::vector<Float_t>;
-  m_jets_flavortruth = new std::vector<Float_t>;
-  m_jets_jvtxf       = new std::vector<Float_t>;
-  m_jets_nTrk        = new std::vector<Int_t>;
-  m_jets_width       = new std::vector<Float_t>;
-  m_jets_flavorpdg   = new std::vector<Int_t>;
-  m_jets_Epdg        = new std::vector<Double_t>;
-  m_lep_m            = new std::vector<Float_t>;
-  m_lep_pt           = new std::vector<Float_t>;
-  m_lep_eta          = new std::vector<Float_t>;
-  m_lep_phi          = new std::vector<Float_t>;
-  m_lep_charge       = new std::vector<Int_t>;
-  m_lep_d0           = new std::vector<Float_t>;
-  m_lep_sigd0        = new std::vector<Float_t>;
-  m_lep_trackiso     = new std::vector<Float_t>;
-  m_lep_caloiso      = new std::vector<Float_t>;
-  m_lep_quality      = new std::vector<Int_t>;
-  m_quark_m          = new std::vector<Float_t>;
-  m_quark_pt         = new std::vector<Float_t>;
-  m_quark_pdg        = new std::vector<Int_t>;
-  m_quark_eta        = new std::vector<Float_t>;
-  m_quark_phi        = new std::vector<Float_t>;
-  m_quark_E          = new std::vector<Float_t>;
+  m_jets_m             = new std::vector<Float_t>;
+  m_jets_pt            = new std::vector<Float_t>;
+  m_jets_eta           = new std::vector<Float_t>;
+  m_jets_eta_det       = new std::vector<Float_t>;
+  m_jets_phi           = new std::vector<Float_t>;
+  m_jets_MV1           = new std::vector<Float_t>;
+  m_jets_flavortruth   = new std::vector<Float_t>;
+  m_jets_jvtxf         = new std::vector<Float_t>;
+  m_jets_nTrk          = new std::vector<Int_t>;
+  m_jets_width         = new std::vector<Float_t>;
+  m_jets_flavorpdg     = new std::vector<Int_t>;
+  m_jets_Epdg          = new std::vector<Double_t>;
+  m_jets_emfrac        = new std::vector<Double_t>; // May 18th, 2014. Update for BCH studies
+  m_jets_BCH_CORR_CELL = new std::vector<Double_t>; // May 18th, 2014. Update for BCH studies
+  m_lep_m              = new std::vector<Float_t>;
+  m_lep_pt             = new std::vector<Float_t>;
+  m_lep_eta            = new std::vector<Float_t>;
+  m_lep_phi            = new std::vector<Float_t>;
+  m_lep_charge         = new std::vector<Int_t>;
+  m_lep_d0             = new std::vector<Float_t>;
+  m_lep_sigd0          = new std::vector<Float_t>;
+  m_lep_trackiso       = new std::vector<Float_t>;
+  m_lep_caloiso        = new std::vector<Float_t>;
+  m_lep_quality        = new std::vector<Int_t>;
+  m_quark_m            = new std::vector<Float_t>;
+  m_quark_pt           = new std::vector<Float_t>;
+  m_quark_pdg          = new std::vector<Int_t>;
+  m_quark_eta          = new std::vector<Float_t>;
+  m_quark_phi          = new std::vector<Float_t>;
+  m_quark_E            = new std::vector<Float_t>;
   
   
   // Just Intialization for HFOR calculation. Not to save into the ReducedNtuple
   if (isMC()) 
     {
-      mc_n               = 0;
-      mc_pt              = new std::vector<Float_t>;
-      mc_pdgId           = new std::vector<Int_t>;
-      mc_m               = new std::vector<Float_t>;
-      mc_eta             = new std::vector<Float_t>;
-      mc_phi             = new std::vector<Float_t>;
-      mc_status          = new std::vector<Int_t>;
-      mc_vx_barcode      = new std::vector<Int_t>;
-      mc_child_index     = new std::vector<vector<Int_t> >;
-      mc_parent_index    = new std::vector<vector<Int_t> >;
+      mc_n             = 0;
+      mc_pt            = new std::vector<Float_t>;
+      mc_pdgId         = new std::vector<Int_t>;
+      mc_m             = new std::vector<Float_t>;
+      mc_eta           = new std::vector<Float_t>;
+      mc_phi           = new std::vector<Float_t>;
+      mc_status        = new std::vector<Int_t>;
+      mc_vx_barcode    = new std::vector<Int_t>;
+      mc_child_index   = new std::vector<vector<Int_t> >;
+      mc_parent_index  = new std::vector<vector<Int_t> >;
     }
   
   // tree
   m_reduced_ntuple = new TTree("higgs","reduced ntuple");
   m_reduced_ntuple->Branch("RunNumber",&m_run);
+  m_reduced_ntuple->Branch("RunMCNumber",&m_mc_run);
   m_reduced_ntuple->Branch("EventNumber",&m_event);
+  m_reduced_ntuple->Branch("lbn",&m_lbn);
   m_reduced_ntuple->Branch("channel",&m_channel);
   m_reduced_ntuple->Branch("isqcdevent",&m_qcdevent);
   m_reduced_ntuple->Branch("SystematicEvent",&m_SystematicEvent);
@@ -4652,6 +4656,8 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("jet_width",&m_jets_width);
   m_reduced_ntuple->Branch("jet_flavorpdg",&m_jets_flavorpdg);
   m_reduced_ntuple->Branch("jet_Epdg",&m_jets_Epdg);
+  m_reduced_ntuple->Branch("jet_emfrac",&m_jets_emfrac);                // May 18th, 2014. Update for BCH studies
+  m_reduced_ntuple->Branch("jet_BCH_CORR_CELL",&m_jets_BCH_CORR_CELL);  // May 18th, 2014. Update for BCH studies
   m_reduced_ntuple->Branch("lep_m",&m_lep_m);
   m_reduced_ntuple->Branch("lep_pt",&m_lep_pt);
   m_reduced_ntuple->Branch("lep_eta",&m_lep_eta);
@@ -4711,6 +4717,8 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_jets_width->clear();
   m_jets_flavorpdg->clear();
   m_jets_Epdg->clear();
+  m_jets_emfrac->clear();         // May 18th, 2014. Update for BCH studies
+  m_jets_BCH_CORR_CELL->clear();  // May 18th, 2014. Update for BCH studies
   m_lep_m->clear();
   m_lep_pt->clear();
   m_lep_eta->clear();
@@ -4729,8 +4737,10 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_quark_E->clear();
   
   m_lep_chargeproduct =  0;
+  m_lbn               = -1;
   m_run               = -1;
   m_event             = -1;
+  m_mc_run            = -1;
   m_weight            =  1.;
   m_SFWeight          =  1.;
   m_ggFweight         =  1.;
@@ -4759,20 +4769,37 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 {
   Int_t minimum_cut = 0;
   
-  if(GetDoQCDSelection()) minimum_cut = HllqqCutFlow::OppositeSign;
-  else minimum_cut = HllqqCutFlow::OppositeSign;
+  if (GetDoQCDSelection()) minimum_cut = HllqqCutFlow::OppositeSign;
+  else                     minimum_cut = HllqqCutFlow::OppositeSign;
   
   std::pair<float,float> jetsf;
-  jetsf.first = 1.;
+  jetsf.first  = 1.;
   jetsf.second = 1.;
   
   
-  if(cut >= minimum_cut)
+  if (cut >= minimum_cut)
     {
-      if (!isMC()) m_run  = ntuple->eventinfo.RunNumber();     
-      if (isMC())  m_run  = ntuple->eventinfo.mc_channel_number();
-      m_event             = ntuple->eventinfo.EventNumber();
+      int tmp_mu = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
+      int tmp_rn = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),tmp_mu);
+      
+      if (!isMC()) m_run    = ntuple->eventinfo.RunNumber();     
+      if (isMC())  m_run    = ntuple->eventinfo.mc_channel_number();
+      
+      if (!isMC()) m_mc_run = ntuple->eventinfo.RunNumber();     
+      if (isMC())  m_mc_run = tmp_rn;
+      
+      if (isMC())
+	{
+	  if (tmp_rn>0) m_lbn = m_PileupReweighter->GetRandomLumiBlockNumber(tmp_rn);
+	  else          m_lbn = -1;
+	}
+      else if (!isMC())
+	{
+	  /*        */  m_lbn = ntuple->eventinfo.lbn();
+	}
+      
       m_cut               = cut;
+      m_event             = ntuple->eventinfo.EventNumber();
       m_weight            =  1.;
       m_SFWeight          =  1.;
       m_ggFweight         =  1.;
@@ -4871,6 +4898,8 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	  m_jets_jvtxf->push_back(Jet->jvtxf());
 	  m_jets_nTrk->push_back(Jet->nTrk());
 	  m_jets_width->push_back(Jet->WIDTH());
+	  m_jets_emfrac->push_back(Jet->emfrac());                // May 18th, 2014. Update for BCH studies
+	  m_jets_BCH_CORR_CELL->push_back(Jet->BCH_CORR_CELL());  // May 18th, 2014. Update for BCH studies
 	  
 	  if (isMC())
 	    {
