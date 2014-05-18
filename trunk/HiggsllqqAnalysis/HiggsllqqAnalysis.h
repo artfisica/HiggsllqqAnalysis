@@ -1207,10 +1207,14 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Float_t>   *m_jets_width;
   std::vector<Int_t>     *m_jets_flavorpdg;
   std::vector<Double_t>  *m_jets_Epdg;
+  std::vector<Double_t>  *m_jets_emfrac;        // May 18th, 2014. Update for BCH studies
+  std::vector<Double_t>  *m_jets_BCH_CORR_CELL; // May 18th, 2014. Update for BCH studies
   //
   UInt_t  m_run;
+  UInt_t  m_mc_run;
   UInt_t  m_event;
   Int_t   m_cut;
+  Int_t   m_lbn;
   Int_t   m_channel;
   Int_t   m_qcdevent;
   Int_t   m_SystematicEvent;
