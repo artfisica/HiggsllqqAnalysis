@@ -497,6 +497,8 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_treader->setTripFile("TileTripReader/data/CompleteTripList_2011-2012.root"); //This doesn't need to be set if you're only calling checkEvent()
   
   bool esData;  // whether this is data (true) or MC (false)
+  if (isMC()) esData = kFALSE;
+  else        esData = kTRUE;
   
   // Initialize the tool, giving the path to the file to emulate masked modules (used in MC only) 
   m_thebchTool = new BCHTool::BCHCleaningToolRoot();    
@@ -4600,6 +4602,8 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_jets_Epdg          = new std::vector<Double_t>;
   m_jets_emfrac        = new std::vector<Double_t>; // May 18th, 2014. Update for BCH studies
   m_jets_BCH_CORR_CELL = new std::vector<Double_t>; // May 18th, 2014. Update for BCH studies
+  m_jets_Medium_BCH    = new std::vector<Bool_t>;   // May 19th, 2014. Update for BCH studies
+  m_jets_Tight_BCH     = new std::vector<Bool_t>;   // May 19th, 2014. Update for BCH studies
   m_lep_m              = new std::vector<Float_t>;
   m_lep_pt             = new std::vector<Float_t>;
   m_lep_eta            = new std::vector<Float_t>;
@@ -4656,8 +4660,10 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("jet_width",&m_jets_width);
   m_reduced_ntuple->Branch("jet_flavorpdg",&m_jets_flavorpdg);
   m_reduced_ntuple->Branch("jet_Epdg",&m_jets_Epdg);
-  m_reduced_ntuple->Branch("jet_emfrac",&m_jets_emfrac);                // May 18th, 2014. Update for BCH studies
-  m_reduced_ntuple->Branch("jet_BCH_CORR_CELL",&m_jets_BCH_CORR_CELL);  // May 18th, 2014. Update for BCH studies
+  m_reduced_ntuple->Branch("jet_emfrac",&m_jets_emfrac);               // May 18th, 2014. Update for BCH studies
+  m_reduced_ntuple->Branch("jet_BCH_CORR_CELL",&m_jets_BCH_CORR_CELL); // May 18th, 2014. Update for BCH studies
+  m_reduced_ntuple->Branch("jet_Medium_BCH",&m_jets_Medium_BCH);       // May 19th, 2014. Update for BCH studies
+  m_reduced_ntuple->Branch("jet_Tight_BCH",&m_jets_Tight_BCH);         // May 19th, 2014. Update for BCH studies
   m_reduced_ntuple->Branch("lep_m",&m_lep_m);
   m_reduced_ntuple->Branch("lep_pt",&m_lep_pt);
   m_reduced_ntuple->Branch("lep_eta",&m_lep_eta);
@@ -4719,6 +4725,8 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_jets_Epdg->clear();
   m_jets_emfrac->clear();         // May 18th, 2014. Update for BCH studies
   m_jets_BCH_CORR_CELL->clear();  // May 18th, 2014. Update for BCH studies
+  m_jets_Medium_BCH->clear();     // May 19th, 2014. Update for BCH studies
+  m_jets_Tight_BCH->clear();      // May 19th, 2014. Update for BCH studies
   m_lep_m->clear();
   m_lep_pt->clear();
   m_lep_eta->clear();
@@ -4779,24 +4787,9 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
   
   if (cut >= minimum_cut)
     {
-      int tmp_mu = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
-      int tmp_rn = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),tmp_mu);
-      
-      if (!isMC()) m_run    = ntuple->eventinfo.RunNumber();     
-      if (isMC())  m_run    = ntuple->eventinfo.mc_channel_number();
-      
-      if (!isMC()) m_mc_run = ntuple->eventinfo.RunNumber();     
-      if (isMC())  m_mc_run = tmp_rn;
-      
-      if (isMC())
-	{
-	  if (tmp_rn>0) m_lbn = m_PileupReweighter->GetRandomLumiBlockNumber(tmp_rn);
-	  else          m_lbn = -1;
-	}
-      else if (!isMC())
-	{
-	  /*        */  m_lbn = ntuple->eventinfo.lbn();
-	}
+      // 19th May 2014 // BHC Studies //
+      int tmp_rn  = GetRunNumberAndLumiBlock().first;
+      int tmp_lbn = GetRunNumberAndLumiBlock().second;
       
       m_cut               = cut;
       m_event             = ntuple->eventinfo.EventNumber();
@@ -4901,6 +4894,10 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	  m_jets_emfrac->push_back(Jet->emfrac());                // May 18th, 2014. Update for BCH studies
 	  m_jets_BCH_CORR_CELL->push_back(Jet->BCH_CORR_CELL());  // May 18th, 2014. Update for BCH studies
 	  
+	  // Looking for the BCH status   // 19th May 2014
+	  m_jets_Medium_BCH->push_back(GetIsBadXBCH(tmp_rn, tmp_lbn, (*jet_itr)->righteta(), (*jet_itr)->rightphi(), Jet->BCH_CORR_CELL(), Jet->emfrac(), (*jet_itr)->rightpt(), 0).first);
+	  m_jets_Tight_BCH->push_back(GetIsBadXBCH(tmp_rn, tmp_lbn, (*jet_itr)->righteta(), (*jet_itr)->rightphi(), Jet->BCH_CORR_CELL(), Jet->emfrac(), (*jet_itr)->rightpt(), 0).second);
+
 	  if (isMC())
 	    {
 	      m_jets_flavortruth->push_back(Jet->flavor_truth_label());
@@ -5297,6 +5294,8 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ1_LJ_ntrk12      = -999;
   str->realJ1_LJ_width12     = -999;
   str->realJ1_LJ_pdg         = -999;
+  str->realJ1_LJ_Medium_BCH  = kFALSE; // May 18th, 2014. Update for BCH studies
+  str->realJ1_LJ_Tight_BCH   = kFALSE; // May 18th, 2014. Update for BCH studies
   str->realJ2_LJ_m           = -999;
   str->realJ2_LJ_pt          = -999;
   str->realJ2_LJ_eta         = -999;
@@ -5310,6 +5309,8 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->realJ2_LJ_ntrk12      = -999;
   str->realJ2_LJ_width12     = -999;
   str->realJ2_LJ_pdg         = -999;
+  str->realJ2_LJ_Medium_BCH  = kFALSE; // May 18th, 2014. Update for BCH studies
+  str->realJ2_LJ_Tight_BCH   = kFALSE; // May 18th, 2014. Update for BCH studies
   //
   str->realZ_LJ_m            = -999;
   str->realZ_LJ_pt           = -999;
@@ -5593,6 +5594,8 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ1_LJ_ntrk12",      &(str->realJ1_LJ_ntrk12));
   analysistree->Branch("realJ1_LJ_width12",     &(str->realJ1_LJ_width12));
   analysistree->Branch("realJ1_LJ_pdg",         &(str->realJ1_LJ_pdg));
+  analysistree->Branch("realJ1_LJ_Medium_BCH",  &(str->realJ1_LJ_Medium_BCH)); // May 18th, 2014. Update for BCH studies
+  analysistree->Branch("realJ1_LJ_Tight_BCH",   &(str->realJ1_LJ_Tight_BCH));  // May 18th, 2014. Update for BCH studies
   analysistree->Branch("realJ2_LJ_m",           &(str->realJ2_LJ_m));
   analysistree->Branch("realJ2_LJ_pt",          &(str->realJ2_LJ_pt));
   analysistree->Branch("realJ2_LJ_eta",         &(str->realJ2_LJ_eta));
@@ -5606,7 +5609,9 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ2_LJ_ntrk12",      &(str->realJ2_LJ_ntrk12));
   analysistree->Branch("realJ2_LJ_width12",     &(str->realJ2_LJ_width12)); 
   analysistree->Branch("realJ2_LJ_pdg",         &(str->realJ2_LJ_pdg));
-  //
+  analysistree->Branch("realJ2_LJ_Medium_BCH",  &(str->realJ2_LJ_Medium_BCH)); // May 18th, 2014. Update for BCH studies
+  analysistree->Branch("realJ2_LJ_Tight_BCH",   &(str->realJ2_LJ_Tight_BCH));  // May 18th, 2014. Update for BCH studies
+  ////////////////////
   analysistree->Branch("realZ_LJ_m",            &(str->realZ_LJ_m));
   analysistree->Branch("realZ_LJ_pt",           &(str->realZ_LJ_pt));
   analysistree->Branch("realZ_LJ_eta",          &(str->realZ_LJ_eta));
@@ -5616,7 +5621,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realH_LJ_pt",           &(str->realH_LJ_pt));
   analysistree->Branch("realH_LJ_eta",          &(str->realH_LJ_eta));
   analysistree->Branch("realH_LJ_phi",          &(str->realH_LJ_phi));
-  ///////////
+  ////////////////////
   analysistree->Branch("mergedZ_LJ_m",          &(str->mergedZ_LJ_m));
   analysistree->Branch("mergedZ_LJ_pt",         &(str->mergedZ_LJ_pt));
   analysistree->Branch("mergedZ_LJ_eta",        &(str->mergedZ_LJ_eta));
@@ -5625,7 +5630,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("mergedH_LJ_pt",         &(str->mergedH_LJ_pt));
   analysistree->Branch("mergedH_LJ_eta",        &(str->mergedH_LJ_eta));
   analysistree->Branch("mergedH_LJ_phi",        &(str->mergedH_LJ_phi));
-  ///////////
+  ////////////////////
   analysistree->Branch("realJ1_BP_m",           &(str->realJ1_BP_m));
   analysistree->Branch("realJ1_BP_pt",          &(str->realJ1_BP_pt));
   analysistree->Branch("realJ1_BP_eta",         &(str->realJ1_BP_eta));
@@ -5652,7 +5657,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realJ2_BP_ntrk12",      &(str->realJ2_BP_ntrk12));
   analysistree->Branch("realJ2_BP_width12",     &(str->realJ2_BP_width12)); 
   analysistree->Branch("realJ2_BP_pdg",         &(str->realJ2_BP_pdg));
-  //
+  ////////////////////
   analysistree->Branch("realZ_BP_m",            &(str->realZ_BP_m));
   analysistree->Branch("realZ_BP_pt",           &(str->realZ_BP_pt));
   analysistree->Branch("realZ_BP_eta",          &(str->realZ_BP_eta));
@@ -5662,16 +5667,16 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("realH_BP_pt",           &(str->realH_BP_pt));
   analysistree->Branch("realH_BP_eta",          &(str->realH_BP_eta));
   analysistree->Branch("realH_BP_phi",          &(str->realH_BP_phi));
-  ////////////////
+  ////////////////////
   analysistree->Branch("Jet1_KF_index",         &(str->Jet1_KF_index));
   analysistree->Branch("Jet2_KF_index",         &(str->Jet2_KF_index));
   analysistree->Branch("Jet1_LJ_index",         &(str->Jet1_LJ_index));
   analysistree->Branch("Jet2_LJ_index",         &(str->Jet2_LJ_index));
   analysistree->Branch("Jet1_BP_index",         &(str->Jet1_BP_index));
   analysistree->Branch("Jet2_BP_index",         &(str->Jet2_BP_index));
-  //
+  ////////////////////
   analysistree->Branch("chisquare",             &(str->chisquare));
-  //////////////
+  ////////////////////
   analysistree->Branch("met",                   &(str->met));
   analysistree->Branch("sumet",                 &(str->sumet));
   ////////////////////////////////////////////////////////////////////////
@@ -5856,8 +5861,12 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
     {
       tmpSysbtagsf[tmp] = 1.;
       Sysbtagsf[tmp]    = 1.;
-}
-
+    }
+  
+  // 19th May 2014 // BHC Studies //
+  int tmp_rn  = GetRunNumberAndLumiBlock().first;
+  int tmp_lbn = GetRunNumberAndLumiBlock().second;
+  
   if(cut >= minimum_cut)
     {
       str->n_jets    = m_GoodJets.size();
@@ -6164,6 +6173,22 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  str->realJ1_LJ_MV1       = GetMV1value(m_GoodJets.at(0));
 	  str->realJ1_LJ_ntrk12    = InfoNtracksWidthJ0.first;
 	  str->realJ1_LJ_width12   = InfoNtracksWidthJ0.second;
+	  str->realJ1_LJ_Medium_BCH = GetIsBadXBCH(tmp_rn,
+						   tmp_lbn,
+						   m_GoodJets.at(0)->righteta(),
+						   m_GoodJets.at(0)->rightphi(),
+						   Jet0->BCH_CORR_CELL(),
+						   Jet0->emfrac(),
+						   m_GoodJets.at(0)->rightpt(),
+						   0).first; // May 19th, 2014. Update for BCH studies
+	  str->realJ1_LJ_Tight_BCH  = GetIsBadXBCH(tmp_rn,
+						   tmp_lbn,
+						   m_GoodJets.at(0)->righteta(),
+						   m_GoodJets.at(0)->rightphi(),
+						   Jet0->BCH_CORR_CELL(),
+						   Jet0->emfrac(),
+						   m_GoodJets.at(0)->rightpt(),
+						   0).second; // May 19th, 2014. Update for BCH studies
 	  
 	  TLorentzVector j0;
 	  j0.SetPtEtaPhiM(str->realJ1_LJ_pt,str->realJ1_LJ_eta,str->realJ1_LJ_phi,str->realJ1_LJ_m);
@@ -6423,6 +6448,23 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(0));
 	      str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_LJ.first;
 	      str->realJ1_LJ_width12     = InfoNtracksWidthJ1_LJ.second;
+	      str->realJ1_LJ_Medium_BCH  = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(0)->righteta(),
+							m_GoodJets.at(0)->rightphi(),
+							Jet_1_LJ->BCH_CORR_CELL(),
+							Jet_1_LJ->emfrac(),
+							m_GoodJets.at(0)->rightpt(),
+							0).first; // May 19th, 2014. Update for BCH studies
+	      str->realJ1_LJ_Tight_BCH   = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(0)->righteta(),
+							m_GoodJets.at(0)->rightphi(),
+							Jet_1_LJ->BCH_CORR_CELL(),
+							Jet_1_LJ->emfrac(),
+							m_GoodJets.at(0)->rightpt(),
+							0).second; // May 19th, 2014. Update for BCH studies
+	      
 	      
 	      str->realJ2_LJ_m           = m_GoodJets.at(1)->Get4Momentum()->M();
 	      str->realJ2_LJ_pt          = m_GoodJets.at(1)->rightpt();
@@ -6436,6 +6478,22 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(1));
 	      str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_LJ.first;
 	      str->realJ2_LJ_width12     = InfoNtracksWidthJ2_LJ.second;
+	      str->realJ2_LJ_Medium_BCH  = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(1)->righteta(),
+							m_GoodJets.at(1)->rightphi(),
+							Jet_2_LJ->BCH_CORR_CELL(),
+							Jet_2_LJ->emfrac(),
+							m_GoodJets.at(1)->rightpt(),
+							0).first; // May 19th, 2014. Update for BCH studies
+	      str->realJ2_LJ_Tight_BCH   = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(1)->righteta(),
+							m_GoodJets.at(1)->rightphi(),
+							Jet_2_LJ->BCH_CORR_CELL(),
+							Jet_2_LJ->emfrac(),
+							m_GoodJets.at(1)->rightpt(),
+							0).second; // May 19th, 2014. Update for BCH studies
 	      
 	      
 	      TLorentzVector j1_LJ;
@@ -6723,6 +6781,22 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(Jone));
 	      str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_BP.first;
 	      str->realJ1_LJ_width12     = InfoNtracksWidthJ1_BP.second;
+	      str->realJ1_LJ_Medium_BCH  = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jone)->righteta(),
+							m_GoodJets.at(Jone)->rightphi(),
+							Jet_1_BP->BCH_CORR_CELL(),
+							Jet_1_BP->emfrac(),
+							m_GoodJets.at(Jone)->rightpt(),
+							0).first; // May 19th, 2014. Update for BCH studies
+	      str->realJ1_LJ_Tight_BCH   = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jone)->righteta(),
+							m_GoodJets.at(Jone)->rightphi(),
+							Jet_1_BP->BCH_CORR_CELL(),
+							Jet_1_BP->emfrac(),
+							m_GoodJets.at(Jone)->rightpt(),
+							0).second; // May 19th, 2014. Update for BCH studies
 	      
 	      str->realJ2_LJ_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
 	      str->realJ2_LJ_pt          = m_GoodJets.at(Jtwo)->rightpt();
@@ -6736,6 +6810,22 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
 	      str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_BP.first;
 	      str->realJ2_LJ_width12     = InfoNtracksWidthJ2_BP.second;
+	      str->realJ2_LJ_Medium_BCH  = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jtwo)->righteta(),
+							m_GoodJets.at(Jtwo)->rightphi(),
+							Jet_2_BP->BCH_CORR_CELL(),
+							Jet_2_BP->emfrac(),
+							m_GoodJets.at(Jtwo)->rightpt(),
+							0).first; // May 19th, 2014. Update for BCH studies
+	      str->realJ2_LJ_Tight_BCH   = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jtwo)->righteta(),
+							m_GoodJets.at(Jtwo)->rightphi(),
+							Jet_2_BP->BCH_CORR_CELL(),
+							Jet_2_BP->emfrac(),
+							m_GoodJets.at(Jtwo)->rightpt(),
+							0).second; // May 19th, 2014. Update for BCH studies
 	      
 	      
 	      TLorentzVector j1_BP;
@@ -6958,7 +7048,23 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ1_LJ_MV1         = GetMV1value(m_GoodJets.at(Jone));
 	      str->realJ1_LJ_ntrk12      = InfoNtracksWidthJ1_BP.first;
 	      str->realJ1_LJ_width12     = InfoNtracksWidthJ1_BP.second;
-	      
+	      str->realJ1_LJ_Medium_BCH  = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jone)->righteta(),
+							m_GoodJets.at(Jone)->rightphi(),
+							Jet_1_BP->BCH_CORR_CELL(),
+							Jet_1_BP->emfrac(),
+							m_GoodJets.at(Jone)->rightpt(),
+							0).first; // May 19th, 2014. Update for BCH studies
+	      str->realJ1_LJ_Tight_BCH   = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jone)->righteta(),
+							m_GoodJets.at(Jone)->rightphi(),
+							Jet_1_BP->BCH_CORR_CELL(),
+							Jet_1_BP->emfrac(),
+							m_GoodJets.at(Jone)->rightpt(),
+							0).second; // May 19th, 2014. Update for BCH studies
+
 	      str->realJ2_LJ_m           = m_GoodJets.at(Jtwo)->Get4Momentum()->M();
 	      str->realJ2_LJ_pt          = m_GoodJets.at(Jtwo)->rightpt();
 	      str->realJ2_LJ_eta         = m_GoodJets.at(Jtwo)->righteta();
@@ -6971,6 +7077,22 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_LJ_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
 	      str->realJ2_LJ_ntrk12      = InfoNtracksWidthJ2_BP.first;
 	      str->realJ2_LJ_width12     = InfoNtracksWidthJ2_BP.second;
+	      str->realJ2_LJ_Medium_BCH  = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jtwo)->righteta(),
+							m_GoodJets.at(Jtwo)->rightphi(),
+							Jet_2_BP->BCH_CORR_CELL(),
+							Jet_2_BP->emfrac(),
+							m_GoodJets.at(Jtwo)->rightpt(),
+							0).first; // May 19th, 2014. Update for BCH studies
+	      str->realJ2_LJ_Tight_BCH   = GetIsBadXBCH(tmp_rn,
+							tmp_lbn,
+							m_GoodJets.at(Jtwo)->righteta(),
+							m_GoodJets.at(Jtwo)->rightphi(),
+							Jet_2_BP->BCH_CORR_CELL(),
+							Jet_2_BP->emfrac(),
+							m_GoodJets.at(Jtwo)->rightpt(),
+							0).second; // May 19th, 2014. Update for BCH studies
 	      
 	      
 	      TLorentzVector j1_BP;
@@ -8527,4 +8649,70 @@ Bool_t HiggsllqqAnalysis::IsBHadron(Int_t pdg)
     return true; 
   else
     return false;
+}
+
+
+// 19th May 2014: Method to obtain the BCH effects
+pair <Bool_t,Bool_t> HiggsllqqAnalysis::GetIsBadXBCH(int run, int lbn, double eta, double phi, double BCH_CORR_CELL, double emfrac, double pt, int isUp)
+{
+  pair <Bool_t,Bool_t> BCHinfo;
+  BCHinfo.first    = kFALSE;
+  BCHinfo.second   = kFALSE;
+  Bool_t Use_Tight = kTRUE;
+  
+  // Condition to avoid error:
+  /* Fatal in <TUnixSystem::BCHCleaningToolBase::IsInMaskedRegion>: RunNumber is 0, most likely because the PileupReweighting tool failed to find a random data RunNumber with similar conditions for your value of mu.  The pileup weight should also be zero.  The user must watch for this case and handle it themselves, in order to ensure that groups not using weights do not miss this problem.  (A RunNumber of 0 will not provide a sensible treatment of masked tile modules.)
+     aborting */
+  if (run > 0 && lbn >-1)
+    {
+      BCHinfo.first = m_thebchTool->IsBadMediumBCH(run, lbn, eta, phi, BCH_CORR_CELL, emfrac, pt, isUp);
+      
+      // The tight cut
+      if (Use_Tight) BCHinfo.second = m_thebchTool->IsBadTightBCH(run, lbn, eta, phi, BCH_CORR_CELL, emfrac, pt);
+      else           BCHinfo.second = m_thebchTool->IsInMaskedRegion(run, lbn, eta, phi);
+    }  
+  return BCHinfo;
+}
+
+
+
+// 17-19th May 2014 ///////////////// BHC Studies //////////////////
+pair <Int_t,Int_t> HiggsllqqAnalysis::GetRunNumberAndLumiBlock()
+{
+  pair <Int_t,Int_t> RunLumiInfo;
+  RunLumiInfo.first  =  0;
+  RunLumiInfo.second = -1;
+  
+  int tmp_mu  = (isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing();
+  int tmp_rn  = -1;
+  if (!isMC()) tmp_rn = ntuple->eventinfo.RunNumber();
+  if (isMC())  tmp_rn = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),tmp_mu);
+  int tmp_lbn = -1;
+  
+  if (!isMC()) { m_run = tmp_rn;                                m_mc_run = tmp_rn; }
+  if (isMC())  { m_run = ntuple->eventinfo.mc_channel_number(); m_mc_run = tmp_rn; }
+  
+  if (isMC())
+    {
+      if (tmp_rn>0) 
+	{
+	  m_lbn   = m_PileupReweighter->GetRandomLumiBlockNumber(tmp_rn);
+	  tmp_lbn = m_PileupReweighter->GetRandomLumiBlockNumber(tmp_rn);
+	}
+      else
+	{
+	  m_lbn   = -1;
+	  tmp_lbn = -1;
+	}
+    }
+  else if (!isMC())
+    {
+      m_lbn   = ntuple->eventinfo.lbn();
+      tmp_lbn = ntuple->eventinfo.lbn();
+    }
+  
+  RunLumiInfo.first  = tmp_rn;
+  RunLumiInfo.second = tmp_lbn;
+  
+  return RunLumiInfo;
 }
