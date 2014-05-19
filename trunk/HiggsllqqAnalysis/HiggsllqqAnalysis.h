@@ -404,6 +404,8 @@ typedef struct
   float realJ1_LJ_Fisher;
   float realJ1_LJ_LL;
   float realJ1_LJ_LLMIX;
+  bool  realJ1_LJ_Medium_BCH; // May 18th, 2014. Update for BCH studies
+  bool  realJ1_LJ_Tight_BCH;  // May 18th, 2014. Update for BCH studies
   float realJ2_LJ_m;
   float realJ2_LJ_pt;
   float realJ2_LJ_eta;
@@ -420,6 +422,8 @@ typedef struct
   float realJ2_LJ_Fisher;
   float realJ2_LJ_LL;
   float realJ2_LJ_LLMIX;
+  bool  realJ2_LJ_Medium_BCH; // May 18th, 2014. Update for BCH studies
+  bool  realJ2_LJ_Tight_BCH;  // May 18th, 2014. Update for BCH studies
   //
   float realZ_LJ_m;
   float realZ_LJ_pt;
@@ -964,6 +968,11 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t getCorrectMETValue();
   Float_t GetMV1value(Analysis::Jet *jet);
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
+
+  // 19th May 2014, BCH studies
+  pair <Bool_t,Bool_t> GetIsBadXBCH(int run, int lbn, double eta, double phi, double BCH_CORR_CELL, double emfrac, double pt, int isUp);
+  pair <Int_t,Int_t> GetRunNumberAndLumiBlock();
+  //
   
   // Flavor Jet Methods
   Bool_t  isHeavyJet(Int_t pdg);
@@ -1209,6 +1218,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   std::vector<Double_t>  *m_jets_Epdg;
   std::vector<Double_t>  *m_jets_emfrac;        // May 18th, 2014. Update for BCH studies
   std::vector<Double_t>  *m_jets_BCH_CORR_CELL; // May 18th, 2014. Update for BCH studies
+  std::vector<Bool_t>    *m_jets_Medium_BCH;    // May 19th, 2014. Update for BCH studies
+  std::vector<Bool_t>    *m_jets_Tight_BCH;     // May 19th, 2014. Update for BCH studies
   //
   UInt_t  m_run;
   UInt_t  m_mc_run;
