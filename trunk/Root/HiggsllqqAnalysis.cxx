@@ -4786,11 +4786,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
   
   
   if (cut >= minimum_cut)
-    {
-      // 19th May 2014 // BHC Studies //
-      int tmp_rn  = GetRunNumberAndLumiBlock().first;
-      int tmp_lbn = GetRunNumberAndLumiBlock().second;
-      
+    {      
       m_cut               = cut;
       m_event             = ntuple->eventinfo.EventNumber();
       m_weight            =  1.;
@@ -4895,8 +4891,8 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
 	  m_jets_BCH_CORR_CELL->push_back(Jet->BCH_CORR_CELL());  // May 18th, 2014. Update for BCH studies
 	  
 	  // Looking for the BCH status   // 19th May 2014
-	  m_jets_Medium_BCH->push_back(GetIsBadXBCH(tmp_rn, tmp_lbn, (*jet_itr)->righteta(), (*jet_itr)->rightphi(), Jet->BCH_CORR_CELL(), Jet->emfrac(), (*jet_itr)->rightpt(), 0).first);
-	  m_jets_Tight_BCH->push_back(GetIsBadXBCH(tmp_rn, tmp_lbn, (*jet_itr)->righteta(), (*jet_itr)->rightphi(), Jet->BCH_CORR_CELL(), Jet->emfrac(), (*jet_itr)->rightpt(), 0).second);
+	  m_jets_Medium_BCH->push_back(GetIsBadXBCH(GetRunNumberAndLumiBlock().first, GetRunNumberAndLumiBlock().second, (*jet_itr)->righteta(), (*jet_itr)->rightphi(), Jet->BCH_CORR_CELL(), Jet->emfrac(), (*jet_itr)->rightpt(), 0).first);
+	  m_jets_Tight_BCH->push_back(GetIsBadXBCH(GetRunNumberAndLumiBlock().first, GetRunNumberAndLumiBlock().second, (*jet_itr)->righteta(), (*jet_itr)->rightphi(), Jet->BCH_CORR_CELL(), Jet->emfrac(), (*jet_itr)->rightpt(), 0).second);
 
 	  if (isMC())
 	    {
