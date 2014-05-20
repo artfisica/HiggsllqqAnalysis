@@ -1,3 +1,12 @@
-dq2-ls -L INFN-ROMA1_LOCALGROUPDISK -fp  user.arturos.mc12_8TeV.117293.AlpgenJimmy_AUET2CTEQ6L1_WcNp0.merge.NTUP_HSG2.e1601_s1499_s1504_r3658_r3549_p1344.13.1/|grep srm |grep \.root >_tmp_ 
-sed 's#dpm#/dpm#g' _tmp_ >__tmp_; mv __tmp_ _tmp_
-sed 's#srm://#root://#g' _tmp_ >__tmp_; mv __tmp_ _tmp_
+#!/bin/bash
+## author: arturos@cern.ch
+## Ceation: September 30th 2013
+## Update:  May  20th 2014
+
+## User Options to Setup:
+site="INFN-ROMA1_SCRATCHDISK"
+dataset="user.arturos.data12_8TeV.periodD.physics_Muons.PhysCont.NTUP_2LHSG2.grp14_v01_p1649_p1650.22.0/"
+rm _tmp_
+dq2-ls -L $site -fp $dataset | grep srm | grep \.root >_tmp_ 
+sed 's#dpm#/dpm#g'       _tmp_ > __tmp_; mv __tmp_ _tmp_
+sed 's#srm://#root://#g' _tmp_ > __tmp_; mv __tmp_ _tmp_
