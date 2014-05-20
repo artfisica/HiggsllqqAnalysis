@@ -7,12 +7,10 @@ atlasoff/Reconstruction/egamma/egammaAnalysis/egammaAnalysisUtils/tags/egammaAna
 atlasoff/PhysicsAnalysis/HiggsPhys/HSG2/HiggsZZ4lUtils/tags/HiggsZZ4lUtils-00-02-06
 atlasoff/Trigger/TrigAnalysis/TrigMuonEfficiency/tags/TrigMuonEfficiency-00-02-42
 atlasoff/Trigger/TrigAnalysis/TrigRootAnalysis/tags/TrigRootAnalysis-00-01-05
-svn+ssh://svn.cern.ch/reps/vippolitsvn/Higgs/HiggsAnalysis/trunk
 svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/PATCore/tags/PATCore-00-00-12
 atlasoff/Reconstruction/Jet/ApplyJetCalibration/tags/ApplyJetCalibration-00-03-18
 atlasoff/Reconstruction/Jet/JetAnalysisTools/ApplyJetResolutionSmearing/tags/ApplyJetResolutionSmearing-00-01-02
 atlasoff/Reconstruction/Jet/JetResolution/tags/JetResolution-02-00-02
-atlasgrp/CombPerf/FlavorTag/JetTagAlgorithms/trunk
 atlasoff/Reconstruction/Jet/JetUncertainties/tags/JetUncertainties-00-08-07
 atlasoff/Reconstruction/egamma/egammaEvent/tags/egammaEvent-03-06-43
 atlasoff/PhysicsAnalysis/JetTagging/JetTagCalibration/tags/JetTagCalibration-00-02-07
@@ -28,3 +26,6 @@ atlasoff/PhysicsAnalysis/JetMissingEtID/JetSelectorTools/tags/JetSelectorTools-0
 atlasoff/PhysicsAnalysis/MuonID/MuonIDAnalysis/MuonIsolationCorrection/tags/MuonIsolationCorrection-01-01
 svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/D3PDTools/RootCoreCLHEP/tags/RootCoreCLHEP-00-00-12
 atlasoff/Reconstruction/Jet/JetAnalysisTools/BCHCleaningTool/tags/BCHCleaningTool-00-00-10
+svn+ssh://svn.cern.ch/reps/arturos/HiggsAnalysisHZZllqq/tags/HiggsAnalysisHZZllqq-00-00-01 HiggsAnalysis
+svn+ssh://svn.cern.ch/reps/arturos/JetTagAlgorithmsHZZllqq/tags/JetTagAlgorithmsHZZllqq-00-00-01 JetTagAlgorithms
+
