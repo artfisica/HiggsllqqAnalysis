@@ -121,7 +121,7 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 Float_t SherpaORptCut = 40000.; // 70000.;
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;      // 18th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
+int NumSystematicsToDo = 41;     // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
 int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -4784,9 +4784,21 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
   jetsf.first  = 1.;
   jetsf.second = 1.;
   
-  
   if (cut >= minimum_cut)
-    {      
+    { 
+      /////////////////Run Number for Data and MC: 21th May 2014////////////////
+      if (!isMC())
+	{
+	  m_run =  ntuple->eventinfo.RunNumber();
+	  m_mc_run = ntuple->eventinfo.RunNumber();
+	}
+      else if (isMC())
+	{
+	  m_run = ntuple->eventinfo.mc_channel_number();
+	  m_mc_run = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),(isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing());
+	}
+      /////////////////////////////////////////////////////////////////////////
+      
       m_cut               = cut;
       m_event             = ntuple->eventinfo.EventNumber();
       m_weight            =  1.;
@@ -8684,9 +8696,6 @@ pair <Int_t,Int_t> HiggsllqqAnalysis::GetRunNumberAndLumiBlock()
   if (!isMC()) tmp_rn = ntuple->eventinfo.RunNumber();
   if (isMC())  tmp_rn = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),tmp_mu);
   int tmp_lbn = -1;
-  
-  if (!isMC()) { m_run = tmp_rn;                                m_mc_run = tmp_rn; }
-  if (isMC())  { m_run = ntuple->eventinfo.mc_channel_number(); m_mc_run = tmp_rn; }
   
   if (isMC())
     {
