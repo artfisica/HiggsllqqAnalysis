@@ -2791,7 +2791,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   Float_t eta_det    = Jet->emscale_eta();
   Float_t cal_pt     = jet->rightpt();
   
-  if(cal_pt<50000. && TMath::Abs(eta_det) < 2.4 )
+  if(1/*cal_pt<50000. && TMath::Abs(eta_det) < 2.4*/) // Change done June 20th, to agree with the recommendation of JVF cut for all jets (look if this is correct)
     {
       JVFcutUp   = jvfTool->getJVFcut(jvtxf_cut, isPU, cal_pt, eta_det, true);
       JVFcutDown = jvfTool->getJVFcut(jvtxf_cut, isPU, cal_pt, eta_det, false);
