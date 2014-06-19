@@ -66,20 +66,14 @@ Bool_t MuonSmearing          = kTRUE,
   FillTreeHiggs              = kTRUE,  // 12th May 2014
   FillTreeTree               = kTRUE,  // December 2013
   
-  New_D3PD                   = kTRUE,  // June 20th, 2014: JUST To Test the old D3PD (<p1344 for low mass samples, for example.)
+  New_D3PD                   = kTRUE,  // June 20th, 2014: JUST To Test the old D3PD (<p1344 for low mass samples, for example.) Should be true since February 2014!!!
 // Print Just High Selection CutFlows
   PrintJustHighSelectionCutFlows = kTRUE;
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0), JetTag1(-1), JetTag2(-1), JetSemiTag1(-1), JetSemiTag2(-1);
 
-float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.);
-
-Int_t    count_events(0), eventNow(-1),   overElectron(0), overMuon(0),  overJet(0); 
-Int_t    badevent(0),     prebadevent(0), ptchange(0),     ptelecChange(0);
-Int_t    periodBD(0),     periodEH(0),    periodI(0),      periodJK(0),  periodLM(0);
-Float_t  Muon0(0),        Muon1(0),       Muon2(0),        Muon3(0),     Muon4(0),     Muon5(0),     Muon6(0),     Muon7(0),Muon8(0);
-Float_t  Electron0(0),    Electron1(0),   Electron2(0),    Electron3(0), Electron4(0), Electron5(0), Electron6(0), b_rescaling = 1.00 /*Fixed  in 1.05 (2011)*/; 
+float corr_jet_pt1(-1.), corr_jet_pt2(-1.), ChiSq(-1.), b_rescaling = 1.00 /*Fixed  in 1.05 (2011)*/; 
 
 
 // Definition of the Leptonic (dilepton) invariant mass window:
@@ -1508,10 +1502,7 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
 	tmp_calibration = m_ElectronEnergyRescaler->applyMCCalibration(el->cl_eta(), el->cl_E() / TMath::CosH(el->tracketa()), egRescaler::EnergyRescalerUpgrade::Electron);
       
       
-      Float_t tmp_E     = el->cl_E() * TMath::Abs(tmp_calibration);
-      Float_t tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
-      Float_t tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
-      
+      Float_t tmp_E = el->cl_E() * TMath::Abs(tmp_calibration);      
       
       // then, apply the other corrections
       if (isMC() && doSmearing() && ElectronSmearing)
@@ -1521,17 +1512,13 @@ void HiggsllqqAnalysis::applyChanges(Analysis::ChargedLepton *lep)
 	  // false here means the MC is mc11c (no constant term)
 	  Float_t smearcorr = m_ElectronEnergyRescaler->getSmearingCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::NOMINAL);
 	  
-	  tmp_E     = tmp_E * smearcorr;
-	  tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
-	  tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
+	  tmp_E = tmp_E * smearcorr;
 	}
       
       
       if (!isMC())
 	{
-	  tmp_E     = m_ElectronEnergyRescaler->applyEnergyCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::Electron, egRescaler::EnergyRescalerUpgrade::Nominal, 1.0, ntuple->eventinfo.RunNumber());
-	  tmp_Et    = tmp_E / TMath::CosH(el->tracketa());
-	  tmp_Et_cl = tmp_E / TMath::CosH(el->cl_eta());
+	  tmp_E = m_ElectronEnergyRescaler->applyEnergyCorrection(el->cl_eta(), tmp_E, egRescaler::EnergyRescalerUpgrade::Electron, egRescaler::EnergyRescalerUpgrade::Nominal, 1.0, ntuple->eventinfo.RunNumber());
 	}
       
       Float_t tmp_pt    = (TMath::Sqrt(TMath::Power(tmp_E, 2) - TMath::Power(lep->Get4Momentum()->M(), 2))) * TMath::Sin(2 * TMath::ATan(TMath::Exp(-el->tracketa())));
@@ -1587,10 +1574,10 @@ void HiggsllqqAnalysis::applyChanges(Analysis::Jet *jet)
 	  
 	  if(DoGSC && !GetDoLowMass())
 	    {
-	      double fEM3        = (this_jet->e_EMB3()+this_jet->e_EME3())/this_jet->emscale_E();
-	      double fTile0      = (this_jet->e_TileBar0()+this_jet->e_TileExt0())/this_jet->emscale_E();
-	      double nTrk        = this_jet->nTrk_pv0_500MeV(); 
-	      double trackWIDTH  = this_jet->trackWIDTH_pv0_1GeV();
+	      fEM3        = (this_jet->e_EMB3()+this_jet->e_EME3())/this_jet->emscale_E();
+	      fTile0      = (this_jet->e_TileBar0()+this_jet->e_TileExt0())/this_jet->emscale_E();
+	      nTrk        = this_jet->nTrk_pv0_500MeV(); 
+	      trackWIDTH  = this_jet->trackWIDTH_pv0_1GeV();
 	    }	  
 	  
 	  // Calibrate the jet!
@@ -3989,7 +3976,6 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
       if((Jet->isBadLooseMinus()!=0) && jet->rightpt()>ptthr /*&& jet->righteta() < 2.5*/)
 	{
 	  Bad_event = kTRUE;
-	  prebadevent++;
 	  
 	  for (Int_t i = 0; i < el_branch->n(); i++) 
 	    {
@@ -4009,10 +3995,8 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
 	  
 	  if(Bad_event)
 	    {
-	      badevent++;
-	      Bad_event = kFALSE;	    
-	      
-	      return kTRUE;
+	      Bad_event = kFALSE;
+	      return      kTRUE;
 	    }
 	}
       
@@ -4050,387 +4034,18 @@ Bool_t HiggsllqqAnalysis::NotMETclean()
 
 
 Float_t HiggsllqqAnalysis::getCorrectMETValue()
-{
-  bool verbose=false;
-  
+{  
   if (METtype_RefFinal) 
     {
       return  ntuple->MET_RefFinal.et();
     }
   else
     {
-      //cout<<"WARNING!!! Retuning MET_Final NOT Topo Implemented yet!!"<<endl;
-      //return  ntuple->MET_RefFinal.et();
-      
-      
-      D3PDReader::JetD3PDObject *jet_branch(0);
-      jet_branch = &(ntuple->jet_antikt4truth);
-      
-      
-      m_testUtil->reset();
-      
-      
-      // Fix for messed up NTUP_JETMET
-      vector<vector<float> >        *ph_MET_wet_new        = new vector<vector<float> >;
-      vector<vector<float> >        *ph_MET_wpx_new        = new vector<vector<float> >;
-      vector<vector<float> >        *ph_MET_wpy_new        = new vector<vector<float> >;
-      vector<vector<unsigned int> > *ph_MET_statusWord_new = new vector<vector<unsigned int> >;
-      
-      for (int iph=0; iph<ntuple->ph.n(); iph++)
-	{
-	  ph_MET_wet_new->push_back(       ntuple->ph_MET_HSG5.wet()->at(iph));
-	  ph_MET_wpx_new->push_back(       ntuple->ph_MET_HSG5.wpx()->at(iph));
-	  ph_MET_wpy_new->push_back(       ntuple->ph_MET_HSG5.wpy()->at(iph));
-	  ph_MET_statusWord_new->push_back(ntuple->ph_MET_HSG5.statusWord()->at(iph));
-	}
-      
-      vector<vector<float> >        *el_MET_wet_new        = new vector<vector<float> >;
-      vector<vector<float> >        *el_MET_wpx_new        = new vector<vector<float> >;
-      vector<vector<float> >        *el_MET_wpy_new        = new vector<vector<float> >;
-      vector<vector<unsigned int> > *el_MET_statusWord_new = new vector<vector<unsigned int> >;
-      
-      for (int iel=0; iel<ntuple->el.n(); iel++)
-	{
-	  el_MET_wet_new->push_back(       ntuple->el_MET.wet()->at(iel));
-	  el_MET_wpx_new->push_back(       ntuple->el_MET.wpx()->at(iel));
-	  el_MET_wpy_new->push_back(       ntuple->el_MET.wpy()->at(iel));
-	  el_MET_statusWord_new->push_back(ntuple->el_MET.statusWord()->at(iel));
-	}
-      
-      if(int(ntuple->el_MET.wet()->size())>ntuple->el.n())
-	{
-	  for(int iel=ntuple->el.n(); iel<int(ntuple->el_MET.wet()->size()); iel++)
-	    {
-	      if (ntuple->el_MET.wet()->at(iel).at(0)>1.e-9) cout << "This one!" << endl;
-	      break;
-	    }
-	}
-      
-      //  Tau rebuilding should be checked -- tau reco may be rerun in D3PD-making,
-      //  and it must be ensured that this is performed prior to MET recalculation
-      m_testUtil->setTauParameters(ntuple->tau.pt(), ntuple->tau.eta(), ntuple->tau.phi(),
-				   ntuple->tau_MET.wet(), ntuple->tau_MET.wpx(), ntuple->tau_MET.wpy(),
-				   ntuple->tau_MET.statusWord());
-      
-      // For these, just the kinematics need to be set      
-      m_testUtil->setPhotonParameters(ntuple->ph.pt(), ntuple->ph.eta(), ntuple->ph.phi(),
-				      ph_MET_wet_new, ph_MET_wpx_new, ph_MET_wpy_new,
-				      ph_MET_statusWord_new);
-      
-      // For these, just the kinematics need to be set      
-      m_testUtil->setElectronParameters(ntuple->el.pt(), ntuple->el.eta(), ntuple->el.phi(),
-					el_MET_wet_new, el_MET_wpx_new, el_MET_wpy_new,
-					el_MET_statusWord_new);
-      
-      
-      // The SoftJets term is now to be taken from D3PD, and no "hard jets" are allowed
-      // to enter it. Recalibration or smearing could cause jets that were above the
-      // 20 GeV threshold to drop below it, so we supply the original pT's to prevent
-      // them from being moved out of RefJet.
-      //
-      // In p1328/p1344 and later D3PD tags, SoftJets is combined with CellOut(_Eflow)
-      // and soft jet weights are always 0, so setOriJetParameters is deprecated.
-      
-      vector<float> *jet_pt_new  = new vector<float>;
-      vector<float> *jet_eta_new = new vector<float>;
-      vector<float> *jet_phi_new = new vector<float>;
-      vector<float> *jet_E_new   = new vector<float>;
-      
-      for (int ijet=0; ijet<int(ntuple->jet_AntiKt4TopoEM_MET_HSG5.statusWord()->size()); ijet++)
-	{
-	  jet_pt_new->push_back(ntuple->jet_akt4topoem.pt()->at(ijet));
-	  jet_eta_new->push_back(ntuple->jet_akt4topoem.eta()->at(ijet));
-	  jet_phi_new->push_back(ntuple->jet_akt4topoem.phi()->at(ijet));
-	  jet_E_new->push_back(ntuple->jet_akt4topoem.E()->at(ijet));
-	}
-      
-      m_testUtil->setJetParameters(jet_pt_new, jet_eta_new, jet_phi_new, jet_E_new,
-				   ntuple->jet_AntiKt4TopoEM_MET_HSG5.wet(), ntuple->jet_AntiKt4TopoEM_MET_HSG5.wpx(), ntuple->jet_AntiKt4TopoEM_MET_HSG5.wpy(),
-				   ntuple->jet_AntiKt4TopoEM_MET_HSG5.statusWord());
-      
-      // Muons may be ID, combined, or standalone. For the latter especially,
-      // we need to set the MS four-momenta because they are treated differently.
-      m_testUtil->setMuonParameters(ntuple->mu_staco.pt(), ntuple->mu_staco.eta(), ntuple->mu_staco.phi(),
-				    ntuple->mu_staco_MET.wet(), ntuple->mu_staco_MET.wpx(), ntuple->mu_staco_MET.wpy(),
-				    ntuple->mu_staco_MET.statusWord());
-      
-      ////////////////////////////// m_testUtil->setExtraMuonParameters(ntuple->mu_staco_ms.qoverp(), ntuple->mu_staco_ms.theta(), ntuple->mu_staco_ms.phi(), ntuple->mu_staco.charge());
-      
-      // An alternative version of this method is demonstrated below, and takes pT, eta, phi instead.
-      // This is more convenient when one needs to smear the pT, for example.
-      
-      // When the terms are not rebuilt from the objects, due to incomplete info,
-      // then one needs to set the term directly from the stored value in the D3PD.
-      // This might also be done if you aren't interested in the possible variations
-      // of that term. E.g. if you only care about photons, no need to rebuild muons.
-      
-      // m_testUtil->setMETTerm(METUtil::RefJet, MET_RefJet_etx, MET_RefJet_ety, MET_RefJet_sumet);  
-      // m_testUtil->setMETTerm(METUtil::SoftJets, MET_SoftJets_etx, MET_SoftJets_ety, MET_SoftJets_sumet);  
-      // m_testUtil->setMETTerm(METUtil::RefEle, MET_RefEle_etx, MET_RefEle_ety, MET_RefEle_sumet);  
-      // m_testUtil->setMETTerm(METUtil::RefGamma, MET_RefGamma_etx, MET_RefGamma_ety, MET_RefGamma_sumet);
-      
-      // *** Note the difference in naming -- there is normally no MET_MuonTotal term.
-      //     It's usually Muon_Total, Muon_Total_Muid, something like that.
-      //     MET_RefFinal in particular uses MET_MuonBoy.
-      // m_testUtil->setMETTerm(METUtil::MuonTotal, MET_MuonBoy_etx, MET_MuonBoy_ety, MET_MuonBoy_sumet);
-      
-      //   Needed for reading some d3pds such as SMWZ
-      //   double MET_RefFinal_etx = MET_RefFinal_et*cos(MET_RefFinal_phi);
-      //   double MET_RefFinal_ety = MET_RefFinal_et*sin(MET_RefFinal_phi);
-      
-      //   double MET_RefEle_etx = MET_RefEle_et*cos(MET_RefEle_phi);
-      //   double MET_RefEle_ety = MET_RefEle_et*sin(MET_RefEle_phi);
-      
-      //   double MET_RefGamma_etx = MET_RefGamma_et*cos(MET_RefGamma_phi);
-      //   double MET_RefGamma_ety = MET_RefGamma_et*sin(MET_RefGamma_phi);
-      
-      //   double MET_RefJet_etx = MET_RefJet_et*cos(MET_RefJet_phi);
-      //   double MET_RefJet_ety = MET_RefJet_et*sin(MET_RefJet_phi);
-      
-      //   double MET_MuonBoy_etx = MET_MuonBoy_et*cos(MET_MuonBoy_phi);
-      //   double MET_MuonBoy_ety = MET_MuonBoy_et*sin(MET_MuonBoy_phi);
-      
-      //   double MET_RefTau_etx = MET_RefTau_et*cos(MET_RefTau_phi);
-      //   double MET_RefTau_ety = MET_RefTau_et*sin(MET_RefTau_phi);
-      
-      //   double MET_CellOut_Eflow_etx = MET_CellOut_Eflow_et*cos(MET_CellOut_Eflow_phi);
-      //   double MET_CellOut_Eflow_ety = MET_CellOut_Eflow_et*sin(MET_CellOut_Eflow_phi);
-      
-      // *** Note that RefMuon is not rebuilt from muons -- it is a calorimeter term.
-      //     Don't use if MET is rebuilt from AOD (RefMuon==0), as the D3PD branch is from ESD.
-      // m_testUtil->setMETTerm(METUtil::RefMuon, MET_RefMuon_etx, MET_RefMuon_ety, MET_RefMuon_sumet);
-      m_testUtil->setMETTerm(METUtil::RefTau,    ntuple->MET_RefTau.etx_CentralReg(),        ntuple->MET_RefTau.ety_CentralReg(),        ntuple->MET_RefTau.sumet());
-      m_testUtil->setMETTerm(METUtil::SoftTerms, ntuple->MET_CellOut_Eflow.etx_CentralReg(), ntuple->MET_CellOut_Eflow.ety_CentralReg(), ntuple->MET_CellOut_Eflow.sumet());
-      
-      // This is the simple check, where you compare the terms manually against what's in the D3PD.
-      // Note: every call to getMissingET recomputes the terms, so if you need to get more than one
-      // value, e.g. etx, ety, et, sumET, it's more efficient to get the METUtility::METObject.
-      // Usually, comparing etx and/or ety is more informative, because et could be right if
-      // etx and ety were flipped, for example. They also add linearly, which et doesn't.
-      
-      METUtility::METObject RefEle_util = m_testUtil->getMissingET(METUtil::RefEle);
-      METUtility::METObject RefGamma_util = m_testUtil->getMissingET(METUtil::RefGamma);
-      METUtility::METObject RefTau_util = m_testUtil->getMissingET(METUtil::RefTau);
-      METUtility::METObject RefMuon_util = m_testUtil->getMissingET(METUtil::RefMuon);
-      METUtility::METObject RefJet_util = m_testUtil->getMissingET(METUtil::RefJet);
-      METUtility::METObject CellOut_util = m_testUtil->getMissingET(METUtil::SoftTerms);
-      METUtility::METObject MuonTotal_util = m_testUtil->getMissingET(METUtil::MuonTotal);
-      METUtility::METObject RefFinal_util = m_testUtil->getMissingET(METUtil::RefFinal);
-      
-      // If you don't want to test manually, there's a built-in consistency check.
-      // To test just one term, fill a METUtility::METObject with the appropriate values,
-      // then feed it to the checkConsistency() method.
-      // The difference can be retrieved via a reference argument.
-      
-      METUtility::METObject refFinal_test(ntuple->MET_RefFinal.etx_CentralReg(),
-					  ntuple->MET_RefFinal.ety_CentralReg(),
-					  ntuple->MET_RefFinal.sumet());
-      bool check_refFinal = m_testUtil->checkConsistency(refFinal_test,METUtil::RefFinal);
-      if(check_refFinal) {if(verbose) cout << "RefFinal checks out!" << endl;}
-      else cout << "RefFinal doesn't check out!" << endl;
-      
-      // By filling a vector of terms, you can test all of them in one function call.
-      // The sum (and sumET) will be tested as well. (Can't get the difference this way).
-      METUtility::METObject refEle_test(ntuple->MET_RefEle.etx_CentralReg(),
-					ntuple->MET_RefEle.ety_CentralReg(),
-					ntuple->MET_RefEle.sumet());
-      //   METUtility::METObject refGamma_test(MET_RefGamma_etx,
-      // 			MET_RefGamma_ety,
-      // 			MET_RefGamma_sumet);
-      METUtility::METObject refJet_test(ntuple->MET_RefJet.etx_CentralReg(),
-					ntuple->MET_RefJet.ety_CentralReg(),
-					ntuple->MET_RefJet.sumet());
-      
-      METUtility::METObject muonBoy_test(ntuple->MET_MuonBoy.etx_CentralReg(),
-					 ntuple->MET_MuonBoy.ety_CentralReg(),
-					 ntuple->MET_MuonBoy.sumet());
-      vector<pair<int,METUtility::METObject> > testvector;
-      testvector.push_back(pair<int,METUtility::METObject>(METUtil::RefEle,refEle_test));
-      //   testvector.push_back(pair<int,METUtility::METObject>(METUtil::RefGamma,refGamma_test));
-      testvector.push_back(pair<int,METUtility::METObject>(METUtil::RefJet,refJet_test));
-      testvector.push_back(pair<int,METUtility::METObject>(METUtil::MuonTotal,muonBoy_test));
-      
-      bool check = m_testUtil->checkConsistency(testvector);
-      if(check) {if(verbose) cout << "MET checks out!" << endl;}
-      else cout << "MET doesn't check out!" << endl;
-      
-      if((verbose || !check_refFinal || !check) && ( ntuple->MET_RefFinal.et() < 60000) && (RefFinal_util.et() > 60000))
-	{
-	  cout << "** Manual consistency check **" << endl << endl;
-	  
-	  cout << "Term:    Original   vs    Tool output"  << endl;
-	  cout << "RefEle etx: "    << ntuple->MET_RefEle.etx_CentralReg()        << " vs " << RefEle_util.etx()    << endl;
-	  cout << "RefGamma etx: "  << ntuple->MET_RefGamma.etx_CentralReg()      << " vs " << RefGamma_util.etx()  << endl;
-	  cout << "RefTau etx: "    << ntuple->MET_RefTau.etx_CentralReg()        << " vs " << RefTau_util.etx()    << endl;
-	  cout << "RefMuon etx: "   << ntuple->MET_RefMuon.etx_CentralReg()       << " vs " << RefMuon_util.etx()   << endl;
-	  cout << "RefJet etx: "    << ntuple->MET_RefJet.etx_CentralReg()        << " vs " << RefJet_util.etx()    << endl;
-	  cout << "MuonBoy etx: "   << ntuple->MET_MuonBoy.etx_CentralReg()       << " vs " << MuonTotal_util.etx() << endl;
-	  cout << "CellOut etx: "   << ntuple->MET_CellOut_Eflow.etx_CentralReg() << " vs " << CellOut_util.etx()   << endl;
-	  cout << "RefFinal etx: "  << ntuple->MET_RefFinal.etx_CentralReg()      << " vs " << RefFinal_util.etx()  << endl << endl;
-	  
-	  float diff= ((ntuple->MET_RefFinal.et()-RefFinal_util.et())/(ntuple->MET_RefFinal.et()+RefFinal_util.et()))*100;
-	  cout << "Rechazado:    RefFinal et: "   << ntuple->MET_RefFinal.et()    << " vs " << RefFinal_util.et()   <<" = "<< diff <<"%"<<endl << endl;
-	}
-      
-      
-      // In addition to the etx, ety, sumet retrieval, you can also get the MET significance.
-      // By default, METUtility::METObject::sig() returns etx() / ( 0.5*sqrt(sumet()) )
-      // 
-      // There is also the possibility of returning a more sophisticated estimator for
-      // the significance, activated by calling METUtility::doSignificance() in setup.
-      // This is still under development, and requires all object resolutions to be set.
-      
-      delete jet_pt_new;
-      delete jet_eta_new;
-      delete jet_phi_new;
-      delete jet_E_new;
-      
-      delete ph_MET_wet_new;
-      delete ph_MET_wpx_new;
-      delete ph_MET_wpy_new;
-      delete ph_MET_statusWord_new;
-      
-      delete el_MET_wet_new;
-      delete el_MET_wpx_new;
-      delete el_MET_wpy_new;
-      delete el_MET_statusWord_new;
-      
-      
-      
-      /*      
-	      vector<float> *RecalibratedJetPtVec = new vector<float>();
-	      vector<float> *jet_eta = new vector<float>();
-	      vector<float> *jet_phi = new vector<float>();
-	      vector<float> *jet_E = new vector<float>();
-	      vector<float> *jet_MET_wet = new vector<float>();
-	      vector<float> *jet_MET_wpx = new vector<float>();
-	      vector<float> *jet_MET_wpy = new vector<float>();
-	      vector<float> *jet_MET_statusWord = new vector<float>();
-	      
-	      
-	      vector<float> *el_smeared_pt        = new vector<float>();
-	      vector<float> *muon_smeared_pt      = new vector<float>();
-	      vector<float> *muon_smeared_ms_pt   = new vector<float>();
-      */
-      
-      // Jet 
-      /*
-	for (Int_t i = 0; i < jet_branch->n(); i++)
-	{ 
-	Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
-	D3PDReader::JetD3PDObjectElement  *Jet = jet->GetJet();
-	//D3PDReader::MissingETCompositionD3PDObject *MET;
-	
-	jet_eta->push_back(Jet->emscale_eta());
-	jet_phi->push_back(Jet->emscale_phi());
-	jet_E->push_back(Jet->emscale_E());
-	//jet_MET_wet->push_back(ntuple->el_MET.wet()); // XXXXX
-	//jet_MET_wpx->push_back(ntuple->el_MET.wpx());
-	//jet_MET_wpy->push_back(ntuple->el_MET.wpy());
-	//jet_MET_statusWord->push_back(ntuple->el_MET.statusWord());
-	
-	applyChanges(jet);
-	
-	RecalibratedJetPtVec->push_back(jet->rightpt());
-	}
-      */
-      
-      // Electron
-      /*
-	for (Int_t i = 0; i < el_branch->n(); i++)
-	{
-	Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*el_branch)[i]), family);
-	applyChanges(lep);
-	
-	
-	el_smeared_pt->push_back(newEt);
-	}
-      */
-      
-      // Muon
-      /*
-	for (Int_t i = 0; i < mu_branch->n(); i++)
-	{
-	Analysis::ChargedLepton *lep = new Analysis::ChargedLepton(&((*mu_branch)[i]), family);
-	applyChanges(lep);
-	
-	muon_smeared_pt->push_back(muon_pT_forMET);
-	muon_smeared_ms_pt->push_back(muon_pTStandalone_forMET);
-	}
-      */
-      /*   
-///////////////////////////////////////////////////
-float MET_RefTau_etx                          = 0.;
-float MET_RefTau_ety                          = 0.;
-float MET_RefGamma_etx                        = 0.;
-float MET_RefGamma_ety                        = 0.;
-float MET_CellOut_Eflow_etx                   = 0.;
-float MET_CellOut_Eflow_ety                   = 0.;
-
-MET_RefTau_etx                          = MET_RefTau_et * TMath::Cos(MET_RefTau_phi);
-MET_RefTau_ety                          = MET_RefTau_et * TMath::Sin(MET_RefTau_phi);
-MET_RefGamma_etx                        = MET_RefGamma_et * TMath::Cos(MET_RefGamma_phi);
-MET_RefGamma_ety                        = MET_RefGamma_et * TMath::Sin(MET_RefGamma_phi);
-MET_CellOut_Eflow_etx                   = MET_CellOut_Eflow_et * TMath::Cos(MET_CellOut_Eflow_phi);
-MET_CellOut_Eflow_ety                   = MET_CellOut_Eflow_et * TMath::Sin(MET_CellOut_Eflow_phi);
-
-
-
-////////
-m_testUtil->setJetParameters(RecalibratedJetPtVec,
-jet_eta,
-jet_phi,
-jet_E,
-jet_MET_wet,
-jet_MET_wpx,
-jet_MET_wpy,
-jet_MET_statusWord);
-
-//m_testUtil->setOriJetParameters(jet_pt); (no more needed in MIssingETUtility-01-02-05)
-
-m_testUtil->setElectronParameters(el_smeared_pt,
-el_eta, el_phi,
-el_MET_wet_new,
-el_MET_wpx_new,
-el_MET_wpy_new,
-el_MET_statusWord_new);
-
-m_testUtil->setMuonParameters(muon_smeared_pt,
-mu_eta,
-mu_phi,
-mu_MET_wet,
-mu_MET_wpx,
-mu_MET_wpy,
-mu_MET_statusWord);
-
-// In this instance there is an overloaded version of setExtraMuonParameters that accepts smeared pTs for spectro
-m_testUtil->setExtraMuonParameters(muon_smeared_ms_pt,
-mu_ms_theta,
-mu_ms_phi);// charge ??
-      */
-      
-      //m_testUtil->setMETTerm(METUtil::RefEle,        ntuple->MET_RefEle.etx(),        ntuple->MET_RefEle.ety(),        ntuple->MET_RefEle.sumet());///////
-      //m_testUtil->setMETTerm(METUtil::MuonTotal,     ntuple->MET_MuonBoy.etx(),       ntuple->MET_MuonBoy.ety(),       ntuple->MET_MuonBoy.sumet());//////
-      //m_testUtil->setMETTerm(METUtil::RefTau,        ntuple->MET_RefTau.etx(),        ntuple->MET_RefTau.ety(),        ntuple->MET_RefTau.sumet());
-      //m_testUtil->setMETTerm(METUtil::RefGamma,      ntuple->MET_RefGamma.etx(),      ntuple->MET_RefGamma.ety(),      ntuple->MET_RefGamma.sumet());
-      //m_testUtil->setMETTerm(METUtil::CellOut_Eflow, ntuple->MET_CellOut_Eflow.etx(), ntuple->MET_CellOut_Eflow.ety(), ntuple->MET_CellOut_Eflow.sumet());
-      
-      
-      //// to get METRefFinal
-      //METUtility::METObject met_refFinal = m_testUtil->getMissingET(METUtil::RefFinal);
-      //met_refFinal_et  = ntuple->MET_RefFinal.et();
-      //met_refFinal_etx = ntuple->MET_RefFinal.etx();
-      //met_refFinal_ety = ntuple->MET_RefFinal.ety();
-      //met_refFinal_phi = ntuple->MET_RefFinal.phi();
-      
-      //delete RecalibratedJetPtVec;
-      //delete muon_smeared_pt;
-      //delete muon_smeared_ms_pt;
-      //delete el_smeared_pt;
-      
-      METUtility::METObject met_refFinal = m_testUtil->getMissingET(METUtil::RefFinal);
-      cout<<"WARNING!!! Retuning RefFinal_util.et() | Recalculated"<<endl;
-      return  met_refFinal.et(); // ntuple->MET_RefFinal.et();  // 10th February 2014
+      cout<<"WARNING!!! Retuning MET_Final NOT Topo Implemented yet!!"<<endl;
+      return  ntuple->MET_RefFinal.et();
+      // IMPORTANT NOTE:
+      //    Check Version of the code 00-00-21 (created the 19th June 2014)
+      //    for details of what was here before this cleaning.
     }
 }
 
@@ -7299,7 +6914,8 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
   
   
   int newJetFlav          = GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
-  int NumBTagEigenVar     = -1;     
+  int NumBTagEigenVar     = -1;
+  bool DEBUG_PRINT        = kFALSE;
   
   // jet flavor truth values checked on lxr
   if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
@@ -7388,14 +7004,16 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
 	  tmpbtagsys[tmp+tmp+40] = res_sys.first;
 	  tmpbtagsys[tmp+tmp+41] = res_sys.second;
 	}
-      /*
-	cout<<tmp<<" -> SF for B     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
-	  <<tmpbtagsys[tmp+tmp+0]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+1]<<endl;
-      cout<<tmp<<" -> SF for C     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
-	  <<tmpbtagsys[tmp+tmp+20]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+21]<<endl;
-      cout<<tmp<<" -> SF for Light = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
-	  <<tmpbtagsys[tmp+tmp+40]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+41]<<endl;
-      */
+      
+      if(DEBUG_PRINT)
+	{
+	  cout<<tmp<<" -> SF for B     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	      <<tmpbtagsys[tmp+tmp+0]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+1]<<endl;
+	  cout<<tmp<<" -> SF for C     = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	      <<tmpbtagsys[tmp+tmp+20]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+21]<<endl;
+	  cout<<tmp<<" -> SF for Light = "<<res.first<<" , with #variations = "<<NumBTagEigenVar<<" , where the first Up is = "
+	      <<tmpbtagsys[tmp+tmp+40]<<" , and the first Down is = "<<tmpbtagsys[tmp+tmp+41]<<endl;
+	}
     }
   
   pair <double,double> result;
@@ -8157,10 +7775,10 @@ Bool_t HiggsllqqAnalysis::Pair_Quality()
 {
   Bool_t GoodQ = false;
   
-  D3PDReader::ElectronD3PDObjectElement *el_1;
-  D3PDReader::ElectronD3PDObjectElement *el_2;
-  D3PDReader::MuonD3PDObjectElement     *mu_1;
-  D3PDReader::MuonD3PDObjectElement     *mu_2;
+  D3PDReader::ElectronD3PDObjectElement *el_1(0);
+  D3PDReader::ElectronD3PDObjectElement *el_2(0);
+  D3PDReader::MuonD3PDObjectElement     *mu_1(0);
+  D3PDReader::MuonD3PDObjectElement     *mu_2(0);
   
   //Taking the 2 muons/electrons of the "loose"couple already found
   if (getChannel() == HiggsllqqAnalysis::MU2 && m_GoodMuons.size() == 2)
@@ -8260,7 +7878,6 @@ Bool_t HiggsllqqAnalysis::JetBestPairResult()
   Jone =800;
   Jtwo =900;
   int ii(-1),jj(-1);
-  float had(0);
   
   std::vector<Analysis::Jet *>::iterator jet_itr_a;
   for(jet_itr_a = m_GoodJets.begin(); jet_itr_a != m_GoodJets.end(); ++jet_itr_a)
@@ -8287,7 +7904,6 @@ Bool_t HiggsllqqAnalysis::JetBestPairResult()
 		{
 		  Jone = tmpJone;
 		  Jtwo = tmpJtwo;
-		  had = hadZ.M();
 		}
 	    }
 	}
