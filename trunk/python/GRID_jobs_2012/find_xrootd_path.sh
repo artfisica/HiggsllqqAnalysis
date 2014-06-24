@@ -14,8 +14,8 @@
 
 ###################################################################################################################################################################
 FILE=$1                                                                                                                                                          ##
-SITE="INFN-ROMA1_LOCALGROUPDISK" ##"INFN-NAPOLI-ATLAS_LOCALGROUPDISK"                                                                                            ##
-SERVER="grid-cert-03.roma1.infn.it" ##"t2-dpm-01.na.infn.it"                                                                                                     ##
+SITE="INFN-NAPOLI-ATLAS_LOCALGROUPDISK" ## "INFN-ROMA1_LOCALGROUPDISK"                                                                                           ##
+SERVER="t2-dpm-01.na.infn.it" ## "grid-cert-03.roma1.infn.it"                                                                                                    ##
 date                                                                                                                                                             ##
 echo "  "                                                                                                                                                        ##
 echo "################################"                                                                                                                          ##

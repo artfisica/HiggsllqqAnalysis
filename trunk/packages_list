@@ -24,8 +24,5 @@ atlasoff/PhysicsAnalysis/TileID/TileTripReader/tags/TileTripReader-00-00-19
 atlasoff/PhysicsAnalysis/ElectronPhotonID/ElectronPhotonSelectorTools/tags/ElectronPhotonSelectorTools-00-00-55
 atlasoff/PhysicsAnalysis/JetMissingEtID/JetSelectorTools/tags/JetSelectorTools-00-00-23
 atlasoff/PhysicsAnalysis/MuonID/MuonIDAnalysis/MuonIsolationCorrection/tags/MuonIsolationCorrection-01-01
-svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/D3PDTools/RootCoreCLHEP/tags/RootCoreCLHEP-00-00-12
 atlasoff/Reconstruction/Jet/JetAnalysisTools/BCHCleaningTool/tags/BCHCleaningTool-00-00-10
-svn+ssh://svn.cern.ch/reps/arturos/HiggsAnalysisHZZllqq/tags/HiggsAnalysisHZZllqq-00-00-01 HiggsAnalysis
-svn+ssh://svn.cern.ch/reps/arturos/JetTagAlgorithmsHZZllqq/tags/JetTagAlgorithmsHZZllqq-00-00-01 JetTagAlgorithms
-
+svn+ssh://svn.cern.ch/reps/atlasphys/Physics/Higgs/HSG5/Limits/InputPreparation/CorrsAndSysts

@@ -57,6 +57,7 @@
 #include "JetUncertainties/MultijetJESUncertaintyProvider.h"
 #include "TileTripReader/TTileTripReader.h"
 #include "BCHCleaningTool/BCHCleaningToolRoot.h"
+#include "HiggsllqqAnalysis/CorrsAndSysts.h"
 
 // TestSelection needs (redundancies to be removed)
 #include <fstream>
@@ -730,7 +731,8 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   egRescaler::EnergyRescalerUpgrade  *m_ElectronEnergyRescaler;
   Root::TTileTripReader              *m_treader;
   BCHTool::BCHCleaningToolRoot       *m_thebchTool;
-  
+  CorrsAndSysts                      *m_corrsAndSysts;
+ 
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSF;
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFCalo;
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFSA;
@@ -745,7 +747,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   MuonTriggerMatching            *m_MuonTriggerMatchTool;
   ElectronTriggerMatching        *m_ElectronTriggerMatchTool;
   Root::TElectronLikelihoodTool  *El_IDtool;   // November 2013
-  
+ 
   TH2F      *m_smearD0[3];
   TRandom3   m_smearD0_rand;
   TAxis     *m_smearD0_x;

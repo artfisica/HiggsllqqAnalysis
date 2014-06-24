@@ -499,8 +499,21 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_thebchTool->InitializeTool(esData, m_treader, "BCHCleaningTool/share/FractionsRejectedJetsMC.root");
   
   /*************************************************************************************************************/
+ 
+
+  /*************************************************************************************************************/
+  // Initialization of the Modelling systematics // 21th June 2014
+  m_corrsAndSysts = new CorrsAndSysts(2,2012); 
   
-  
+  // Get the name of the sample 
+  TString name("");
+  if(ntuple->eventinfo.RunNumber()=169051) { name = "WHlvbb"; cout<<"   this is ggH400NWA signal llqq ****"<<endl; }
+  else {
+     cout << "Cannot find sample which matches this file name" << endl;
+       }
+  /*************************************************************************************************************/
+
+ 
   return kTRUE;
 }
 
@@ -2778,7 +2791,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   Float_t eta_det    = Jet->emscale_eta();
   Float_t cal_pt     = jet->rightpt();
   
-  if(cal_pt<50000. && TMath::Abs(eta_det) < 2.4) // June 2th, 2014. Review and keep!!!
+  if(cal_pt<50000. && TMath::Abs(jet->righteta()/*eta_det*/) < 2.4) // June 2th, 2014. Review and keep!!!
     {
       JVFcutUp   = jvfTool->getJVFcut(jvtxf_cut, isPU, cal_pt, eta_det, true);
       JVFcutDown = jvfTool->getJVFcut(jvtxf_cut, isPU, cal_pt, eta_det, false);
@@ -2799,7 +2812,8 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   
   Bool_t dolowmass = GetDoLowMass();
   
-  
+	// cout<<"     ***** Running Sytematic = "<<getSystematicToDo()<<"    ******** the JVF cut is = "<<jvtxf_cut<<" ******** "<<endl; 
+ 
   if(Jet->isBadLooseMinus() == 0) jet->set_lastcut(HllqqJetQuality::jetCleaning);
   else return kFALSE;
   
@@ -2819,7 +2833,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
       else return kFALSE;
     }
   
-  if(jet->rightpt()<50000. && TMath::Abs(Jet->emscale_eta()) < 2.4) // June 2th, 2014. Review and keep!!!
+  if(jet->rightpt()<50000. && TMath::Abs(jet->righteta()/*Jet->emscale_eta()*/) < 2.4) // June 23th, 2014. Review and keep!!!
     {
       if (TMath::Abs(Jet->jvtxf()) > jvtxf_cut) jet->set_lastcut(HllqqJetQuality::Pileup);
       else return kFALSE;
@@ -8153,7 +8167,7 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight(Int_t cut)
 	return result;
     }
   
-  // ToDo: Instrucciones para instalar las systematics of Z+jets Modelling
+  // ToDo: Instrucciones para instalar las systematics of Z+jets odelling
   //     Calcular todas las sistematicas pero solo para las runNumber que correspondan a z+jets bkgs. Y luego, dada la systematicsToDoNumber, multiplicar el peso Nominal DPhi * CurrentSytematic.
   //     Siendo el numero de systematics 2*3 = 6
   

@@ -2,7 +2,7 @@
   
 prun --cmtConfig x86_64-slc6-gcc47-opt --exec "echo %IN > input.txt; python HiggsllqqAnalysis/python/regolari.py; cat input.txt; ./HiggsllqqAnalysis/bin/test --analysis rel_17_2 --useTopoIso --input input.txt --output output.root --MV1c --GSC" --outDS user.arturos.169039.ggH580CPS_ZZllqq.NTUP_HSG2_XXX --outputs output.root --inDS mc12_8TeV.169039.PowhegPythia8_AU2CT10_ggH580CPS_ZZllqq.merge.NTUP_HSG2.e1622_s1581_s1586_r3658_r3549_p1649/ --nFilesPerJob=1 --useRootCore --extFile=*/*/*.root*,*/*/*/*.root*,*/*/*/*/*.root*,*/*/*/*/*/*.root*, --outTarBall tarball.tar --noSubmit --noCompile --rootVer 5.34.14 --destSE=INFN-ROMA1_LOCALGROUPDISK,INFN-NAPOLI-ATLAS_LOCALGROUPDISK 
         ## 
-lun 19 mag 2014, 18.44.47, CEST
+Wed May 28 00:10:56 CEST 2014
   
   
 ################################
