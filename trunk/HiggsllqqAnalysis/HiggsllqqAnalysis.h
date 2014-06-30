@@ -4,10 +4,12 @@
 /** @class HiggsllqqAnalysis HiggsllqqAnalysis.h
     
     Code to perform SM H -> ZZ(*) -> qqll analysis.
-
+    
     @start  date 08/15/2012 
-    @update date 12/02/2013
-*/
+    @update date 24/06/2014
+    
+    arturos@cern.ch
+**/
 
 #include <TEfficiency.h>
 
@@ -91,83 +93,83 @@ using namespace std;
 namespace DataPeriod
 {
   enum
-    {
-      y2011_A, // data11
-      y2011_B,
-      y2011_C,
-      y2011_D,
-      y2011_E,
-      y2011_F,
-      y2011_G,
-      y2011_H,
-      y2011_I,
-      y2011_J,
-      y2011_K,
-      y2011_L,
-      y2011_M,
-      y2012_A, // data12
-      y2012_B, // data12
-      y2012_C, // data12
-      y2012_D, // data12
-      y2012_E, // data12
-      // DO NOT USE VALUES BELOW THIS LINE FOR COMPARISON (e.g. AI < JM makes no sense)
-      y2011_BD, // MC
-      y2011_EH,
-      y2011_LM,
-      y2012_AllYear,
-    };
+  {
+    y2011_A, // data11
+    y2011_B,
+    y2011_C,
+    y2011_D,
+    y2011_E,
+    y2011_F,
+    y2011_G,
+    y2011_H,
+    y2011_I,
+    y2011_J,
+    y2011_K,
+    y2011_L,
+    y2011_M,
+    y2012_A, // data12
+    y2012_B, // data12
+    y2012_C, // data12
+    y2012_D, // data12
+    y2012_E, // data12
+    // DO NOT USE VALUES BELOW THIS LINE FOR COMPARISON (e.g. AI < JM makes no sense)
+    y2011_BD, // MC
+    y2011_EH,
+    y2011_LM,
+    y2012_AllYear,
+  };
 }
 
 
 namespace HllqqCutFlow
 {
   enum
-    {
-      Entries,
-      HFOR,
-      GRL,
-      larError,
-      Trigger,
-      Vertex,
-      METcleaning,
-      LArHole,
-      NumberOfLeptons,
-      TriggerConsistency,
-      OppositeSign,
-      TwoJets,
-      DileptonMass,
-      MET,
-      NumTagJets,
-      DiJetMass,
-    };
+  {
+    Entries,
+    HFOR,
+    GRL,
+    larError,
+    Trigger,
+    Vertex,
+    METcleaning,
+    LArHole,
+    NumberOfLeptons,
+    TriggerConsistency,
+    OppositeSign,
+    TwoJets,
+    DileptonMass,
+    MET,
+    NumTagJets,
+    DiJetMass,
+  };
 }
 
 
 namespace HllqqCutFlow0tag
 {
   enum
-    {
-      NumTagJets0,
-      PtLeadingJet0,
-      DiJetMass0,
-      //    JetPt0,
-      //    Ptleptons0,
-      //    Dphileptons0,
-    };
+  {
+    NumTagJets0,
+    PtLeadingJet0,
+    DiJetMass0,
+    //    JetPt0,
+    //    Ptleptons0,
+    //    Dphileptons0,
+  };
 }
 
 
 namespace HllqqCutFlow1tag
 {
   enum
-    {
-      NumTagJets1,
-      PtLeadingJet1,
-      DiJetMass1,
-      //    JetPt0,
-      //    Ptleptons0,
-      //    Dphileptons0,
-    };
+  {
+    NumTagJets1,
+    PtLeadingJet1,
+    DiJetMass1,
+    //    JetPt0,
+    //    Ptleptons0,
+    //    Dphileptons0,
+  };
 }
 
 
@@ -188,7 +190,7 @@ namespace HllqqCutFlow2tag
 namespace HllqqMuonQuality
 {
   enum
-    {
+  {
       family,
       quality,
       eta,
@@ -200,50 +202,50 @@ namespace HllqqMuonQuality
       Isolation,
       overlap,
       medium,
-    };
+  };
 }
 
 
 namespace HllqqElectronQuality
 {
   enum
-    {
-      family,
-      algorithm,
-      quality,
-      eta,
-      Et,
-      objectquality,
-      z0,
-      d0Sig, 
-      Isolation,
-      overlap,
-      medium,
-    };
+  {
+    family,
+    algorithm,
+    quality,
+    eta,
+    Et,
+    objectquality,
+    z0,
+    d0Sig, 
+    Isolation,
+    overlap,
+    medium,
+  };
 }
 
 
 namespace HllqqJetQuality
 {
   enum
-    {
-      jetCleaning,
-      kinematics,
-      Pileup,
-      overlap,
-    };
+  {
+    jetCleaning,
+    kinematics,
+    Pileup,
+    overlap,
+  };
 }
 
 
 namespace HllqqGRL
 {
   enum
-    {
-      // offset in the vector of GRLs: this number, plus the output of getChannel(), gives the location of the GRL to be read for that channel and that year
-      // the difference between two consecutive members of this enum it must be equal to the number of entries in the enum of the class HiggsllqqAnalysis (i.e. { MU2, MUE, E2 } -> 3)
-      data11 = 0,
-      data12 = 3,
-    };
+  {
+    // offset in the vector of GRLs: this number, plus the output of getChannel(), gives the location of the GRL to be read for that channel and that year
+    // the difference between two consecutive members of this enum it must be equal to the number of entries in the enum of the class HiggsllqqAnalysis (i.e. { MU2, MUE, E2 } -> 3)
+    data11 = 0,
+    data12 = 3,
+  };
 }
 
 
@@ -286,6 +288,10 @@ typedef struct
   int   low_event;
   int   n_jets;
   int   n_b_jets;
+  // 26th June 2014: Three more generic variables for final analysis setups.
+  bool  isMCsample;
+  float luminosity;
+  float Xsection;
   //////////////////////
   float lep1_m;
   float lep1_pt;
@@ -699,12 +705,12 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     m_JetbTagger = val;
   }
-
+  
   virtual void setJetCalibration(Int_t val)
   {
     m_JetCalibration = val;
   }
-
+  
   virtual void setSystematicToDo(Int_t val)
   {
     m_SystematicToDo = val;
@@ -732,7 +738,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Root::TTileTripReader              *m_treader;
   BCHTool::BCHCleaningToolRoot       *m_thebchTool;
   CorrsAndSysts                      *m_corrsAndSysts;
- 
+  
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSF;
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFCalo;
   Analysis::AnalysisMuonConfigurableScaleFactors  *m_MuonEffSFSA;
@@ -747,7 +753,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   MuonTriggerMatching            *m_MuonTriggerMatchTool;
   ElectronTriggerMatching        *m_ElectronTriggerMatchTool;
   Root::TElectronLikelihoodTool  *El_IDtool;   // November 2013
- 
+  
   TH2F      *m_smearD0[3];
   TRandom3   m_smearD0_rand;
   TAxis     *m_smearD0_x;
@@ -768,6 +774,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   // utility maps
   std::map<UInt_t, Float_t>  m_CrossSection;
   std::map<UInt_t, Int_t>    m_SignalSampleMass;
+  std::map<UInt_t, Int_t>    m_BackgoundSampleMass;
   
   
   // channels to be processed and cutflows
@@ -878,14 +885,14 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   {
     return m_jetFamily;
   }
- 
-
+  
+  
   virtual Int_t getJetbTagger()
   {
     return m_JetbTagger;
   }
-
-
+  
+  
   virtual Int_t getJetCalibration()
   {
     return m_JetCalibration;
@@ -919,6 +926,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   virtual Float_t getSFWeight();
   virtual Float_t getggFWeight();
   virtual Float_t getDPhijjZWeight(Int_t cut);
+  virtual Float_t getBkgPtVCorrectionWeight(); // 25th June 2014. Inserting the modelling corrections and their systematics
   
   
   // Trigger SF 
@@ -926,7 +934,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   
   // tools for cross section computation
   void            initCrossSections();  // to be change!! error
-  Float_t         getCrossSectionWeight();
+  Float_t         getCrossSection();
   Float_t         getTruthHiggsMass();
   virtual Float_t getTruthHiggsPt();    // to be change!! error
   
@@ -970,7 +978,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t getCorrectMETValue();
   Float_t GetMV1value(Analysis::Jet *jet);
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
-
+  
   // 19th May 2014, BCH studies
   pair <Bool_t,Bool_t> GetIsBadXBCH(int run, int lbn, double eta, double phi, double BCH_CORR_CELL, double emfrac, double pt, int isUp);
   pair <Int_t,Int_t> GetRunNumberAndLumiBlock();
@@ -1236,6 +1244,10 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Int_t   m_HFOR;
   Int_t   m_low_event;
   Int_t   m_trig_flag;
+  // 26th June 2014: Three more generic variables for final analysis setups.
+  Bool_t  m_isMCsample;
+  Float_t m_luminosity;
+  Float_t m_Xsection;
   //
   Float_t m_weight;
   Float_t m_SFWeight;
