@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: May 18th, 2014
+    Update: June 25th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -42,6 +42,7 @@ Bool_t MuonSmearing          = kTRUE,
   
   DoCaloMuons                = kTRUE,
   DoggFWeight                = kTRUE,
+  DoBkgPtVCorrection         = kTRUE, // 25th June 2014: including variables for modelling weights calculation.
   Print_weights              = kFALSE,
   
 // Do Jet Kinematic Fitter OR USE THE 2 LEADING JETS
@@ -113,6 +114,9 @@ Float_t EtaWindow     = 2.5;   // 4.5;
 
 // Sherpa OR pt cut
 Float_t SherpaORptCut = 40000.; // 70000.;
+
+// Luminosity value: June 2014
+Float_t CurrentLuminosity = 20.3; //fb-1
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
 int NumSystematicsToDo = 0;     // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
@@ -288,7 +292,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_PileupReweighter = new Root::TPileupReweighting("m_PileupReweighter");
   m_PileupReweighter->SetUnrepresentedDataAction(2);
   
-
+  
   // Reference: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/InDetTrackingPerformanceGuidelines#Pile_up_rescaling
   if (analysis_version() == "rel_17")        // mc11c, 2011
     {
@@ -499,21 +503,19 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   m_thebchTool->InitializeTool(esData, m_treader, "BCHCleaningTool/share/FractionsRejectedJetsMC.root");
   
   /*************************************************************************************************************/
- 
-
+  
+  
   /*************************************************************************************************************/
   // Initialization of the Modelling systematics // 21th June 2014
   m_corrsAndSysts = new CorrsAndSysts(2,2012); 
   
   // Get the name of the sample 
   TString name("");
-  if(ntuple->eventinfo.RunNumber()=169051) { name = "WHlvbb"; cout<<"   this is ggH400NWA signal llqq ****"<<endl; }
-  else {
-     cout << "Cannot find sample which matches this file name" << endl;
-       }
+  if(ntuple->eventinfo.RunNumber()=169051) { name = "HZZllqq"; cout<<"   this is ggH400NWA signal llqq ****"<<endl; }
+  else { cout << "Cannot find sample which matches this file name" << endl; }
   /*************************************************************************************************************/
-
- 
+  
+  
   return kTRUE;
 }
 
@@ -2098,16 +2100,16 @@ void HiggsllqqAnalysis::getGoodMuons()
 	      {
 		
 		/*cout<<"   Removing low pt muon "
-		    <<i
-		    <<" overlaping the good jet "
-		    <<theJetNow
-		    <<"!... continue...DR = "
-		    <<mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))
-		    <<"  and mu-pt = "
-		    <<i_mu->pt()
-		    <<endl;
-		  */  
-
+		  <<i
+		  <<" overlaping the good jet "
+		  <<theJetNow
+		  <<"!... continue...DR = "
+		  <<mu_i->Get4Momentum()->DeltaR(*(jet->Get4Momentum()))
+		  <<"  and mu-pt = "
+		  <<i_mu->pt()
+		  <<endl;
+		*/  
+		
 		// found an jet overlapped to a jet
 		skip_muon[i] = kTRUE;
 	      } // overlapping muon/jet
@@ -2699,7 +2701,7 @@ Bool_t HiggsllqqAnalysis::isGood(Analysis::ChargedLepton *lep)
 		  
 		  if (passLH) lep->set_lastcut(HllqqElectronQuality::quality);
 		  else return kFALSE;
-	
+		  
 		} // End El_IDtool!
 	    } // End High Mass
 	} // End rel. 17.2
@@ -2812,8 +2814,8 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
   
   Bool_t dolowmass = GetDoLowMass();
   
-	// cout<<"     ***** Running Sytematic = "<<getSystematicToDo()<<"    ******** the JVF cut is = "<<jvtxf_cut<<" ******** "<<endl; 
- 
+  // cout<<"     ***** Running Sytematic = "<<getSystematicToDo()<<"    ******** the JVF cut is = "<<jvtxf_cut<<" ******** "<<endl; 
+  
   if(Jet->isBadLooseMinus() == 0) jet->set_lastcut(HllqqJetQuality::jetCleaning);
   else return kFALSE;
   
@@ -3218,7 +3220,7 @@ Bool_t HiggsllqqAnalysis::finalize_analysis()
   // clear the maps
   m_CrossSection.clear();
   m_SignalSampleMass.clear();
-  
+  m_BackgoundSampleMass.clear();
   
   // clear the cutflows
   m_Channels.clear();
@@ -3551,6 +3553,7 @@ void HiggsllqqAnalysis::initCrossSections()  //To be updated . Error Agosto2013
 {
   m_CrossSection.clear();
   m_SignalSampleMass.clear();
+  m_BackgoundSampleMass.clear();
   
   // values are in fb
   m_CrossSection[107650] = 827375;
@@ -3716,38 +3719,42 @@ void HiggsllqqAnalysis::initCrossSections()  //To be updated . Error Agosto2013
 }
 
 
-Float_t HiggsllqqAnalysis::getCrossSectionWeight() //To be updated . Error. Agosto2013
+Float_t HiggsllqqAnalysis::getCrossSection() // 25th June 2014. Reconstruction of the method
 {
-  Float_t result(-9999.9);
+  Float_t xsec = -1.;
   
   if (isMC())
     {
       UInt_t chan = ntuple->eventinfo.mc_channel_number();
-      
-      // ZZ cross section with M_ZZ dependent K factor
-      if (chan == 109292 || chan == 109291)
+      std::map<UInt_t, Float_t>::iterator it;
+      it = m_CrossSection.find(chan);
+      if (it != m_CrossSection.end())
 	{
-	  Float_t xsec = CrossSections::GetBkgCrossSection(chan, kFALSE);
-	  Float_t mcfm = GetMzzWeightFromMCFM(126000/*getTruthZZMass()*/ / 1000.); //To be corrected!! Error. Agosto2013
-	  result = xsec * mcfm;
-	}
-      // Other cross sections
-      else 
+	  xsec = it->second;
+     	}
+    }
+  
+  return xsec;
+}
+
+/*=======================================================================================================================================================*/
+/* June 2014: Section dedicate to the creation and modification of the methods relative to the MC weights of the physics signal and background processes */
+
+Float_t HiggsllqqAnalysis::getBkgPtVCorrectionWeight()
+{
+  Float_t result = 1.;
+  
+  if (isMC() && DoBkgPtVCorrection)
+    {
+      // check if this is a signal PowHeg ggF sample
+      if (m_SignalSampleMass.find(ntuple->eventinfo.mc_channel_number()) != m_SignalSampleMass.end())
 	{
-	  Float_t xsec = -1.;
-	  std::map<UInt_t, Float_t>::iterator it;
-	  it = m_CrossSection.find(chan);
-	  if (it != m_CrossSection.end())
-	    {
-	      xsec = it->second;
-	    }
-	  result = xsec;
+	  result = m_ggFReweighter->getWeight(getTruthHiggsPt() / 1000);
 	}
     }
   
   return result;
 }
-
 
 Float_t HiggsllqqAnalysis::getggFWeight()
 {
@@ -4277,6 +4284,9 @@ void HiggsllqqAnalysis::InitReducedNtuple()
   m_reduced_ntuple->Branch("SystematicEvent",&m_SystematicEvent);
   m_reduced_ntuple->Branch("islowevent",&m_low_event);
   m_reduced_ntuple->Branch("last_cut",&m_cut);
+  m_reduced_ntuple->Branch("isMCsample",&m_isMCsample);
+  m_reduced_ntuple->Branch("luminosity",&m_luminosity);
+  m_reduced_ntuple->Branch("Xsection",&m_Xsection);
   m_reduced_ntuple->Branch("jet_m",&m_jets_m);
   m_reduced_ntuple->Branch("jet_pt",&m_jets_pt);
   m_reduced_ntuple->Branch("jet_eta",&m_jets_eta);
@@ -4394,6 +4404,9 @@ void HiggsllqqAnalysis::ResetReducedNtupleMembers()
   m_qcdevent          = -1;
   m_SystematicEvent   = -1;
   m_low_event         = -1;
+  m_isMCsample        = kFALSE;
+  m_luminosity        = -1;
+  m_Xsection          = -1;
   m_met_met           = -9999.;
   m_met_phi           = -9999.;
   m_met_sumet         = -9999.;
@@ -4415,16 +4428,20 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
   
   if (cut >= minimum_cut)
     { 
-      /////////////////Run Number for Data and MC: 21th May 2014////////////////
+      ///////////////Run Number for Data and MC: 21th May 2014. Update of 2 more vers 26th June 2014//////////////
       if (!isMC())
 	{
-	  m_run =  ntuple->eventinfo.RunNumber();
-	  m_mc_run = ntuple->eventinfo.RunNumber();
+	  m_run        = ntuple->eventinfo.RunNumber();
+	  m_mc_run     = ntuple->eventinfo.RunNumber();
+	  m_isMCsample = kFALSE;
+	  m_Xsection   = 0;
 	}
       else if (isMC())
 	{
-	  m_run = ntuple->eventinfo.mc_channel_number();
-	  m_mc_run = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),(isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing());
+	  m_run        = ntuple->eventinfo.mc_channel_number();
+	  m_mc_run     = m_PileupReweighter->GetRandomRunNumber(ntuple->eventinfo.RunNumber(),(isMC() && ntuple->eventinfo.lbn()==1 && int(ntuple->eventinfo.averageIntPerXing()+0.5)==1) ? 0. : ntuple->eventinfo.averageIntPerXing());
+	  m_isMCsample = kFALSE;
+	  m_Xsection   = getCrossSection(); 
 	}
       /////////////////////////////////////////////////////////////////////////
       
@@ -4442,6 +4459,7 @@ void HiggsllqqAnalysis::FillReducedNtuple(Int_t cut, UInt_t channel)
       m_truthH_pt         = -1.;
       m_NPV               =  0;
       m_channel           = channel;
+      m_luminosity        = CurrentLuminosity;
       
       
       if(channel == HiggsllqqAnalysis::MU2)
