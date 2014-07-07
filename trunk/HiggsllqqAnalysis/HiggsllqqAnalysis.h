@@ -979,10 +979,19 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   Float_t GetMV1value(Analysis::Jet *jet);
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
   
+
   // 19th May 2014, BCH studies
   pair <Bool_t,Bool_t> GetIsBadXBCH(int run, int lbn, double eta, double phi, double BCH_CORR_CELL, double emfrac, double pt, int isUp);
   pair <Int_t,Int_t> GetRunNumberAndLumiBlock();
   //
+  
+  
+  // 04th July 2014, modelling Corr&Syst helping methods
+  Float_t GetTruthPt();
+  Bool_t IsSherpaZjetSample(int mcRunNumber);
+  pair<Float_t,TString> EventType(int RunNumber);
+  //
+  
   
   // Flavor Jet Methods
   Bool_t  isHeavyJet(Int_t pdg);
