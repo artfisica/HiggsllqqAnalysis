@@ -1,0 +1,2 @@
+dq2-ls -L INFN-ROMA1_LOCALGROUPDISK -fp $2 
+ 
