@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: June 25th, 2014
+    Update: June 30th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -3029,6 +3029,15 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 			      <<"|"<<tmpWeight
 			      <<"|"<<endl;
 			}
+
+		      /*CAS::EventType evtType = m_corrsAndSysts->GetEventType(EventType(ntuple->eventinfo.mc_channel_number()).second);
+		      cout<<"   Correction test = "
+			  <<m_corrsAndSysts->Get_BkgDeltaPhiCorrection(evtType, getDPhijjZWeight(1), 4, GetTruthPt())
+			  <<"    "
+			  <<evtType
+			  <<"    "
+			  <<GetTruthPt()
+			  <<endl;*/
 		      
 		      // update cutflows
 		      if(getSystematicToDo()==-1) m_EventCutflow[chan].addCutCounter(last_event, 1);
@@ -8162,7 +8171,8 @@ Float_t HiggsllqqAnalysis::getDiLeptonMass()
 
 Float_t HiggsllqqAnalysis::getDPhijjZWeight(Int_t cut)
 {
-  Float_t result = 1.;
+  Float_t result    = 1.;
+  Float_t dphi2jets =-1.;
   
   if(DoDPhiWeight)
     {      
@@ -8176,9 +8186,9 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight(Int_t cut)
 	  j1_LJ.SetPtEtaPhiM(m_GoodJets.at(0)->rightpt(),m_GoodJets.at(0)->righteta(),m_GoodJets.at(0)->rightphi(),m_GoodJets.at(0)->Get4Momentum()->M());
 	  j2_LJ.SetPtEtaPhiM(m_GoodJets.at(1)->rightpt(),m_GoodJets.at(1)->righteta(),m_GoodJets.at(1)->rightphi(),m_GoodJets.at(1)->Get4Momentum()->M());
 	  
-	  Float_t dphi2jets = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
-	  Float_t val       = f->Eval(dphi2jets);
-	  //cout<<"  F(x)   = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
+	  dphi2jets       = TMath::Abs(j1_LJ.DeltaPhi(j2_LJ));
+	  Float_t val     = f->Eval(dphi2jets);
+	  //cout<<"  F(x) = "<<val<<" .for the DPhi = "<<dphi2jets<<endl;
 	  result           *= val;
 	}
       else 
@@ -8368,4 +8378,367 @@ pair <Int_t,Int_t> HiggsllqqAnalysis::GetRunNumberAndLumiBlock()
   RunLumiInfo.second = tmp_lbn;
   
   return RunLumiInfo;
+}
+
+
+// Method to get the Truth pt of the Z boson in Z+jet samples and the truth pt in Top samples
+Float_t HiggsllqqAnalysis::GetTruthPt()
+{
+  Float_t result(-9999.);
+  
+  if (isMC())
+    {  
+      if ( IsSherpaZjetSample(ntuple->eventinfo.mc_channel_number()) )
+	{
+	  int pdg(0),one(0);
+	  TLorentzVector lepton_1;
+	  TLorentzVector lepton_2;
+	  TLorentzVector Z_12;
+	  
+	  for (Int_t i = 0; i < ntuple->mc.n(); i++)
+	    {
+	      if (ntuple->mc[i].status() != 3) { continue; }
+	      
+	      pdg = TMath::Abs(ntuple->mc[i].pdgId());
+	      
+	      if(pdg < 11) { continue; }
+	      if(pdg > 16) { continue; }
+	      
+	      one++;
+	      
+	      if(one==1)
+		lepton_1.SetPtEtaPhiM(ntuple->mc[i].pt(),
+				      ntuple->mc[i].eta(),
+				      ntuple->mc[i].phi(),
+				      ntuple->mc[i].m());
+	      
+	      if(one==2)
+		lepton_2.SetPtEtaPhiM(ntuple->mc[i].pt(),
+				      ntuple->mc[i].eta(),
+				      ntuple->mc[i].phi(),
+				      ntuple->mc[i].m());
+	      
+	    } // loop over truth particles
+	  
+	  Z_12 = lepton_1 + lepton_2;
+	  
+	  if(one==2)
+	    {
+	      result = Z_12.Pt();
+	    }
+	} // Sherpa Z+Jets samples
+    }
+  
+  return result;
+}
+
+Bool_t  HiggsllqqAnalysis::IsSherpaZjetSample(int mcRunNumber)
+{
+  Bool_t result(kFALSE);
+  
+  if( mcRunNumber    == 167749
+      || mcRunNumber == 167750
+      || mcRunNumber == 167751
+      || mcRunNumber == 167752
+      || mcRunNumber == 167753
+      || mcRunNumber == 167754
+      || mcRunNumber == 167755
+      || mcRunNumber == 167756
+      || mcRunNumber == 167757
+      || mcRunNumber == 167797
+      || mcRunNumber == 167798
+      || mcRunNumber == 167799
+      || mcRunNumber == 167800
+      || mcRunNumber == 167801
+      || mcRunNumber == 167802
+      || mcRunNumber == 167803
+      || mcRunNumber == 167804
+      || mcRunNumber == 167805
+      || mcRunNumber == 167809
+      || mcRunNumber == 167810
+      || mcRunNumber == 167811
+      || mcRunNumber == 167812
+      || mcRunNumber == 167813
+      || mcRunNumber == 167814
+      || mcRunNumber == 167815
+      || mcRunNumber == 167816
+      || mcRunNumber == 167817
+      || mcRunNumber == 167821
+      || mcRunNumber == 167822
+      || mcRunNumber == 167823
+      || mcRunNumber == 167824
+      || mcRunNumber == 167825
+      || mcRunNumber == 167826
+      || mcRunNumber == 167827
+      || mcRunNumber == 167828
+      || mcRunNumber == 167829
+      || mcRunNumber == 167833
+      || mcRunNumber == 167834
+      || mcRunNumber == 167835
+      || mcRunNumber == 167836
+      || mcRunNumber == 167837
+      || mcRunNumber == 167838
+      || mcRunNumber == 167839
+      || mcRunNumber == 167840
+      || mcRunNumber == 167841
+      || mcRunNumber == 180543
+      || mcRunNumber == 180544
+      || mcRunNumber == 180545
+      || mcRunNumber == 180546
+      || mcRunNumber == 180547
+      || mcRunNumber == 180548
+      || mcRunNumber == 180549
+      || mcRunNumber == 180550
+      || mcRunNumber == 180551 )
+    {
+      result = kTRUE;
+    }
+  
+  return result;
+}
+
+
+pair<Float_t,TString> HiggsllqqAnalysis::EventType(int RunNumber) // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/VHInputConfiguration#Sample_Name 
+{
+  pair<Float_t,TString> info;  
+  
+  if(RunNumber >201000) 
+    {
+      info.first  = -.0001;  
+      info.second = "data";  
+    }
+  else if(/*ggH*/
+	  RunNumber == 160421 || // PowhegPythia8_AU2CT10_ggH220_ZZllqq
+	  RunNumber == 160422 || // PowhegPythia8_AU2CT10_ggH240_ZZllqq
+	  RunNumber == 160423 || // PowhegPythia8_AU2CT10_ggH260_ZZllqq
+	  RunNumber == 160424 || // PowhegPythia8_AU2CT10_ggH280_ZZllqq
+	  RunNumber == 160425 || // PowhegPythia8_AU2CT10_ggH300_ZZllqq
+	  RunNumber == 160426 || // PowhegPythia8_AU2CT10_ggH320_ZZllqq
+	  RunNumber == 160427 || // PowhegPythia8_AU2CT10_ggH340_ZZllqq
+	  RunNumber == 160428 || // PowhegPythia8_AU2CT10_ggH360_ZZllqq
+	  RunNumber == 160429 || // PowhegPythia8_AU2CT10_ggH380_ZZllqq
+	  RunNumber == 160430 || // PowhegPythia8_AU2CT10_ggH400_ZZllqq
+	  RunNumber == 169030 || // PowhegPythia8_AU2CT10_ggH400CPS_ZZllqq
+	  RunNumber == 169031 || // PowhegPythia8_AU2CT10_ggH420CPS_ZZllqq
+	  RunNumber == 169032 || // PowhegPythia8_AU2CT10_ggH440CPS_ZZllqq
+	  RunNumber == 169033 || // PowhegPythia8_AU2CT10_ggH460CPS_ZZllqq
+	  RunNumber == 169034 || // PowhegPythia8_AU2CT10_ggH480CPS_ZZllqq
+	  RunNumber == 169035 || // PowhegPythia8_AU2CT10_ggH500CPS_ZZllqq
+	  RunNumber == 169036 || // PowhegPythia8_AU2CT10_ggH520CPS_ZZllqq
+	  RunNumber == 169037 || // PowhegPythia8_AU2CT10_ggH540CPS_ZZllqq
+	  RunNumber == 169038 || // PowhegPythia8_AU2CT10_ggH560CPS_ZZllqq
+	  RunNumber == 169039 || // PowhegPythia8_AU2CT10_ggH580CPS_ZZllqq
+	  RunNumber == 169040 || // PowhegPythia8_AU2CT10_ggH600CPS_ZZllqq
+	  RunNumber == 169041 || // PowhegPythia8_AU2CT10_ggH650CPS_ZZllqq
+	  RunNumber == 169042 || // PowhegPythia8_AU2CT10_ggH700CPS_ZZllqq
+	  RunNumber == 169043 || // PowhegPythia8_AU2CT10_ggH750CPS_ZZllqq
+	  RunNumber == 169044 || // PowhegPythia8_AU2CT10_ggH800CPS_ZZllqq
+	  RunNumber == 169045 || // PowhegPythia8_AU2CT10_ggH850CPS_ZZllqq
+	  RunNumber == 169046 || // PowhegPythia8_AU2CT10_ggH900CPS_ZZllqq
+	  RunNumber == 169047 || // PowhegPythia8_AU2CT10_ggH950CPS_ZZllqq
+	  RunNumber == 169048 || // PowhegPythia8_AU2CT10_ggH1000CPS_ZZllqq
+	  RunNumber == 169050 || // PowhegPythia8_AU2CT10_ggH300NWA_ZZllqq
+	  RunNumber == 169051 || // PowhegPythia8_AU2CT10_ggH400NWA_ZZllqq
+	  RunNumber == 169052 || // PowhegPythia8_AU2CT10_ggH500NWA_ZZllqq
+	  RunNumber == 169053 || // PowhegPythia8_AU2CT10_ggH600NWA_ZZllqq
+	  RunNumber == 169054 || // PowhegPythia8_AU2CT10_ggH700NWA_ZZllqq
+	  RunNumber == 169055 || // PowhegPythia8_AU2CT10_ggH800NWA_ZZllqq
+	  RunNumber == 169056 || // PowhegPythia8_AU2CT10_ggH900NWA_ZZllqq
+	  RunNumber == 169057 || // PowhegPythia8_AU2CT10_ggH1000NWA_ZZllqq
+	  RunNumber == 181734 || // PowhegPythia8_AU2CT10_ggH420NWA_ZZllqq
+	  RunNumber == 181735 || // PowhegPythia8_AU2CT10_ggH440NWA_ZZllqq
+	  RunNumber == 181736 || // PowhegPythia8_AU2CT10_ggH460NWA_ZZllqq
+	  RunNumber == 181737 || // PowhegPythia8_AU2CT10_ggH480NWA_ZZllqq
+	  RunNumber == 181738 || // PowhegPythia8_AU2CT10_ggH520NWA_ZZllqq
+	  RunNumber == 181739 || // PowhegPythia8_AU2CT10_ggH540NWA_ZZllqq
+	  RunNumber == 181740 || // PowhegPythia8_AU2CT10_ggH560NWA_ZZllqq
+	  RunNumber == 181741 || // PowhegPythia8_AU2CT10_ggH580NWA_ZZllqq
+	  RunNumber == 181742 || // PowhegPythia8_AU2CT10_ggH650NWA_ZZllqq
+	  RunNumber == 181743 || // PowhegPythia8_AU2CT10_ggH750NWA_ZZllqq
+	  RunNumber == 181744 || // PowhegPythia8_AU2CT10_ggH850NWA_ZZllqq
+	  RunNumber == 181745 )  // PowhegPythia8_AU2CT10_ggH950NWA_ZZllqq
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "ggHllqq";
+    }
+  else if(/*VBFH*/
+	  RunNumber == 160471 || // PowhegPythia8_AU2CT10_VBFH220_ZZllqq
+	  RunNumber == 160472 || // PowhegPythia8_AU2CT10_VBFH240_ZZllqq
+	  RunNumber == 160473 || // PowhegPythia8_AU2CT10_VBFH260_ZZllqq
+	  RunNumber == 160474 || // PowhegPythia8_AU2CT10_VBFH280_ZZllqq
+	  RunNumber == 160475 || // PowhegPythia8_AU2CT10_VBFH300_ZZllqq
+	  RunNumber == 160476 || // PowhegPythia8_AU2CT10_VBFH320_ZZllqq
+	  RunNumber == 160477 || // PowhegPythia8_AU2CT10_VBFH340_ZZllqq
+	  RunNumber == 160478 || // PowhegPythia8_AU2CT10_VBFH360_ZZllqq
+	  RunNumber == 160479 || // PowhegPythia8_AU2CT10_VBFH380_ZZllqq
+	  RunNumber == 160480 || // PowhegPythia8_AU2CT10_VBFH400_ZZllqq
+	  RunNumber == 160481 || // PowhegPythia8_AU2CT10_VBFH420_ZZllqq
+	  RunNumber == 160482 || // PowhegPythia8_AU2CT10_VBFH440_ZZllqq
+	  RunNumber == 160483 || // PowhegPythia8_AU2CT10_VBFH460_ZZllqq
+	  RunNumber == 160484 || // PowhegPythia8_AU2CT10_VBFH480_ZZllqq
+	  RunNumber == 160485 || // PowhegPythia8_AU2CT10_VBFH500_ZZllqq
+	  RunNumber == 160486 || // PowhegPythia8_AU2CT10_VBFH520_ZZllqq
+	  RunNumber == 160487 || // PowhegPythia8_AU2CT10_VBFH540_ZZllqq
+	  RunNumber == 160488 || // PowhegPythia8_AU2CT10_VBFH560_ZZllqq
+	  RunNumber == 160489 || // PowhegPythia8_AU2CT10_VBFH580_ZZllqq
+	  RunNumber == 160490 || // PowhegPythia8_AU2CT10_VBFH600_ZZllqq
+	  RunNumber == 169220 || // PowhegPythia8_AU2CT10_VBFH400CPS_ZZllqq
+	  RunNumber == 169221 || // PowhegPythia8_AU2CT10_VBFH420CPS_ZZllqq
+	  RunNumber == 169222 || // PowhegPythia8_AU2CT10_VBFH440CPS_ZZllqq
+	  RunNumber == 169223 || // PowhegPythia8_AU2CT10_VBFH460CPS_ZZllqq
+	  RunNumber == 169224 || // PowhegPythia8_AU2CT10_VBFH480CPS_ZZllqq
+	  RunNumber == 169225 || // PowhegPythia8_AU2CT10_VBFH500CPS_ZZllqq
+	  RunNumber == 169226 || // PowhegPythia8_AU2CT10_VBFH520CPS_ZZllqq
+	  RunNumber == 169227 || // PowhegPythia8_AU2CT10_VBFH540CPS_ZZllqq
+	  RunNumber == 169228 || // PowhegPythia8_AU2CT10_VBFH560CPS_ZZllqq
+	  RunNumber == 169229 || // PowhegPythia8_AU2CT10_VBFH580CPS_ZZllqq
+	  RunNumber == 169230 || // PowhegPythia8_AU2CT10_VBFH600CPS_ZZllqq
+	  RunNumber == 169231 || // PowhegPythia8_AU2CT10_VBFH650CPS_ZZllqq
+	  RunNumber == 169232 || // PowhegPythia8_AU2CT10_VBFH700CPS_ZZllqq
+	  RunNumber == 169233 || // PowhegPythia8_AU2CT10_VBFH750CPS_ZZllqq
+	  RunNumber == 169234 || // PowhegPythia8_AU2CT10_VBFH800CPS_ZZllqq
+	  RunNumber == 169235 || // PowhegPythia8_AU2CT10_VBFH850CPS_ZZllqq
+	  RunNumber == 169236 || // PowhegPythia8_AU2CT10_VBFH900CPS_ZZllqq
+	  RunNumber == 169237 || // PowhegPythia8_AU2CT10_VBFH950CPS_ZZllqq
+	  RunNumber == 169238 || // PowhegPythia8_AU2CT10_VBFH1000CPS_ZZllqq
+	  RunNumber == 169240 || // PowhegPythia8_AU2CT10_VBFH300NWA_ZZllqq
+	  RunNumber == 169241 || // PowhegPythia8_AU2CT10_VBFH400NWA_ZZllqq
+	  RunNumber == 169242 || // PowhegPythia8_AU2CT10_VBFH500NWA_ZZllqq
+	  RunNumber == 169243 || // PowhegPythia8_AU2CT10_VBFH600NWA_ZZllqq
+	  RunNumber == 169244 || // PowhegPythia8_AU2CT10_VBFH700NWA_ZZllqq
+	  RunNumber == 169245 || // PowhegPythia8_AU2CT10_VBFH800NWA_ZZllqq
+	  RunNumber == 169246 || // PowhegPythia8_AU2CT10_VBFH900NWA_ZZllqq
+	  RunNumber == 169247 || // PowhegPythia8_AU2CT10_VBFH1000NWA_ZZllqq
+	  RunNumber == 181510 || // PowhegPythia8_AU2CT10_VBFH420NWA_ZZllqq
+	  RunNumber == 181511 || // PowhegPythia8_AU2CT10_VBFH440NWA_ZZllqq
+	  RunNumber == 181512 || // PowhegPythia8_AU2CT10_VBFH460NWA_ZZllqq
+	  RunNumber == 181513 || // PowhegPythia8_AU2CT10_VBFH480NWA_ZZllqq
+	  RunNumber == 181514 || // PowhegPythia8_AU2CT10_VBFH520NWA_ZZllqq
+	  RunNumber == 181515 || // PowhegPythia8_AU2CT10_VBFH540NWA_ZZllqq
+	  RunNumber == 181516 || // PowhegPythia8_AU2CT10_VBFH560NWA_ZZllqq
+	  RunNumber == 181517 || // PowhegPythia8_AU2CT10_VBFH580NWA_ZZllqq
+	  RunNumber == 181518 || // PowhegPythia8_AU2CT10_VBFH650NWA_ZZllqq
+	  RunNumber == 181519 || // PowhegPythia8_AU2CT10_VBFH750NWA_ZZllqq
+	  RunNumber == 181520 || // PowhegPythia8_AU2CT10_VBFH850NWA_ZZllqq
+	  RunNumber == 181521  ) // PowhegPythia8_AU2CT10_VBFH950NWA_ZZllqq
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "VBFHllqq";
+    }
+  else if(/*ttbar*/
+	  RunNumber == 105200 || // McAtNloJimmy_CT10_ttbar_LeptonFilter
+	  RunNumber == 117050  ) // PowhegPythia_P2011C_ttbar
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "ttbar";
+    }
+  else if(/*stop*/
+	  RunNumber == 110101 || // AcerMCPythia_P2011CCTEQ6L1_singletop_tchan_l
+	  RunNumber == 110101 || // AcerMCPythia_P2011CCTEQ6L1_singletop_tchan_l
+	  RunNumber == 110119 || // PowhegPythia_P2011C_st_schan_lep
+	  RunNumber == 110140  ) // PowhegPythia_P2011C_st_Wtchan_incl_DR
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "stop";
+    }
+  else if(/*Zbb || Zbl*/
+	  RunNumber == 167749 || // Sherpa_CT10_ZeeMassiveCBPt0_BFilter
+	  RunNumber == 167749 || // Sherpa_CT10_ZeeMassiveCBPt0_BFilter
+	  RunNumber == 167752 || // Sherpa_CT10_ZmumuMassiveCBPt0_BFilter
+	  RunNumber == 167755 || // Sherpa_CT10_ZtautauMassiveCBPt0_BFilter
+	  RunNumber == 167797 || // Sherpa_CT10_ZeeMassiveCBPt70_140_BFilter
+	  RunNumber == 167800 || // Sherpa_CT10_ZmumuMassiveCBPt70_140_BFilter
+	  RunNumber == 167803 || // Sherpa_CT10_ZtautauMassiveCBPt70_140_BFilter
+	  RunNumber == 167809 || // Sherpa_CT10_ZeeMassiveCBPt140_280_BFilter
+	  RunNumber == 167812 || // Sherpa_CT10_ZmumuMassiveCBPt140_280_BFilter
+	  RunNumber == 167815 || // Sherpa_CT10_ZtautauMassiveCBPt140_280_BFilter
+	  RunNumber == 167821 || // Sherpa_CT10_ZeeMassiveCBPt280_500_BFilter
+	  RunNumber == 167824 || // Sherpa_CT10_ZmumuMassiveCBPt280_500_BFilter
+	  RunNumber == 167827 || // Sherpa_CT10_ZtautauMassiveCBPt280_500_BFilter
+	  RunNumber == 167833 || // Sherpa_CT10_ZeeMassiveCBPt500_BFilter
+	  RunNumber == 167836 || // Sherpa_CT10_ZmumuMassiveCBPt500_BFilter
+	  RunNumber == 167839 || // Sherpa_CT10_ZtautauMassiveCBPt500_BFilter
+	  RunNumber == 180543 || // Sherpa_CT10_ZeeMassiveCBPt40_70_BFilter
+	  RunNumber == 180546 || // Sherpa_CT10_ZmumuMassiveCBPt40_70_BFilter
+	  RunNumber == 180549  ) // Sherpa_CT10_ZtautauMassiveCBPt40_70_BFilter
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "Zb";//"Zbl";
+    }
+  else if(/*Zcl*/
+	  RunNumber == 167750 || // Sherpa_CT10_ZeeMassiveCBPt0_CFilterBVeto
+	  RunNumber == 167750 || // Sherpa_CT10_ZeeMassiveCBPt0_CFilterBVeto
+	  RunNumber == 167753 || // Sherpa_CT10_ZmumuMassiveCBPt0_CFilterBVeto
+	  RunNumber == 167756 || // Sherpa_CT10_ZtautauMassiveCBPt0_CFilterBVeto
+	  RunNumber == 167798 || // Sherpa_CT10_ZeeMassiveCBPt70_140_CFilterBVeto
+	  RunNumber == 167801 || // Sherpa_CT10_ZmumuMassiveCBPt70_140_CFilterBVeto
+	  RunNumber == 167804 || // Sherpa_CT10_ZtautauMassiveCBPt70_140_CFilterBVeto
+	  RunNumber == 167810 || // Sherpa_CT10_ZeeMassiveCBPt140_280_CFilterBVeto
+	  RunNumber == 167813 || // Sherpa_CT10_ZmumuMassiveCBPt140_280_CFilterBVeto
+	  RunNumber == 167816 || // Sherpa_CT10_ZtautauMassiveCBPt140_280_CFilterBVeto
+	  RunNumber == 167822 || // Sherpa_CT10_ZeeMassiveCBPt280_500_CFilterBVeto
+	  RunNumber == 167825 || // Sherpa_CT10_ZmumuMassiveCBPt280_500_CFilterBVeto
+	  RunNumber == 167828 || // Sherpa_CT10_ZtautauMassiveCBPt280_500_CFilterBVeto
+	  RunNumber == 167834 || // Sherpa_CT10_ZeeMassiveCBPt500_CFilterBVeto
+	  RunNumber == 167837 || // Sherpa_CT10_ZmumuMassiveCBPt500_CFilterBVeto
+	  RunNumber == 167840 || // Sherpa_CT10_ZtautauMassiveCBPt500_CFilterBVeto
+	  RunNumber == 180545 || // Sherpa_CT10_ZeeMassiveCBPt40_70_CVetoBVeto
+	  RunNumber == 180548 || // Sherpa_CT10_ZmumuMassiveCBPt40_70_CVetoBVeto
+	  RunNumber == 180550  ) // Sherpa_CT10_ZtautauMassiveCBPt40_70_CFilterBVeto
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "Zcl";
+    }
+  else if(/*Zl*/
+	  RunNumber == 167751 || // Sherpa_CT10_ZeeMassiveCBPt0_CVetoBVeto
+	  RunNumber == 167751 || // Sherpa_CT10_ZeeMassiveCBPt0_CVetoBVeto
+	  RunNumber == 167754 || // Sherpa_CT10_ZmumuMassiveCBPt0_CVetoBVeto
+	  RunNumber == 167757 || // Sherpa_CT10_ZtautauMassiveCBPt0_CVetoBVeto
+	  RunNumber == 167799 || // Sherpa_CT10_ZeeMassiveCBPt70_140_CVetoBVeto
+	  RunNumber == 167802 || // Sherpa_CT10_ZmumuMassiveCBPt70_140_CVetoBVeto
+	  RunNumber == 167805 || // Sherpa_CT10_ZtautauMassiveCBPt70_140_CVetoBVeto
+	  RunNumber == 167811 || // Sherpa_CT10_ZeeMassiveCBPt140_280_CVetoBVeto
+	  RunNumber == 167814 || // Sherpa_CT10_ZmumuMassiveCBPt140_280_CVetoBVeto
+	  RunNumber == 167817 || // Sherpa_CT10_ZtautauMassiveCBPt140_280_CVetoBVeto
+	  RunNumber == 167823 || // Sherpa_CT10_ZeeMassiveCBPt280_500_CVetoBVeto
+	  RunNumber == 167826 || // Sherpa_CT10_ZmumuMassiveCBPt280_500_CVetoBVeto
+	  RunNumber == 167829 || // Sherpa_CT10_ZtautauMassiveCBPt280_500_CVetoBVeto
+	  RunNumber == 167835 || // Sherpa_CT10_ZeeMassiveCBPt500_CVetoBVeto
+	  RunNumber == 167838 || // Sherpa_CT10_ZmumuMassiveCBPt500_CVetoBVeto
+	  RunNumber == 167841 || // Sherpa_CT10_ZtautauMassiveCBPt500_CVetoBVeto
+	  RunNumber == 180544 || // Sherpa_CT10_ZeeMassiveCBPt40_70_CFilterBVeto
+	  RunNumber == 180547 || // Sherpa_CT10_ZmumuMassiveCBPt40_70_CFilterBVeto
+	  RunNumber == 180551  ) // Sherpa_CT10_ZtautauMassiveCBPt40_70_CVetoBVeto
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "Zl";
+    }
+  else if(/*WZ*/
+	  RunNumber == 161996 || // Herwig_AUET2CTEQ6L1_WZ_NoLeptonFilter
+	  RunNumber == 181968 || // PowhegPythia8_AU2CT10_WZ_hadhad2l_mll020
+	  RunNumber == 181969 || // PowhegPythia8_AU2CT10_WZ_hadhad2nu_mll020
+	  RunNumber == 181970  ) // PowhegPythia8_AU2CT10_WZ_lnu2had_mll020
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "WZ";
+    }
+  else if(/*ZZ*/
+	  RunNumber == 161997 || // Herwig_AUET2CTEQ6L1_ZZ_NoLeptonFilter
+	  RunNumber == 181966 || // PowhegPythia8_AU2CT10_ZZ_2l2had_mll020
+	  RunNumber == 181967  ) // PowhegPythia8_AU2CT10_ZZ_2nu2had_mll020
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "ZZ";
+    }
+  else if(/*WW*/
+	  RunNumber == 161995 || // Herwig_AUET2CTEQ6L1_WW_NoLeptonFilter
+	  RunNumber == 181971  ) // PowhegPythia8_AU2CT10_WW
+    {
+      info.first  = 1/*GetXsection(RunNumber)*/;  
+      info.second = "WW";
+    }
+  // else if(/*multijet*/
+  //         to look for!
+  
+  return info;
 }
