@@ -14,7 +14,7 @@ atlasoff/Reconstruction/Jet/JetResolution/tags/JetResolution-02-00-02
 atlasoff/Reconstruction/Jet/JetUncertainties/tags/JetUncertainties-00-08-07
 atlasoff/Reconstruction/egamma/egammaEvent/tags/egammaEvent-03-06-43
 atlasoff/PhysicsAnalysis/JetTagging/JetTagCalibration/tags/JetTagCalibration-00-02-07
-atlasoff/PhysicsAnalysis/JetTagging/JetTagPerformanceCalibration/CalibrationDataInterface/tags/CalibrationDataInterface-00-03-06
+svn+ssh://svn.cern.ch/reps/ATLASatAS/BTagging/CDI_code/CalibrationDataInterface_RebinPt/tags/RebinPt-tag-00-00/ CalibrationDataInterface
 svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/egamma/egammaAnalysis/egammaFourMomentumError/tags/egammaFourMomentumError-00-00-11
 svn+ssh://svn.cern.ch/reps/atlasoff/Reconstruction/egamma/egammaAnalysis/egParticleConditions/tags/egParticleConditions-00-00-03
 svn+ssh://svn.cern.ch/reps/atlasoff/PhysicsAnalysis/ElectronPhotonID/ElectronEfficiencyCorrection/tags/ElectronEfficiencyCorrection-00-00-34
