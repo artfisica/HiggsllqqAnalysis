@@ -64,7 +64,7 @@ Bool_t MuonSmearing          = kTRUE,
   DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
   DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
   
-  FillTreeHiggs              = kTRUE,  // 12th May 2014
+  FillTreeHiggs              = kFALSE, // 8th July 2014
   FillTreeTree               = kTRUE,  // December 2013
   
   New_D3PD                   = kTRUE,  // June 20th, 2014: JUST To Test the old D3PD (<p1344 for low mass samples, for example.) Should be true since February 2014!!!
@@ -119,7 +119,7 @@ Float_t SherpaORptCut = 40000.; // 70000.;
 Float_t CurrentLuminosity = 20.3; //fb-1
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;     // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
+int NumSystematicsToDo = 41;     // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
 int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
