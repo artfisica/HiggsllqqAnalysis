@@ -25,11 +25,20 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: June 30th, 2014
+    Update: July 19th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
 */
+
+/**********************************************************
+Note: for Low Mass Analysis configuration: (July 18th 2014)
+
+a)  New_D3PD                      = kFALSE,   // Line 79
+b) PrintJustHighSelectionCutFlows = kFALSE;   // Line 81
+c) int LowMassONorOFF             = 0;        // Line 132
+d) int Print_low_OR_high          = 0;        // Line 133
+*********************************************************/
 
 
 // Smearing Options:
@@ -67,9 +76,9 @@ Bool_t MuonSmearing          = kTRUE,
   FillTreeHiggs              = kFALSE, // 8th July 2014
   FillTreeTree               = kTRUE,  // December 2013
   
-  New_D3PD                   = kTRUE,  // June 20th, 2014: JUST To Test the old D3PD (<p1344 for low mass samples, for example.) Should be true since February 2014!!!
+  New_D3PD                   = kFALSE,  // June 20th, 2014: JUST To Test the old D3PD (=< p1344 for low mass samples, for example.) Should be true since February 2014!!!
 // Print Just High Selection CutFlows
-  PrintJustHighSelectionCutFlows = kTRUE;
+  PrintJustHighSelectionCutFlows = kFALSE;
 
 //Global Jets Variables.
 int Pair_jet1(-1), Pair_jet2(-1), Jone(800), Jtwo(900), mediumElectrons(0), mediumMuons(0), JetTag1(-1), JetTag2(-1), JetSemiTag1(-1), JetSemiTag2(-1);
@@ -120,8 +129,8 @@ Float_t CurrentLuminosity = 20.3; //fb-1
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
 int NumSystematicsToDo = 41;     // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
-int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
-int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
+int LowMassONorOFF     = 0;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
+int Print_low_OR_high  = 0;      // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
 Bool_t           DEBUG = kFALSE; // Print the values for debugging of the Systematics (Now, 8th May: JES + mu. Please, see bellow)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -463,8 +472,14 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   calib = new Analysis::CalibrationDataInterfaceROOT(MV1tagger,MV1_env_tagger_file,pathbtagger);
   
-  if (getJetFamily()      == 0) jetAlgo= "AntiKt4TopoEMJVF0_5";
-  else if (getJetFamily() == 1) jetAlgo= "AntiKt4LCTopoJVF0_5";
+  if (getJetFamily()      == 0){
+    if (LowMassONorOFF==0) jetAlgo= "AntiKt4TopoEM";
+    else                   jetAlgo= "AntiKt4TopoEMJVF0_5";
+  }
+  else if (getJetFamily() == 1){
+    if (LowMassONorOFF==0) jetAlgo= "AntiKt4LCTopo";
+    else                   jetAlgo= "AntiKt4LCTopoJVF0_5";
+  }
   
   ajet.jetAuthor = jetAlgo;
   uncertainty = Analysis::Total;
@@ -511,7 +526,7 @@ Bool_t HiggsllqqAnalysis::initialize_tools()
   
   // Get the name of the sample 
   TString name("");
-  if(ntuple->eventinfo.RunNumber()=169051) { name = "HZZllqq"; cout<<"   this is ggH400NWA signal llqq ****"<<endl; }
+  if(ntuple->eventinfo.RunNumber() == 169051) { name = "HZZllqq"; cout<<"   this is ggH400NWA signal llqq ****  "<< ntuple->eventinfo.RunNumber()<<endl; }
   else { cout << "Cannot find sample which matches this file name" << endl; }
   /*************************************************************************************************************/
   
