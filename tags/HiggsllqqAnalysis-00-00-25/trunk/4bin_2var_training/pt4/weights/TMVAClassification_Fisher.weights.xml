@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<MethodSetup Method="Fisher::Fisher">
+  <GeneralInfo>
+    <Info name="TMVA Release" value="4.1.2 [262402]"/>
+    <Info name="ROOT Release" value="5.32/04 [335876]"/>
+    <Info name="Creator" value="csavares"/>
+    <Info name="Date" value="Wed May  8 12:21:53 2013"/>
+    <Info name="Host" value="Linux lxbuild148.cern.ch 2.6.18-238.5.1.el5 #1 SMP Wed Mar 2 15:08:52 CET 2011 x86_64 x86_64 x86_64 GNU/Linux"/>
+    <Info name="Dir" value="/afs/cern.ch/user/c/csavares/private/tesi_specialistica/training/4bin_2var_training/pt4"/>
+    <Info name="Training events" value="411198"/>
+    <Info name="TrainingTime" value="1.81534052e-01"/>
+    <Info name="AnalysisType" value="Classification"/>
+  </GeneralInfo>
+  <Options>
+    <Option name="V" modified="Yes">False</Option>
+    <Option name="VerbosityLevel" modified="No">Default</Option>
+    <Option name="VarTransform" modified="Yes">None</Option>
+    <Option name="H" modified="Yes">True</Option>
+    <Option name="CreateMVAPdfs" modified="Yes">True</Option>
+    <Option name="IgnoreNegWeightsInTraining" modified="No">False</Option>
+    <Option name="Method" modified="Yes">Fisher</Option>
+  </Options>
+  <Variables NVar="2">
+    <Variable VarIndex="0" Expression="Ntrk" Label="Ntrk" Title="Ntrk_jet" Unit="" Internal="Ntrk" Type="I" Min="0.00000000e+00" Max="4.40000000e+01"/>
+    <Variable VarIndex="1" Expression="Width" Label="Width" Title="Width_jet" Unit="" Internal="Width" Type="F" Min="0.00000000e+00" Max="2.81490684e-01"/>
+  </Variables>
+  <Spectators NSpec="0"/>
+  <Classes NClass="2">
+    <Class Name="Signal" Index="0"/>
+    <Class Name="Background" Index="1"/>
+  </Classes>
+  <Transformations NTransformations="0"/>
+  <MVAPdfs>
+    <PDF Name="Fisher_PDFSig" MinNSmooth="10" MaxNSmooth="10" InterpolMethod="2" KDE_type="1" KDE_iter="1" KDE_border="1" KDE_finefactor="1.0000000000000000e+00">
+      <Histogram Name="Fisher_tr_S_original" NBins="50" XMin="-1.4225486516952515e+00" XMax="5.4642271995544434e-01" HasEquidistantBins="1">
+        0.00000000e+00 0.00000000e+00 2.80726643e-04 2.80726643e-04 4.21089964e-04 2.80726643e-04 1.26326981e-03 2.10544979e-03 5.19344257e-03 7.15852901e-03 9.68506932e-03 1.64225083e-02 2.44232174e-02 3.27046514e-02 4.35126275e-02 4.74428013e-02 5.64260520e-02 6.42863959e-02 7.43925571e-02 9.01132524e-02 1.00780860e-01 1.03588127e-01 1.21133544e-01 1.45556763e-01 1.70401067e-01 1.91034481e-01 1.99456275e-01 2.47741252e-01 2.65707761e-01 3.14273477e-01 3.57084274e-01 4.22914684e-01 4.75831658e-01 5.62435806e-01 6.63918495e-01 7.65962601e-01 9.30187702e-01 1.08458734e+00 1.31829226e+00 1.55803287e+00 1.81237113e+00 2.04397058e+00 2.26841164e+00 2.35080481e+00 2.20861673e+00 1.86009467e+00 1.30018544e+00 7.26801276e-01 3.13150555e-01 3.42486501e-02 
+      </Histogram>
+    </PDF>
+    <PDF Name="Fisher_PDFBkg" MinNSmooth="10" MaxNSmooth="10" InterpolMethod="2" KDE_type="1" KDE_iter="1" KDE_border="1" KDE_finefactor="1.0000000000000000e+00">
+      <Histogram Name="Fisher_tr_B_original" NBins="50" XMin="-1.4225486516952515e+00" XMax="5.4642271995544434e-01" HasEquidistantBins="1">
+        1.10274319e-04 5.51371602e-04 5.51371602e-04 2.53630942e-03 3.52877821e-03 7.38837942e-03 1.52178556e-02 2.28267834e-02 3.44055891e-02 5.17186560e-02 7.66406506e-02 9.97982547e-02 1.32218912e-01 1.72910124e-01 2.03125298e-01 2.39295274e-01 2.62673438e-01 3.06672871e-01 3.37329149e-01 3.84857357e-01 4.38891798e-01 4.78369981e-01 5.03843367e-01 5.72323740e-01 6.06619000e-01 6.74878836e-01 7.20973492e-01 7.56371558e-01 8.00481260e-01 8.67086947e-01 9.32259083e-01 9.72178400e-01 1.00029838e+00 1.06061840e+00 1.11729944e+00 1.14508855e+00 1.18478727e+00 1.19537365e+00 1.17949414e+00 1.17662692e+00 1.12634194e+00 1.03459370e+00 9.44389284e-01 8.13052535e-01 6.62638366e-01 4.78921354e-01 3.06893438e-01 1.85481399e-01 9.34023485e-02 1.00349626e-02 
+      </Histogram>
+    </PDF>
+  </MVAPdfs>
+  <Weights NCoeff="3">
+    <Coefficient Index="0" Value="5.4642269076304317e-01"/>
+    <Coefficient Index="1" Value="-6.4288740654324375e-03"/>
+    <Coefficient Index="2" Value="-6.6768343151253040e+00"/>
+  </Weights>
+</MethodSetup>
