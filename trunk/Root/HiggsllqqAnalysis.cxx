@@ -38,7 +38,7 @@ a)  New_D3PD                      = kFALSE,   // Line 79
 b) PrintJustHighSelectionCutFlows = kFALSE;   // Line 81
 c) int LowMassONorOFF             = 0;        // Line 132
 d) int Print_low_OR_high          = 0;        // Line 133
-*********************************************************/
+**********************************************************/
 
 
 // Smearing Options:
@@ -69,9 +69,9 @@ Bool_t MuonSmearing          = kTRUE,
   EL_LH_ID                   = kTRUE,  // November 2013
   
 // Calculating the DPhi weight
-  DoDPhiWeight               = kFALSE, // Problems with th Grid, to produce the tar should be OFF
-  DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c"
-  DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"
+  DoDPhiWeight               = kTRUE,  // July 22th: ON for modelling systematics inclusion. // Problems with th Grid, to produce the tar should be OFF
+  DoMV1c                     = kFALSE, // This is setup using a external flag --->  "--MV1c" // For old LowMass analysis sellections, this is not in the executable command line
+  DoGSC                      = kFALSE, // This is setup using a external flag --->  "--GSC"  // For old LowMass analysis sellections, this is not in the executable command line
   
   FillTreeHiggs              = kFALSE, // 8th July 2014
   FillTreeTree               = kTRUE,  // December 2013
@@ -3044,15 +3044,6 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 			      <<"|"<<tmpWeight
 			      <<"|"<<endl;
 			}
-
-		      /*CAS::EventType evtType = m_corrsAndSysts->GetEventType(EventType(ntuple->eventinfo.mc_channel_number()).second);
-		      cout<<"   Correction test = "
-			  <<m_corrsAndSysts->Get_BkgDeltaPhiCorrection(evtType, getDPhijjZWeight(1), 4, GetTruthPt())
-			  <<"    "
-			  <<evtType
-			  <<"    "
-			  <<GetTruthPt()
-			  <<endl;*/
 		      
 		      // update cutflows
 		      if(getSystematicToDo()==-1) m_EventCutflow[chan].addCutCounter(last_event, 1);
@@ -5584,16 +5575,36 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
       if(isMC()) 
 	{
-	  str->truthH_pt            = getTruthHiggsPt();
+	  str->truthH_pt            = getTruthHiggsPt();       // NOT in weight
 	  str->SFWeight            *= getSFWeight();           // YES in weight
-	  str->ggFweight           *= getggFWeight();          // YES in weight
+	  str->ggFweight           *= getggFWeight();          // NOT in weight
 	  str->EventWeight         *= getEventWeight();        // YES in weight
 	  str->PileupWeight        *= getPileupWeight();       // YES in weight
 	  str->VertexZWeight       *= getVertexZWeight();      // YES in weight
 	  str->TriggerSFWeight     *= getCandidateTriggerSF(); // YES in weight  
 	  str->DPhijjZWeight       *= getDPhijjZWeight(cut);   // NOT in weight
 	  str->weight              *= str->SFWeight * str->EventWeight * str->PileupWeight * str->VertexZWeight * str->TriggerSFWeight;
-	}      
+	  
+	  
+	  CAS::EventType evtType = m_corrsAndSysts->GetEventType(EventType(ntuple->eventinfo.mc_channel_number()).second);
+	  float corr1 = m_corrsAndSysts->Get_BkgDeltaPhiCorrection(evtType, getDPhijjZWeight(cut), m_GoodJets.size(), GetTruthPt());
+	  if(1/*corr1 <1 || corr1>1*/)
+	    {
+	      cout<<"   Correction test = "
+		  <<"    "
+		  <<corr1
+		  <<"    "
+		  <<EventType(ntuple->eventinfo.mc_channel_number()).second
+ 		  <<"    "
+		  <<evtType
+		  <<"    "
+		  <<ntuple->eventinfo.mc_channel_number()
+		  <<"    "
+		  <<GetTruthPt()
+		  <<endl;
+	    }	  
+	}
+      
       
       //  Reset and fill trigger flag word. ERROR!
       str->trig_SF  = 1.; // trig_SF;
@@ -8214,7 +8225,7 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight(Int_t cut)
   //     Calcular todas las sistematicas pero solo para las runNumber que correspondan a z+jets bkgs. Y luego, dada la systematicsToDoNumber, multiplicar el peso Nominal DPhi * CurrentSytematic.
   //     Siendo el numero de systematics 2*3 = 6
   
-  return result;
+  return dphi2jets;//result;
 }
 
 
@@ -8574,7 +8585,7 @@ pair<Float_t,TString> HiggsllqqAnalysis::EventType(int RunNumber) // https://twi
 	  RunNumber == 181745 )  // PowhegPythia8_AU2CT10_ggH950NWA_ZZllqq
     {
       info.first  = 1/*GetXsection(RunNumber)*/;  
-      info.second = "ggHllqq";
+      info.second = "qqZllH";
     }
   else if(/*VBFH*/
 	  RunNumber == 160471 || // PowhegPythia8_AU2CT10_VBFH220_ZZllqq
@@ -8678,7 +8689,7 @@ pair<Float_t,TString> HiggsllqqAnalysis::EventType(int RunNumber) // https://twi
 	  RunNumber == 180549  ) // Sherpa_CT10_ZtautauMassiveCBPt40_70_BFilter
     {
       info.first  = 1/*GetXsection(RunNumber)*/;  
-      info.second = "Zb";//"Zbl";
+      info.second = "Zb";//"Zb";
     }
   else if(/*Zcl*/
 	  RunNumber == 167750 || // Sherpa_CT10_ZeeMassiveCBPt0_CFilterBVeto
@@ -8726,7 +8737,7 @@ pair<Float_t,TString> HiggsllqqAnalysis::EventType(int RunNumber) // https://twi
 	  RunNumber == 180551  ) // Sherpa_CT10_ZtautauMassiveCBPt40_70_CVetoBVeto
     {
       info.first  = 1/*GetXsection(RunNumber)*/;  
-      info.second = "Zl";
+      info.second = "Zll";
     }
   else if(/*WZ*/
 	  RunNumber == 161996 || // Herwig_AUET2CTEQ6L1_WZ_NoLeptonFilter
