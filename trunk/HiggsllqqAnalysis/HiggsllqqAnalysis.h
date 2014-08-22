@@ -519,6 +519,7 @@ typedef struct
   float sumet;
   //////////////////////
   float btagSF;
+  float btagSF_true_label;
   float SysBTagB0EfficUp;
   float SysBTagB0EfficDo;
   float SysBTagB1EfficUp;
@@ -1096,7 +1097,7 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   void SetAnalysisOutputBranches(analysis_output_struct *str);
   void ResetAnalysisOutputBranches(analysis_output_struct *str);
   void FillAnalysisOutputTree(analysis_output_struct *str, Int_t cut, UInt_t channel);
-  pair <double,double> GetJetSFsvalue(int jetindex, Float_t tmpbtagsys[60]);
+  pair <double,double> GetJetSFsvalue(int jetindex, Float_t tmpbtagsys[60], Bool_t true_label);
   
   // MVA methods (June 2013)
   void    SetTmvaReaders(TMVA::Reader *reader[36],Float_t var1[36], Float_t var2[36]);
