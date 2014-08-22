@@ -34,7 +34,7 @@
 /**********************************************************
 Note: for Low Mass Analysis configuration: (July 18th 2014)
 
-a)  New_D3PD                      = kFALSE,   // Line 79
+a) New_D3PD                       = kFALSE,   // Line 79
 b) PrintJustHighSelectionCutFlows = kFALSE;   // Line 81
 c) int LowMassONorOFF             = 0;        // Line 132
 d) int Print_low_OR_high          = 0;        // Line 133
@@ -59,7 +59,7 @@ Bool_t MuonSmearing          = kTRUE,
   BP_Selection               = kFALSE,
   LJ_Selection               = kTRUE,   // The Winner method for 2012 data-paper.
   FillGluon                  = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up
-  FillFlavour                = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up
+  FillFlavour                = kFALSE,  // Performance Studies Nov 2013: Function to turn off for standard analysis speed up // ON in August 19th, 2014. Compare values 
   
 // Extended region to look for Jets pt>30GeV and eta >2.5 <4.5
   ExtendedJetRegion          = kFALSE,
@@ -77,6 +77,11 @@ Bool_t MuonSmearing          = kTRUE,
   FillTreeTree               = kTRUE,  // December 2013
   
   New_D3PD                   = kTRUE,  // June 20th, 2014: JUST To Test the old D3PD (=< p1344 for low mass samples, for example.) Should be true since February 2014!!!
+  
+// BCH studies/cuts in the GoodJet definition // August 13th, 2014.
+  do_BCH_Medium_Cleanning    = kFALSE,
+  do_BCH_Tight_Cleanning     = kFALSE,
+  
 // Print Just High Selection CutFlows
   PrintJustHighSelectionCutFlows = kTRUE;
 
@@ -2887,6 +2892,36 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
       if (!hot_tile)
 	return kFALSE;
     }
+
+  // Looking for the BCH status. August 13th, 2014.
+  if(do_BCH_Medium_Cleanning)
+    {
+      Bool_t medium_clean = kFALSE;
+      medium_clean        = GetIsBadXBCH(GetRunNumberAndLumiBlock().first,
+					 GetRunNumberAndLumiBlock().second,
+					 jet->righteta(),
+					 jet->rightphi(),
+					 Jet->BCH_CORR_CELL(),
+					 Jet->emfrac(),
+					 jet->rightpt(),
+					 0).first;
+      if (medium_clean)
+	return kFALSE;
+    }
+  if(do_BCH_Tight_Cleanning)
+    {
+      Bool_t tight_clean = kFALSE;
+      tight_clean        = GetIsBadXBCH(GetRunNumberAndLumiBlock().first,
+					GetRunNumberAndLumiBlock().second,
+					jet->righteta(),
+					jet->rightphi(),
+					Jet->BCH_CORR_CELL(),
+					Jet->emfrac(),
+					jet->rightpt(),
+					0).second;
+      if (tight_clean)
+	return kFALSE;
+    }
   
   return kTRUE; 
 }
@@ -4077,7 +4112,7 @@ Float_t HiggsllqqAnalysis::getCorrectMETValue()
     }
   else
     {
-      cout<<"WARNING!!! Retuning MET_Final NOT Topo Implemented yet!!"<<endl;
+      cout<<"WARNING!!! Retuning MET_Final NOT Implemented yet!!"<<endl;
       return  ntuple->MET_RefFinal.et();
       // IMPORTANT NOTE:
       //    Check Version of the code 00-00-21 (created the 19th June 2014)
@@ -4793,11 +4828,12 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->ggFweight             = 1.00; //Careful, these are weights, initialization = 1.00
   str->EventWeight           = 1.00; //Careful, these are weights, initialization = 1.00
   str->PileupWeight          = 1.00; //Careful, these are weights, initialization = 1.00
-  str->VertexZWeight         = 1.00; //Careful, these are weights, initialization = 1.0
-  str->DPhijjZWeight         = 1.00; //Careful, these are weights, initialization = 1.0
+  str->VertexZWeight         = 1.00; //Careful, these are weights, initialization = 1.00
+  str->DPhijjZWeight         = 1.00; //Careful, these are weights, initialization = 1.00
   str->TriggerSFWeight       = 1.00; //Careful, these are weights, initialization = 1.00
   str->truthH_pt             =   -1;
   str->btagSF                = 1.00; //Careful, these are weights, initialization = 1.00
+  str->btagSF_true_label     = 1.00; //Careful, these are weights, initialization = 1.00  
   str->SysBTagB0EfficUp      = 1.00;
   str->SysBTagB0EfficDo      = 1.00;
   str->SysBTagB1EfficUp      = 1.00;
@@ -5351,6 +5387,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("sumet",                 &(str->sumet));
   ////////////////////////////////////////////////////////////////////////
   analysistree->Branch("btagSF",                &(str->btagSF));
+  analysistree->Branch("btagSF_true_label",     &(str->btagSF_true_label));
   analysistree->Branch("SysBTagB0EfficUp",      &(str->SysBTagB0EfficUp));
   analysistree->Branch("SysBTagB0EfficDo",      &(str->SysBTagB0EfficDo));
   analysistree->Branch("SysBTagB1EfficUp",      &(str->SysBTagB1EfficUp));
@@ -5523,7 +5560,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
   
   static const float Mz =  91188.;
   Int_t   howmanytags   = -1;
-  Float_t tmpbtagsf     =  1.;
+  Float_t tmpbtagsf_1   =  1.;
+  Float_t tmpbtagsf_2   =  1.;
   Float_t tmpSysbtagsf[NumBTagSystWeights];
   Float_t Sysbtagsf[NumBTagSystWeights];
   
@@ -5584,27 +5622,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  str->TriggerSFWeight     *= getCandidateTriggerSF(); // YES in weight  
 	  str->DPhijjZWeight       *= getDPhijjZWeight(cut);   // NOT in weight
 	  str->weight              *= str->SFWeight * str->EventWeight * str->PileupWeight * str->VertexZWeight * str->TriggerSFWeight;
-	  
-	  
-	  CAS::EventType evtType = m_corrsAndSysts->GetEventType(EventType(ntuple->eventinfo.mc_channel_number()).second);
-	  float corr1 = m_corrsAndSysts->Get_BkgDeltaPhiCorrection(evtType, getDPhijjZWeight(cut), m_GoodJets.size(), GetTruthPt());
-	  if(1/*corr1 <1 || corr1>1*/)
-	    {
-	      cout<<"   Correction test = "
-		  <<"    "
-		  <<corr1
-		  <<"    "
-		  <<EventType(ntuple->eventinfo.mc_channel_number()).second
- 		  <<"    "
-		  <<evtType
-		  <<"    "
-		  <<ntuple->eventinfo.mc_channel_number()
-		  <<"    "
-		  <<GetTruthPt()
-		  <<endl;
-	    }	  
 	}
-      
       
       //  Reset and fill trigger flag word. ERROR!
       str->trig_SF  = 1.; // trig_SF;
@@ -5805,13 +5823,16 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  // Looping to find the btagging SFs into the GoodJet selected into the event
 	  if (isMC()) 
 	    {
-	      pair<double,double> thisjetSF = GetJetSFsvalue(0,tmpSysbtagsf);
-	      tmpbtagsf *= thisjetSF.first;
+	      pair<double,double> thisjetSF = GetJetSFsvalue(0,tmpSysbtagsf,kFALSE);
+	      tmpbtagsf_1                  *= thisjetSF.first;
+	      thisjetSF                     = GetJetSFsvalue(0,tmpSysbtagsf,kTRUE);
+	      tmpbtagsf_2                  *= thisjetSF.first;
 	    }
 	  
 	  
 	  // btagging SF filling
-	  str->btagSF                = tmpbtagsf;
+	  str->btagSF                = tmpbtagsf_1;
+	  str->btagSF_true_label     = tmpbtagsf_2;
 	  str->SysBTagB0EfficUp      = tmpSysbtagsf[0];   str->SysBTagB0EfficDo     = tmpSysbtagsf[1];
 	  str->SysBTagB1EfficUp      = tmpSysbtagsf[2];   str->SysBTagB1EfficDo     = tmpSysbtagsf[3];
 	  str->SysBTagB2EfficUp      = tmpSysbtagsf[4];   str->SysBTagB2EfficDo     = tmpSysbtagsf[5];
@@ -5907,16 +5928,20 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  if(howmanytags>2)
 	    str->istagged = -1;
 	  
-	  // Using the Global Jets index variables to fill the reduced TestSelection ntuple,Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
+	  // Using the Global Jets index variables to fill the reduced TestSelection ntuple,
+	  // Warning: be sure that you call at least DiJetMass Cut if is OUT of the above "if"!
 	  
 	  // Looping to find the btagging SFs into the GoodJets selected into the event
 	  for (UInt_t w = 0; w < m_GoodJets.size(); w++)
 	    {
-	      if (isMC()) 
+	      if (isMC())
 		{
-		  pair<double,double> thisjetSF = GetJetSFsvalue(w,tmpSysbtagsf);
-		  tmpbtagsf *= thisjetSF.first;
-		  for(int tmpB =0; tmpB<NumBTagSystWeights; tmpB++) Sysbtagsf[tmpB] *= tmpSysbtagsf[tmpB];
+		  pair<double,double> thisjetSF = GetJetSFsvalue(w,tmpSysbtagsf,kFALSE);
+		  tmpbtagsf_1                  *= thisjetSF.first; // Reviewed and OK! b-taggingSF. August 19th 2014
+		  thisjetSF                     = GetJetSFsvalue(w,tmpSysbtagsf,kTRUE);
+		  tmpbtagsf_2                  *= thisjetSF.first;
+		  
+		  for(int tmpB = 0; tmpB<NumBTagSystWeights; tmpB++) Sysbtagsf[tmpB] *= tmpSysbtagsf[tmpB];
 		}
 	      
 	      if(w==0)
@@ -5944,7 +5969,8 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	  
 	  
 	  // btagging SF filling
-	  str->btagSF                = tmpbtagsf;
+	  str->btagSF                = tmpbtagsf_1;
+	  str->btagSF_true_label     = tmpbtagsf_2;
 	  str->SysBTagB0EfficUp      = Sysbtagsf[0];   str->SysBTagB0EfficDo     = Sysbtagsf[1];
 	  str->SysBTagB1EfficUp      = Sysbtagsf[2];   str->SysBTagB1EfficDo     = Sysbtagsf[3];
 	  str->SysBTagB2EfficUp      = Sysbtagsf[4];   str->SysBTagB2EfficDo     = Sysbtagsf[5];
@@ -6047,7 +6073,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_KF_MV1         = GetMV1value(m_GoodJets.at(SelectedJets.second));
 	      str->realJ2_KF_ntrk12      = InfoNtracksWidthJ2_KF.first;
 	      str->realJ2_KF_width12     = InfoNtracksWidthJ2_KF.second;
-	      
 	      
 	      TLorentzVector j1;
 	      j1.SetPtEtaPhiM(str->realJ1_KF_pt,str->realJ1_KF_eta,str->realJ1_KF_phi,str->realJ1_KF_m);
@@ -6185,7 +6210,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 							m_GoodJets.at(1)->rightpt(),
 							0).second; // May 19th, 2014. Update for BCH studies
 	      
-	      
 	      TLorentzVector j1_LJ;
 	      j1_LJ.SetPtEtaPhiM(str->realJ1_LJ_pt,str->realJ1_LJ_eta,str->realJ1_LJ_phi,str->realJ1_LJ_m);
 	      TLorentzVector j2_LJ;
@@ -6193,6 +6217,31 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      TLorentzVector hadZ_LJ = j1_LJ  +  j2_LJ;
 	      TLorentzVector H_LJ    = lepZ   +  hadZ_LJ;
 	      
+	      
+	      
+	      
+	      //CAS::EventType evtType = m_corrsAndSysts->GetEventType(/*"Zl"*/EventType(ntuple->eventinfo.mc_channel_number()).second);
+	      //  GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
+	      //float corr1 = m_corrsAndSysts->Get_BkgDeltaPhiCorrection(evtType, getDPhijjZWeight(cut), m_GoodJets.size(), GetTruthPt());
+	      /*
+               if(corr1!=1 || corr1==1)
+		{
+		  cout<<"   Correction test = "
+		      <<"    "
+		      <<corr1
+		      <<"    "
+		      <<EventType(ntuple->eventinfo.mc_channel_number()).second
+		      <<"    "
+		      <<evtType
+		      <<"    "
+		      <<ntuple->eventinfo.mc_channel_number()
+		      <<"    "
+		      <<GetTruthPt()
+		      <<"    "
+		      <<getDPhijjZWeight(cut)
+		      <<endl;
+		}	  
+	      */
 	      
 	      
 	      if(hadZ_LJ.M()<MergedMin || hadZ_LJ.M()>MergedMax) // Merge Regime Part B: 
@@ -6278,7 +6327,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 	      str->realJ2_BP_MV1         = GetMV1value(m_GoodJets.at(Jtwo));
 	      str->realJ2_BP_ntrk12      = InfoNtracksWidthJ2_BP.first;
 	      str->realJ2_BP_width12     = InfoNtracksWidthJ2_BP.second;
-	      
 	      
 	      TLorentzVector j1_BP;
 	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
@@ -6516,7 +6564,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 							Jet_2_BP->emfrac(),
 							m_GoodJets.at(Jtwo)->rightpt(),
 							0).second; // May 19th, 2014. Update for BCH studies
-	      
 	      
 	      TLorentzVector j1_BP;
 	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
@@ -6784,7 +6831,6 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 							m_GoodJets.at(Jtwo)->rightpt(),
 							0).second; // May 19th, 2014. Update for BCH studies
 	      
-	      
 	      TLorentzVector j1_BP;
 	      j1_BP.SetPtEtaPhiM(str->realJ1_BP_pt,str->realJ1_BP_eta,str->realJ1_BP_phi,str->realJ1_BP_m);
 	      TLorentzVector j2_BP;
@@ -6962,7 +7008,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
 
 
 ///////////////////////////////////////////////////////////////////////////
-pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmpbtagsys[60])
+pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmpbtagsys[60], Bool_t true_label)
 {  
   // Getting the jet Object
   D3PDReader::JetD3PDObjectElement *Jet_ = m_GoodJets.at(jetindex)->GetJet();
@@ -6979,30 +7025,45 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
   if(DoMV1c)   OP_tagger    = "continuous"; // 70%  REFERNECE => https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingBenchmarks#MV1c_tagger_antikt4topoemJVF_jet
   const std::string OP_MV1x = OP_tagger;
   
+  bool DEBUG_PRINT          = kFALSE;
+  float current_MV1c        = GetMV1value(m_GoodJets.at(jetindex));
+  int NumBTagEigenVar       = -1;
+  int newJetFlav            = -1;
   
-  int newJetFlav          = GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
-  int NumBTagEigenVar     = -1;
-  bool DEBUG_PRINT        = kFALSE;
+  // Removing the GetJetFlavour Calculation for all the Z+jets samples, those have not pdg >22.
+  // This is a problem for the Truth Tagging Search, since all particles == 0!! August 19th, 2014. See the line just right bellow:
+  if (IsSherpaZjetSample(ntuple->eventinfo.mc_channel_number()) || true_label)
+    newJetFlav              = Jet_->flavor_truth_label();
+  else
+    newJetFlav              = GetJetFlavour(m_GoodJets.at(jetindex)->righteta(),m_GoodJets.at(jetindex)->rightphi(),Jet_->flavor_truth_label());
+  
   
   // jet flavor truth values checked on lxr
-  if (GetMV1value(m_GoodJets.at(jetindex)) > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
+  if (current_MV1c > MV1_OP70) // NEW= 0_8119; OLD= 0_795;
     {       
       if       (TMath::Abs(newJetFlav) == 5)
 	{
-	  res                        = calib->getScaleFactor(ajet,             "B", OP_MV1x, uncertainty);
+	  res                        = calib->getScaleFactor(ajet,             "B", OP_MV1x, Analysis::None); //uncertainty);
 	  if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "B", OP_MV1x, Analysis::SFEigen);
 	}
-      else if  (TMath::Abs(newJetFlav) == 4 || TMath::Abs(newJetFlav) == 15) 
+      else if  (TMath::Abs(newJetFlav) == 4) 
 	{
-	  res                        = calib->getScaleFactor(ajet,             "C", OP_MV1x, uncertainty);
+	  res                        = calib->getScaleFactor(ajet,             "C", OP_MV1x, Analysis::None); //uncertainty);
 	  if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "C", OP_MV1x, Analysis::SFEigen);
 	}
+      else if  (TMath::Abs(newJetFlav) == 15)
+        {
+          res                        = calib->getScaleFactor(ajet,             "T", OP_MV1x, Analysis::None); //uncertainty);
+          if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "T", OP_MV1x, Analysis::SFEigen);
+        }
       else
 	{
-	  res                        = calib->getScaleFactor(ajet,             "Light", OP_MV1x, uncertainty);
+	  res                        = calib->getScaleFactor(ajet,             "Light", OP_MV1x, Analysis::None); //uncertainty);
 	  if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "Light", OP_MV1x, Analysis::SFEigen);
 	}
-      //cout<< " This is a YES "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<endl;
+      
+      // if (TMath::Abs(newJetFlav) != 5 && TMath::Abs(newJetFlav) != 4) cout<<"This is not tagged as a b-particle into the D3PD = "<<newJetFlav<<endl;
+      // cout<< " This is a YES "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<" | mv1c = "<<current_MV1c<<" | True_label =  "<<Jet_->flavor_truth_label()<<endl;
     }
   else  // It is not a b-tagged jet
     {
@@ -7018,7 +7079,7 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
 	      res             = calib->getInefficiencyScaleFactor(ajet, "B", OP_MV1x, Analysis::None);
 	    }
 	}
-      else if  (TMath::Abs(newJetFlav) == 4 || TMath::Abs(newJetFlav) == 15) 
+      else if  (TMath::Abs(newJetFlav) == 4)
 	{
 	  if(DoMV1c)
 	    {
@@ -7030,6 +7091,18 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
 	      res             = calib->getInefficiencyScaleFactor(ajet, "C", OP_MV1x, Analysis::None);
 	    }
 	}
+      else if  (TMath::Abs(newJetFlav) == 15)
+        {
+          if(DoMV1c)
+            {
+              res                        = calib->getScaleFactor(ajet,             "T", OP_MV1x, Analysis::None); //uncertainty);
+              if(DoMV1c) NumBTagEigenVar = calib->getNumVariations(ajet.jetAuthor, "T", OP_MV1x, Analysis::SFEigen);
+            }
+          else
+            {
+              res             = calib->getInefficiencyScaleFactor(ajet, "C", OP_MV1x, Analysis::None);
+            }
+        }
       else
 	{
 	  if(DoMV1c)
@@ -7042,7 +7115,7 @@ pair <double,double> HiggsllqqAnalysis::GetJetSFsvalue(int jetindex, Float_t tmp
 	      res             = calib->getInefficiencyScaleFactor(ajet, "Light", OP_MV1x, Analysis::None);
 	    }
 	}
-      //cout<< " This is a NOT "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<endl;
+      //cout<< " This is a NOT "<<newJetFlav<<" tag jet = "<<res.first<<" | "<<res.second<<" | mv1c = "<<current_MV1c<<" | True_label =  "<<Jet_->flavor_truth_label()<<endl;
     }
   
   // https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/BTaggingNewVHRunIPrescriptions
@@ -8221,9 +8294,10 @@ Float_t HiggsllqqAnalysis::getDPhijjZWeight(Int_t cut)
 	return result;
     }
   
-  // ToDo: Instrucciones para instalar las systematics of Z+jets odelling
-  //     Calcular todas las sistematicas pero solo para las runNumber que correspondan a z+jets bkgs. Y luego, dada la systematicsToDoNumber, multiplicar el peso Nominal DPhi * CurrentSytematic.
-  //     Siendo el numero de systematics 2*3 = 6
+  // ToDo: Instrucciones para instalar las systematics of Z+jets modelling
+  //       Calcular todas las sistematicas pero solo para las runNumber que correspondan a z+jets bkgs.
+  //       Y luego, dada la systematicsToDoNumber, multiplicar el peso Nominal DPhi * CurrentSytematic.
+  //       Siendo el numero de systematics 2*3 = 6
   
   return dphi2jets;//result;
 }
@@ -8293,7 +8367,6 @@ Float_t HiggsllqqAnalysis::GetDeltaRNearest(Float_t eta, Float_t phi, Int_t flav
     {
       D3PDReader::TruthParticleD3PDObjectElement *p = &(ntuple->mc[i]);
       Int_t pdg = p->pdgId();
-      
       if(flav == 4)
 	{
 	  if(!IsCHadron(pdg)) continue; 
@@ -8689,7 +8762,7 @@ pair<Float_t,TString> HiggsllqqAnalysis::EventType(int RunNumber) // https://twi
 	  RunNumber == 180549  ) // Sherpa_CT10_ZtautauMassiveCBPt40_70_BFilter
     {
       info.first  = 1/*GetXsection(RunNumber)*/;  
-      info.second = "Zb";//"Zb";
+      info.second = "Zl";//"Zb";
     }
   else if(/*Zcl*/
 	  RunNumber == 167750 || // Sherpa_CT10_ZeeMassiveCBPt0_CFilterBVeto
