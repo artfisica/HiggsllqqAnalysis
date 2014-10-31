@@ -4,7 +4,7 @@
 ## Update:  November  28th 2013
 
 ## User Options to Setup:
-FILE="SamplesD3PD_low.txt" ## "SamplesD3PD.txt"     ## The name of the text file where the list of files are saved.
+FILE="SamplesD3PD.txt"     ## The name of the text file where the list of files are saved.
 USER="arturos"             ## User who will send the GRID jobs.
 PRODUCTION=$1              ## "16.0"                  ## Tag of the production version.
 TAR="yes"                  ## To create the tar file.               Possible answer: "yes" or "not"

@@ -25,7 +25,7 @@
     dolowmass for muons     = True   if GetDoLowMass() == True
     dolowmass for electrons = True   if GetDoLowMass() == True
     
-    Update: July 21th, 2014
+    Update: October 30th, 2014
     
     Author:
     Arturo Sanchez <arturos@cern.ch> <sanchez@na.infn.it> <arturos@ula.ve>
@@ -133,7 +133,8 @@ Float_t SherpaORptCut = 40000.; // 70000.;
 Float_t CurrentLuminosity = 20.3; //fb-1
 
 // Number of systematics to recreate: Please check the dictionary in order to apply this number in a smart way.
-int NumSystematicsToDo = 0;      // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 8th May: 40 systematics installed)
+int InitialSystematic  = -1;//20;     // 28th October 2014 ----> Variable to split the loop that run the systematics. Memory problem at GRID sites.
+int NumSystematicsToDo = 0;//41;     // 20th May 2014 ---> The actual-current number of systematics + 1 (Now 28th Oct: 41 systematics installed)
 int LowMassONorOFF     = 1;      // 1 == Not to run Low Mass selection  | 0 == Yes to run Low Mass selection.  // Performance studies November 2013.
 int Print_low_OR_high  = 1;      // 0 for LowSelection ; 1 for HighSelection
 int NumBTagSystWeights = 60;     // The number of systematics, see llqq Winter 2013 twiki for details!
@@ -2847,7 +2848,7 @@ Bool_t HiggsllqqAnalysis::isGoodJet(Analysis::Jet *jet)
     }  
   else if (!dolowmass)
     {
-      if ((jet->rightpt()>20000. && TMath::Abs(/*Jet->emscale_eta()*/jet->righteta()) < 2.5 && jet->rightE()>0)
+      if ((jet->rightpt()>20000. && TMath::Abs(/*Jet->emscale_eta()*/jet->righteta()) < 2.5 && jet->rightE()>0 && !ExtendedJetRegion)
 	  ||
 	  (jet->rightpt()>30000. && TMath::Abs(/*Jet->emscale_eta()*/jet->righteta()) > 2.5 && jet->rightE()>0 && TMath::Abs(/*Jet->emscale_eta()*/jet->righteta()) < 4.5 && ExtendedJetRegion)) 
 	jet->set_lastcut(HllqqJetQuality::kinematics);
@@ -2979,12 +2980,11 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 	  
 	  
 	  //Including the loop over each of the systematic evaluation!! // November 2013
-	  for (int syst = -1; syst < NumSystematicsToDo; syst++)
+	  for (int syst = InitialSystematic; syst < NumSystematicsToDo; syst++)
 	    {
 	      
 	      // Assigning systematic to run in this lap! // November 2013
 	      setSystematicToDo(syst);
-	      
 	      /*
 		if(getSystematicToDo()>=0)
 		cout<<"     +++++ PLEASE! Take Care, Systematic "<<getSystematicToDo()<<" is ON. Check the dictionary for details!!"<<endl;
@@ -3044,25 +3044,25 @@ Bool_t HiggsllqqAnalysis::execute_analysis()
 		      
 		      if(tmpMCWeight>=0)
 			tmpWeight       *= tmpMCWeight;
-		      else cout<<"   ERROR: Upps the MC event weight is negative!!!!   "<<tmpMCWeight     <<endl;
+		      else cout<<"   PROBLEM: Upps the MC event weight is negative!!!! This event will be rejected in posteriori steps"<<tmpMCWeight<<endl;
 		      if(tmpPileupWeight>=0)
 			tmpWeight       *= tmpPileupWeight;
-		      else cout<<"   ERROR: Upps the PileupWeight is negative!!!!      "<<tmpPileupWeight <<endl;
+		      else cout<<"   PROBLEM: Upps the PileupWeight is negative!!!! This event will be rejected in posteriori steps"<<tmpPileupWeight<<endl;
 		      if(tmpSFWeight>=0)
 			tmpWeight       *= tmpSFWeight;
-		      else cout<<"   ERROR: Upps the SFWeight is negative!!!!          "<<tmpSFWeight     <<endl;
+		      else cout<<"   PROBLEM: Upps the SFWeight is negative!!!! This event will be rejected in posteriori steps"<<tmpSFWeight<<endl;
 		      if(tmpVertexZWeight>=0)
 			tmpWeight       *= tmpVertexZWeight;
-		      else cout<<"   ERROR: Upps the Vertex Z weight is negative!!!!   "<<tmpVertexZWeight<<endl;
+		      else cout<<"   PROBLEM: Upps the Vertex Z weight is negative!!!! This event will be rejected in posteriori steps"<<tmpVertexZWeight<<endl;
 		      if(tmpTriggerSF>=0)
 			tmpWeight       *= tmpTriggerSF;
-		      else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		      else cout<<"   PROBLEM: Upps the Trigger SF weight is negative!!!! This event will be rejected in posteriori steps"<<tmpVertexZWeight<<endl;
 		      if(tmpggFWeight>=0)
 			tmpWeight       *= tmpggFWeight;
-		      else cout<<"   ERROR: Upps the ggF signal weight is negative!!!! "<<tmpggFWeight    <<endl;
+		      else cout<<"   PROBLEM: Upps the ggF signal weight is negative!!!! This event will be rejected in posteriori steps"<<tmpggFWeight<<endl;
 		      if(tmpDPhijjZWeight>=0)
 			tmpWeight       *= tmpDPhijjZWeight;
-		      else cout<<"   ERROR: Upps the Trigger SF weight is negative!!!! "<<tmpVertexZWeight<<endl;
+		      else cout<<"   PROBLEM: Upps the Trigger SF weight is negative!!!! This event will be rejected in posteriori steps"<<tmpVertexZWeight<<endl;
 		      
 		      if(Print_weights)
 			{
@@ -4115,7 +4115,7 @@ Float_t HiggsllqqAnalysis::getCorrectMETValue()
       cout<<"WARNING!!! Retuning MET_Final NOT Implemented yet!!"<<endl;
       return  ntuple->MET_RefFinal.et();
       // IMPORTANT NOTE:
-      //    Check Version of the code 00-00-21 (created the 19th June 2014)
+      //    Check Version of the code HiggsllqqAnalysis-00-00-21 (created the 19th June 2014)
       //    for details of what was here before this cleaning.
     }
 }
@@ -4128,6 +4128,150 @@ Bool_t HiggsllqqAnalysis::hasGoodMET()
   else               pass_cut = (getCorrectMETValue() < MET_high_cut);
   
   return pass_cut;
+}
+
+
+Float_t HiggsllqqAnalysis::getTotalEtOrPtEvent(int option)
+{
+  float totalEtLeptons = 0.;
+  float totalPtLeptons = 0.;
+  float totalEtJets    = 0.;
+  float totalPtJets    = 0.;
+  float totalEtJetsFw  = 0.;
+  float totalPtJetsFw  = 0.;
+  
+  if(getChannel() == HiggsllqqAnalysis::MU2)
+    {
+      for (std::vector<Analysis::ChargedLepton*>::iterator mu_itr = m_GoodMuons.begin(); mu_itr != m_GoodMuons.end(); ++mu_itr)
+	{
+	  Analysis::ChargedLepton           *mu_a = (*mu_itr);
+	  D3PDReader::MuonD3PDObjectElement *b_mu = mu_a->GetMuon();
+	  
+	  totalEtLeptons += mu_a->Get4Momentum()->Et();
+	  totalPtLeptons += b_mu->pt();
+	}
+    }
+  else if(getChannel() == HiggsllqqAnalysis::E2)
+    {
+      for (std::vector<Analysis::ChargedLepton*>::iterator el_itr = m_GoodElectrons.begin(); el_itr != m_GoodElectrons.end(); ++el_itr)
+	{
+	  Analysis::ChargedLepton               *el_a = (*el_itr);
+	  D3PDReader::ElectronD3PDObjectElement *b_el = el_a->GetElectron();
+	  
+	  totalEtLeptons += el_a->Get4Momentum()->Et();
+	  totalPtLeptons += b_el->pt();
+	}
+    }
+  
+  for (std::vector<Analysis::Jet *>::iterator jet_itr = m_GoodJets.begin(); jet_itr != m_GoodJets.end(); ++jet_itr)
+    {	
+      totalEtJets += (*jet_itr)->Get4Momentum()->Et();
+      totalPtJets += (*jet_itr)->rightpt();
+    }
+  
+  ///////////////////////////////////////////////////////////////////
+  //Find forward Jets
+  D3PDReader::JetD3PDObject    *jet_branch(0);
+  if      (getJetFamily() == 0) jet_branch = &(ntuple->jet_akt4topoem);
+  else if (getJetFamily() == 1) jet_branch = &(ntuple->jet_AntiKt4LCTopo);
+  ExtendedJetRegion = kTRUE;
+  for (Int_t i = 0; i < jet_branch->n(); i++)
+    {
+      Analysis::Jet *jet = new Analysis::Jet(&((*jet_branch)[i]));
+      applyChanges(jet);
+      
+      if (isGoodJet(jet))
+	{
+	  totalEtJetsFw += jet->Get4Momentum()->Et();
+	  totalPtJetsFw += jet->rightpt();
+	}
+    }
+  ExtendedJetRegion = kFALSE;
+  ///////////////////////////////////////////////////////////////////
+  
+  
+  if(option == 0)
+    {
+      float total = totalEtLeptons+totalEtJets;
+      return total;
+    } 
+  else if(option == 1)
+    {
+      float total = totalPtLeptons+totalPtJets;
+      return total;
+    } 
+  else if(option == 2)
+    {
+      float total = totalEtLeptons+totalEtJets+totalEtJetsFw;
+      return total;
+    } 
+  else if(option == 3)
+    {
+      float total = totalPtLeptons+totalPtJets+totalPtJetsFw;
+      return total;
+    } 
+  else
+    {
+      return 1.;  // Protection to sqrt in the next method.
+    } 
+}
+
+
+Float_t HiggsllqqAnalysis::getMETsignificanceValue(int option)  // October 2014: Method to obtain the different useful values for MET significant calculation
+{
+  float current_MeT     = getCorrectMETValue();
+  float current_TotEt   = 1;//getTotalEtOrPtEvent(0); // HT
+  float current_TotPt   = 1;//getTotalEtOrPtEvent(1); // PT
+  float current_TotEtfw = 1;//getTotalEtOrPtEvent(2); // HTfw
+  float current_TotPtfw = getTotalEtOrPtEvent(3); // PTfw
+  
+  /*
+    METsgfE     = getMETsignificanceValue(1); // MET significance = MET/sqrt(HT)
+    METsgfPt    = getMETsignificanceValue(2); // MET significance = MET/sqrt(PT)
+    TotGoodE    = getMETsignificanceValue(3); // HT
+    TotGoodPt   = getMETsignificanceValue(4); // PT
+    METsgfEfw   = getMETsignificanceValue(5); // MET significance = MET/sqrt(HTfw)
+    METsgfPtfw  = getMETsignificanceValue(6); // MET significance = MET/sqrt(PTfw)
+    TotGoodEfw  = getMETsignificanceValue(7); // HTfw
+    TotGoodPtfw = getMETsignificanceValue(8); // PTfw
+  */
+  
+  if (option == 1)
+    {
+      return (current_MeT/1000.)/(TMath::Sqrt(current_TotEt/1000.));
+    }
+  else if(option == 2)
+    {
+      return (current_MeT/1000.)/(TMath::Sqrt(current_TotPt/1000.));
+    }
+  else if(option == 3)
+    {
+      return current_TotEt;
+    } 
+  else if(option == 4)
+    {
+      return current_TotPt;
+    } 
+  else if(option == 5)
+    {
+      return (current_MeT/1000.)/(TMath::Sqrt(current_TotEtfw/1000.));
+    } 
+  else if(option == 6)
+    {
+      return (current_MeT/1000.)/(TMath::Sqrt(current_TotPtfw/1000.)); 
+    } 
+  else if(option == 7)
+    {
+      return current_TotEtfw;
+    } 
+  else if(option == 8)
+    {
+      return current_TotPtfw;
+    } 
+  else
+    {
+      return -9999.;
+    } 
 }
 
 
@@ -4823,6 +4967,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->low_event             = -999;
   str->n_jets                = -999;
   str->n_b_jets              = -999;
+  str->isMCsample            = kFALSE;
   str->weight                = 1.00; //Careful, this is a weight,  initialization = 1.00
   str->SFWeight              = 1.00; //Careful, these are weights, initialization = 1.00
   str->ggFweight             = 1.00; //Careful, these are weights, initialization = 1.00
@@ -4832,6 +4977,7 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->DPhijjZWeight         = 1.00; //Careful, these are weights, initialization = 1.00
   str->TriggerSFWeight       = 1.00; //Careful, these are weights, initialization = 1.00
   str->truthH_pt             =   -1;
+  str->truthH_M              =   -1;
   str->btagSF                = 1.00; //Careful, these are weights, initialization = 1.00
   str->btagSF_true_label     = 1.00; //Careful, these are weights, initialization = 1.00  
   str->SysBTagB0EfficUp      = 1.00;
@@ -5077,6 +5223,16 @@ void HiggsllqqAnalysis::ResetAnalysisOutputBranches(analysis_output_struct *str)
   str->chisquare             = -999;
   str->met                   = -999;
   str->sumet                 = -999;
+  //////////////////////////////////  October 2014 ----> production 28.
+  str->METsgfE               = -999; // MET significance = MET/sqrt(HT); HT = sum of the energy of all the "good" objects in the event
+  str->METsgfPt              = -999; // MET significance = MET/sqrt(PT); PT = sum of the momentum of all the "good" objects in the event
+  str->TotGoodE              = -999; // HT
+  str->TotGoodPt             = -999; // PT
+  str->METsgfEfw             = -999; // MET significance = MET/sqrt(HTfw); HTfw = sum of the energy of all the "good" objects in the event + energy forward jets (|eta|>2.5)
+  str->METsgfPtfw            = -999; // MET significance = MET/sqrt(PTfw); PTfw = sum of the momentum of all the "good" objects in the event + momentum forward jets (|eta|>2.5)
+  str->TotGoodEfw            = -999; // HTfw
+  str->TotGoodPtfw           = -999; // PTfw
+  //////////////////////////////////
   str->NPV                   = -999;
   str->mu                    = -999;
   str->HFOR                  =   -1;
@@ -5185,6 +5341,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("low_event",             &(str->low_event));
   analysistree->Branch("HFOR",                  &(str->HFOR));
   analysistree->Branch("Entries",               &(str->Entries));
+  analysistree->Branch("isMCsample",            &(str->isMCsample));
   //
   analysistree->Branch("n_jets",                &(str->n_jets));
   analysistree->Branch("n_b_jets",              &(str->n_b_jets));
@@ -5197,6 +5354,7 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   analysistree->Branch("DPhijjZWeight",         &(str->DPhijjZWeight));
   analysistree->Branch("TriggerSFWeight",       &(str->TriggerSFWeight));
   analysistree->Branch("truthH_pt",             &(str->truthH_pt));
+  analysistree->Branch("truthH_M",              &(str->truthH_M));
   analysistree->Branch("mu",                    &(str->mu));
   analysistree->Branch("trig_SF",               &(str->trig_SF));
   analysistree->Branch("trig_SF2",              &(str->trig_SF2));
@@ -5385,6 +5543,15 @@ void HiggsllqqAnalysis::SetAnalysisOutputBranches(analysis_output_struct *str)
   ////////////////////
   analysistree->Branch("met",                   &(str->met));
   analysistree->Branch("sumet",                 &(str->sumet));
+  ////////////////////////////////////////////////////////////////////////  October 2014 ----> production 28.
+  analysistree->Branch("METsgfE",               &(str->METsgfE));     // MET significance = MET/sqrt(HT)
+  analysistree->Branch("METsgfPt",              &(str->METsgfPt));    // MET significance = MET/sqrt(PT)
+  analysistree->Branch("TotGoodE",              &(str->TotGoodE));    // HT
+  analysistree->Branch("TotGoodPt",             &(str->TotGoodPt));   // PT
+  analysistree->Branch("METsgfEfw",             &(str->METsgfEfw));   // MET significance = MET/sqrt(HTfw)
+  analysistree->Branch("METsgfPtfw",            &(str->METsgfPtfw));  // MET significance = MET/sqrt(PTfw)
+  analysistree->Branch("TotGoodEfw",            &(str->TotGoodEfw));  // HTfw
+  analysistree->Branch("TotGoodPtfw",           &(str->TotGoodPtfw)); // PTfw
   ////////////////////////////////////////////////////////////////////////
   analysistree->Branch("btagSF",                &(str->btagSF));
   analysistree->Branch("btagSF_true_label",     &(str->btagSF_true_label));
@@ -5589,6 +5756,9 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       
       if (!isMC()) str->runnumber   = ntuple->eventinfo.RunNumber();
       if (isMC())  str->runnumber   = ntuple->eventinfo.mc_channel_number();
+       
+      if (isMC()) str->isMCsample   = kTRUE;
+      else        str->isMCsample   = kFALSE;
       
       str->eventnumber              = ntuple->eventinfo.EventNumber();
       str->HFOR                     = HFOR_value;
@@ -5599,8 +5769,17 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       str->issystematicevent        = getSystematicToDo();
       str->met                      = getCorrectMETValue();
       str->sumet                    = ntuple->MET_RefFinal.sumet();
+      str->METsgfE                  = -1;//getMETsignificanceValue(1); // MET significance = MET/sqrt(HT)
+      str->METsgfPt                 = -1;//getMETsignificanceValue(2); // MET significance = MET/sqrt(PT)
+      str->TotGoodE                 = -1;//getMETsignificanceValue(3); // HT
+      str->TotGoodPt                = -1;//getMETsignificanceValue(4); // PT
+      str->METsgfEfw                = -1;//getMETsignificanceValue(5); // MET significance = MET/sqrt(HTfw)
+      str->METsgfPtfw               = getMETsignificanceValue(6); // MET significance = MET/sqrt(PTfw)
+      str->TotGoodEfw               = -1;//getMETsignificanceValue(7); // HTfw
+      str->TotGoodPtfw              = -1;//getMETsignificanceValue(8); // PTfw
       str->NPV                      = getNumberOfGoodVertices();
       str->truthH_pt                = -1.;
+      str->truthH_M                 = -1.;
       str->SFWeight                 =  1.;
       str->ggFweight                =  1.;
       str->EventWeight              =  1.;
@@ -5614,6 +5793,7 @@ void HiggsllqqAnalysis::FillAnalysisOutputTree(analysis_output_struct *str, Int_
       if(isMC()) 
 	{
 	  str->truthH_pt            = getTruthHiggsPt();       // NOT in weight
+	  str->truthH_M             = getTruthHiggsMass();     // NOT in weight
 	  str->SFWeight            *= getSFWeight();           // YES in weight
 	  str->ggFweight           *= getggFWeight();          // NOT in weight
 	  str->EventWeight         *= getEventWeight();        // YES in weight

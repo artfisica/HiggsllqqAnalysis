@@ -1,7 +1,7 @@
 #!/bin/bash
 ## author: arturos@cern.ch
 ## Created: September 30th 2013
-## Updated: November  20th 2014
+## Updated: May       20th 2014
 #############################################################################
 FILE=$1
 SYST=$6

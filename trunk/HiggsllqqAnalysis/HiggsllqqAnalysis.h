@@ -517,6 +517,15 @@ typedef struct
   int   NPV;
   int   HFOR;
   float sumet;
+  //////////////////////    October 2014 ----> production 28.
+  float METsgfE;     // MET significance = MET/sqrt(HT); HT = sum of the energy of all the "good" objects in the event
+  float METsgfPt;    // MET significance = MET/sqrt(PT); PT = sum of the momentum of all the "good" objects in the event
+  float TotGoodE;    // HT
+  float TotGoodPt;   // PT
+  float METsgfEfw;   // MET significance = MET/sqrt(HTfw); HTfw = sum of the energy of all the "good" objects in the event + energy forward jets (|eta|>2.5)
+  float METsgfPtfw;  // MET significance = MET/sqrt(PTfw); PTfw = sum of the momentum of all the "good" objects in the event + momentum forward jets (|eta|>2.5)
+  float TotGoodEfw;  // HTfw
+  float TotGoodPtfw; // PTfw
   //////////////////////
   float btagSF;
   float btagSF_true_label;
@@ -582,7 +591,9 @@ typedef struct
   float SysBTagL9EfficDo;
   //////////////////////
   int   Entries;
+  bool  isMC;
   float truthH_pt;
+  float truthH_M;
   float weight;
   float SFWeight;
   float ggFweight;
@@ -977,6 +988,9 @@ class HiggsllqqAnalysis : public HiggsAnalysis {
   void    FillReducedNtuple(Int_t cut, UInt_t channel);
   
   Float_t getCorrectMETValue();
+  Float_t getMETsignificanceValue(int option);
+  Float_t getTotalEtOrPtEvent(int option);
+
   Float_t GetMV1value(Analysis::Jet *jet);
   pair <Int_t,Double_t> GetFlavour(Analysis::Jet *jet);
   
